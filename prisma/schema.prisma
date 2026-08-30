@@ -1,0 +1,250 @@
+// Prisma Schema - 技能评测系统数据模型 (SQLite)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// 智能体管理
+// ============================================
+
+model Skill {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  version     String   @default("1.0.0")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  endpoints   AgentEndpoint[]
+  evalRuns    EvalRun[]
+  skillVersions SkillVersion[]
+
+  @@map("skills")
+}
+
+model AgentEndpoint {
+  id             String   @id @default(uuid())
+  skillId        String
+  name           String
+  url            String
+  authType       String   @default("none") // none, api_key, oauth, token
+  authConfig     String?  // 认证配置（JSON字符串，加密存储）
+  sseFormat      String   @default("auto") // auto, content, delta, custom
+  sseTemplate    String?  // SSE 响应解析模板（JSON字符串）
+  requestTemplate String? // 请求体模板（JSON字符串）
+  timeout        Int      @default(30000)  // 超时时间(ms)
+  maxRetries     Int      @default(3)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  skill          Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  evalRuns       EvalRun[]
+
+  @@map("agent_endpoints")
+}
+
+model SkillVersion {
+  id          String   @id @default(uuid())
+  skillId     String
+  version     String
+  snapshot    String   // 版本快照数据（JSON字符串）
+  createdAt   DateTime @default(now())
+
+  skill       Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([skillId, version])
+  @@map("skill_versions")
+}
+
+// ============================================
+// 评测数据集
+// ============================================
+
+model Dataset {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  category    String?  // 分类标签
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  testCases   TestCase[]
+  snapshots   DatasetSnapshot[]
+
+  @@map("datasets")
+}
+
+model TestCase {
+  id            String   @id @default(uuid())
+  datasetId     String
+  input         String   // 输入 prompt/上下文
+  expectedOutput String? // 期望输出
+  difficulty    String   @default("medium") // easy, medium, hard
+  tags          String   @default("") // 评测维度标签，逗号分隔
+  metadata      String?  // 额外元数据（JSON字符串）
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  dataset       Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  evalResults   EvalResult[]
+  generationRecords GenerationRecord[]
+
+  @@map("test_cases")
+}
+
+model DatasetSnapshot {
+  id          String   @id @default(uuid())
+  datasetId   String
+  version     String
+  data        String   // 快照数据（JSON字符串）
+  createdAt   DateTime @default(now())
+
+  dataset     Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  @@unique([datasetId, version])
+  @@map("dataset_snapshots")
+}
+
+// 评测集 AI 生成记录
+model GenerationRecord {
+  id            String   @id @default(uuid())
+  testCaseId    String
+  input         String   // 原始问题
+  candidates    String   // 3个候选答案（JSON字符串）
+  aiRecommendation Int?  // AI推荐的答案索引
+  selectedIndex Int?     // 人工选择的索引
+  finalOutput   String?  // 最终确认的标准答案
+  createdAt     DateTime @default(now())
+
+  testCase      TestCase @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+
+  @@map("generation_records")
+}
+
+// ============================================
+// 评测执行
+// ============================================
+
+model EvalRun {
+  id            String   @id @default(uuid())
+  skillId       String
+  endpointId    String
+  datasetId     String?  // 可选，关联数据集
+  status        String   @default("pending") // pending, running, completed, failed
+  config        String?  // 运行配置（JSON字符串）
+  startTime     DateTime?
+  endTime       DateTime?
+  totalCases    Int      @default(0)
+  passedCases   Int      @default(0)
+  failedCases   Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  skill         Skill         @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  endpoint      AgentEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+  results       EvalResult[]
+  pipeline      PipelineInstance?
+
+  @@map("eval_runs")
+}
+
+model EvalResult {
+  id            String   @id @default(uuid())
+  evalRunId     String
+  testCaseId    String
+  status        String   @default("pending") // pending, passed, failed, error
+  actualOutput  String?  // 实际输出
+  rawSseStream  String?  // 原始 SSE 流数据
+  metrics       String?  // 性能指标（JSON字符串：耗时、token等）
+  scores        String?  // 各维度评分（JSON字符串）
+  errorMessage  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  evalRun       EvalRun  @relation(fields: [evalRunId], references: [id], onDelete: Cascade)
+  testCase      TestCase @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+  annotations   Annotation[]
+
+  @@map("eval_results")
+}
+
+// ============================================
+// 标注体系
+// ============================================
+
+model Annotation {
+  id            String   @id @default(uuid())
+  evalResultId  String
+  type          String   // ai, human
+  annotatorId   String?  // 标注员ID（人工标注时）
+  scores        String   // 评分数据（JSON字符串）
+  comment       String?  // 批注
+  isFinal       Boolean  @default(false) // 是否为最终标注
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  evalResult    EvalResult @relation(fields: [evalResultId], references: [id], onDelete: Cascade)
+
+  @@map("annotations")
+}
+
+// ============================================
+// AI 修复
+// ============================================
+
+model FixRecord {
+  id            String   @id @default(uuid())
+  evalResultId  String
+  diagnosis     String   // 问题诊断
+  suggestion    String   // 修复建议
+  fixType       String   // prompt, knowledge, parameter
+  fixContent    String?  // 修复内容（JSON字符串）
+  appliedAt     DateTime? // 应用时间
+  verified      Boolean  @default(false) // 是否验证通过
+  createdAt     DateTime @default(now())
+
+  @@map("fix_records")
+}
+
+// ============================================
+// 流水线编排
+// ============================================
+
+model Pipeline {
+  id            String   @id @default(uuid())
+  name          String
+  description   String?
+  template      String   // 流水线节点定义（JSON字符串）
+  isPreset      Boolean  @default(false) // 是否预置模板
+  cronExpression String? // 定时表达式
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  instances     PipelineInstance[]
+
+  @@map("pipelines")
+}
+
+model PipelineInstance {
+  id            String   @id @default(uuid())
+  pipelineId    String
+  evalRunId     String?  @unique // 一对一关系需要 @unique
+  status        String   @default("pending") // pending, running, completed, failed
+  currentNode   String?
+  progress      String?  // 各节点进度（JSON字符串）
+  startTime     DateTime?
+  endTime       DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  pipeline      Pipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  evalRun       EvalRun? @relation(fields: [evalRunId], references: [id], onDelete: SetNull)
+
+  @@map("pipeline_instances")
+}

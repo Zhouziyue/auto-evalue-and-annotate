@@ -18,6 +18,9 @@ import { MultimodalEvalService } from './multimodal-eval.service';
 import { LLMJudgeService } from './llm-judge.service';
 import { GuardrailsService } from './guardrails.service';
 import { ABTestService } from './ab-test.service';
+import { PromptOptimizationService } from './prompt-optimization.service';
+import { CostTrackingService } from './cost-tracking.service';
+import { BenchmarkService } from './benchmark.service';
 import { EvalController } from './eval.controller';
 
 @Module({
@@ -42,6 +45,9 @@ import { EvalController } from './eval.controller';
     LLMJudgeService,
     GuardrailsService,
     ABTestService,
+    PromptOptimizationService,
+    CostTrackingService,
+    BenchmarkService,
   ],
   exports: [
     EvalService,
@@ -63,6 +69,9 @@ import { EvalController } from './eval.controller';
     LLMJudgeService,
     GuardrailsService,
     ABTestService,
+    PromptOptimizationService,
+    CostTrackingService,
+    BenchmarkService,
   ],
 })
 export class EvalModule {}

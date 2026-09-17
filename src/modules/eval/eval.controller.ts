@@ -18,6 +18,9 @@ import { MultimodalEvalService, MultimodalEvalInput, MultimodalEvalType } from '
 import { LLMJudgeService, JudgeInput, JudgeType, JudgeRubric } from './llm-judge.service';
 import { GuardrailsService, GuardType, ValidatorConfig, ValidatorType } from './guardrails.service';
 import { ABTestService, ABTestConfig, ABTestStatus } from './ab-test.service';
+import { PromptOptimizationService, OptimizationConfig, OptimizationStrategy } from './prompt-optimization.service';
+import { CostTrackingService } from './cost-tracking.service';
+import { BenchmarkService, BenchmarkType } from './benchmark.service';
 
 @Controller('api/eval')
 export class EvalController {
@@ -40,6 +43,9 @@ export class EvalController {
     private llmJudgeService: LLMJudgeService,
     private guardrailsService: GuardrailsService,
     private abTestService: ABTestService,
+    private promptOptimizationService: PromptOptimizationService,
+    private costTrackingService: CostTrackingService,
+    private benchmarkService: BenchmarkService,
   ) {}
 
   // ========== 评测指标 API ==========
@@ -635,5 +641,154 @@ export class EvalController {
     @Body() body: { variantId1: string; variantId2: string },
   ) {
     return this.abTestService.compareVariants(id, body.variantId1, body.variantId2);
+  }
+
+  // ========== Prompt 优化 API ==========
+
+  // 优化 Prompt
+  @Post('prompt-optimize')
+  async optimizePrompt(
+    @Body() body: { prompt: string; config: OptimizationConfig },
+  ) {
+    return this.promptOptimizationService.optimizePrompt(body.prompt, body.config);
+  }
+
+  // 获取优化策略列表
+  @Get('prompt-optimize/strategies')
+  getOptimizationStrategies() {
+    return {
+      strategies: Object.values(OptimizationStrategy).map(s => ({
+        id: s,
+        name: this.getStrategyName(s),
+      })),
+    };
+  }
+
+  private getStrategyName(strategy: OptimizationStrategy): string {
+    const names: Record<OptimizationStrategy, string> = {
+      [OptimizationStrategy.ITERATIVE]: '迭代优化',
+      [OptimizationStrategy.GENETIC]: '遗传算法',
+      [OptimizationStrategy.GRADIENT]: '梯度优化',
+      [OptimizationStrategy.META_PROMPT]: '元提示优化',
+    };
+    return names[strategy] || strategy;
+  }
+
+  // ========== 成本追踪 API ==========
+
+  // 记录使用量
+  @Post('cost/record')
+  async recordUsage(@Body() data: {
+    model: string;
+    provider?: string;
+    promptTokens: number;
+    completionTokens: number;
+    latency?: number;
+    userId?: string;
+    sessionId?: string;
+    traceId?: string;
+    tags?: string[];
+  }) {
+    return this.costTrackingService.recordUsage(data);
+  }
+
+  // 获取成本统计
+  @Get('cost/stats')
+  async getCostStats(
+    @Query('model') model?: string,
+    @Query('userId') userId?: string,
+    @Query('days') days?: string,
+  ) {
+    const since = days ? new Date(Date.now() - parseInt(days) * 24 * 60 * 60 * 1000) : undefined;
+    return this.costTrackingService.getStats({ since, model, userId });
+  }
+
+  // 获取使用记录
+  @Get('cost/records')
+  async getCostRecords(
+    @Query('model') model?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.costTrackingService.getRecords({ model, limit: limit ? parseInt(limit) : 100 });
+  }
+
+  // 获取模型定价
+  @Get('cost/pricing')
+  getPricing() {
+    return this.costTrackingService.getPricing();
+  }
+
+  // 成本预测
+  @Post('cost/predict')
+  async predictCost(@Body() body: {
+    model: string;
+    provider: string;
+    estimatedMonthlyTokens: number;
+  }) {
+    return this.costTrackingService.getCostPrediction(
+      body.model, body.provider, body.estimatedMonthlyTokens,
+    );
+  }
+
+  // 创建预算告警
+  @Post('cost/budget-alert')
+  async createBudgetAlert(@Body() body: {
+    name: string;
+    threshold: number;
+    period: 'daily' | 'weekly' | 'monthly';
+  }) {
+    return this.costTrackingService.createBudgetAlert(body);
+  }
+
+  // 获取预算告警
+  @Get('cost/budget-alerts')
+  getBudgetAlerts() {
+    return this.costTrackingService.getBudgetAlerts();
+  }
+
+  // ========== 基准测试 API ==========
+
+  // 运行基准测试
+  @Post('benchmark/run')
+  async runBenchmark(
+    @Body() body: { type: BenchmarkType; modelName?: string; categories?: string[] },
+  ) {
+    return this.benchmarkService.runBenchmark(body.type, body.modelName, body.categories);
+  }
+
+  // 运行所有基准测试
+  @Post('benchmark/run-all')
+  async runAllBenchmarks(@Body() body: { modelName?: string }) {
+    return this.benchmarkService.runAllBenchmarks(body.modelName);
+  }
+
+  // 获取基准测试结果
+  @Get('benchmark/results')
+  async getBenchmarkResults(
+    @Query('model') model?: string,
+    @Query('type') type?: BenchmarkType,
+  ) {
+    return this.benchmarkService.getResults(model, type);
+  }
+
+  // 对比模型
+  @Post('benchmark/compare')
+  async compareBenchmarkModels(@Body() body: {
+    models: string[];
+    type?: BenchmarkType;
+  }) {
+    return this.benchmarkService.compareModels(body.models, body.type);
+  }
+
+  // 获取可用基准测试
+  @Get('benchmark/types')
+  getBenchmarkTypes() {
+    return this.benchmarkService.getAvailableBenchmarks();
+  }
+
+  // 添加自定义基准题目
+  @Post('benchmark/custom')
+  async addCustomBenchmark(@Body() body: { questions: any[] }) {
+    return this.benchmarkService.addCustomBenchmark(body.questions);
   }
 }

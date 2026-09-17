@@ -15,6 +15,9 @@ import { ExperimentService, CreateExperimentInput } from './experiment.service';
 import { QualityGateService, EvalReport } from './quality-gate.service';
 import { FeedbackService, SubmitFeedbackInput, FeedbackType } from './feedback.service';
 import { MultimodalEvalService, MultimodalEvalInput, MultimodalEvalType } from './multimodal-eval.service';
+import { LLMJudgeService, JudgeInput, JudgeType, JudgeRubric } from './llm-judge.service';
+import { GuardrailsService, GuardType, ValidatorConfig, ValidatorType } from './guardrails.service';
+import { ABTestService, ABTestConfig, ABTestStatus } from './ab-test.service';
 
 @Controller('api/eval')
 export class EvalController {
@@ -34,6 +37,9 @@ export class EvalController {
     private qualityGateService: QualityGateService,
     private feedbackService: FeedbackService,
     private multimodalEvalService: MultimodalEvalService,
+    private llmJudgeService: LLMJudgeService,
+    private guardrailsService: GuardrailsService,
+    private abTestService: ABTestService,
   ) {}
 
   // ========== 评测指标 API ==========
@@ -491,5 +497,143 @@ export class EvalController {
       [MultimodalEvalType.AUDIO_QA]: '音频问答',
     };
     return names[type] || type;
+  }
+
+  // ========== LLM-as-Judge API ==========
+
+  // 运行 LLM 评判
+  @Post('judge/run')
+  async runJudge(@Body() input: JudgeInput) {
+    return this.llmJudgeService.runJudge(input);
+  }
+
+  // 批量评判
+  @Post('judge/batch')
+  async runBatchJudge(@Body() body: { inputs: JudgeInput[] }) {
+    return this.llmJudgeService.runBatchJudge(body.inputs);
+  }
+
+  // 获取所有 Rubrics
+  @Get('judge/rubrics')
+  getRubrics() {
+    return this.llmJudgeService.getRubrics();
+  }
+
+  // 获取单个 Rubric
+  @Get('judge/rubrics/:id')
+  getRubric(@Param('id') id: string) {
+    return this.llmJudgeService.getRubric(id);
+  }
+
+  // 创建自定义 Rubric
+  @Post('judge/rubrics')
+  createRubric(@Body() rubric: Omit<JudgeRubric, 'id'>) {
+    return this.llmJudgeService.createRubric(rubric);
+  }
+
+  // ========== 输出护栏 API ==========
+
+  // 检查输入
+  @Post('guardrails/check-input')
+  async checkInput(@Body() body: { input: string }) {
+    return this.guardrailsService.checkInput(body.input);
+  }
+
+  // 检查输出
+  @Post('guardrails/check-output')
+  async checkOutput(@Body() body: { output: string }) {
+    return this.guardrailsService.checkOutput(body.output);
+  }
+
+  // 同时检查输入输出
+  @Post('guardrails/check-both')
+  async checkBoth(@Body() body: { input: string; output: string }) {
+    return this.guardrailsService.checkBoth(body.input, body.output);
+  }
+
+  // 获取所有验证器
+  @Get('guardrails/validators')
+  getValidators() {
+    return this.guardrailsService.getValidators();
+  }
+
+  // 创建自定义验证器
+  @Post('guardrails/validators')
+  createValidator(@Body() config: Omit<ValidatorConfig, 'id'>) {
+    return this.guardrailsService.createValidator(config);
+  }
+
+  // 切换验证器状态
+  @Post('guardrails/validators/:id/toggle')
+  toggleValidator(@Param('id') id: string, @Body() body: { enabled: boolean }) {
+    return this.guardrailsService.toggleValidator(id, body.enabled);
+  }
+
+  // ========== A/B 测试 API ==========
+
+  // 创建 A/B 测试
+  @Post('ab-tests')
+  async createABTest(@Body() config: ABTestConfig) {
+    return this.abTestService.createTest(config);
+  }
+
+  // 获取测试列表
+  @Get('ab-tests')
+  async listABTests(@Query('status') status?: ABTestStatus) {
+    return this.abTestService.listTests(status);
+  }
+
+  // 获取测试详情
+  @Get('ab-tests/:id')
+  async getABTest(@Param('id') id: string) {
+    return this.abTestService.getTest(id);
+  }
+
+  // 启动测试
+  @Post('ab-tests/:id/start')
+  async startABTest(@Param('id') id: string) {
+    return this.abTestService.startTest(id);
+  }
+
+  // 暂停测试
+  @Post('ab-tests/:id/pause')
+  async pauseABTest(@Param('id') id: string) {
+    return this.abTestService.pauseTest(id);
+  }
+
+  // 完成测试
+  @Post('ab-tests/:id/complete')
+  async completeABTest(@Param('id') id: string) {
+    return this.abTestService.completeTest(id);
+  }
+
+  // 记录运行结果
+  @Post('ab-tests/:id/runs')
+  async recordABTestRun(
+    @Param('id') id: string,
+    @Body() data: { variantId: string; input: string; output: string; scores: Record<string, number>; latency: number },
+  ) {
+    return this.abTestService.recordRun(id, data);
+  }
+
+  // 选择变体
+  @Get('ab-tests/:id/select-variant')
+  async selectVariant(@Param('id') id: string) {
+    return this.abTestService.selectVariant(id);
+  }
+
+  // 获取测试结果
+  @Get('ab-tests/:id/results')
+  async getABTestResults(@Param('id') id: string) {
+    return this.abTestService.calculateResults(id);
+  }
+
+  // 对比变体
+  @Post('ab-tests/:id/compare')
+  async compareVariants(
+    @Param('id') id: string,
+    @Body() body: { variantId1: string; variantId2: string },
+  ) {
+    return this.abTestService.compareVariants(id, body.variantId1, body.variantId2);
   }
 }

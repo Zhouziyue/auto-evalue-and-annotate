@@ -15,6 +15,9 @@ import { ExperimentService } from './experiment.service';
 import { QualityGateService } from './quality-gate.service';
 import { FeedbackService } from './feedback.service';
 import { MultimodalEvalService } from './multimodal-eval.service';
+import { LLMJudgeService } from './llm-judge.service';
+import { GuardrailsService } from './guardrails.service';
+import { ABTestService } from './ab-test.service';
 import { EvalController } from './eval.controller';
 
 @Module({
@@ -36,6 +39,9 @@ import { EvalController } from './eval.controller';
     QualityGateService,
     FeedbackService,
     MultimodalEvalService,
+    LLMJudgeService,
+    GuardrailsService,
+    ABTestService,
   ],
   exports: [
     EvalService,
@@ -54,6 +60,9 @@ import { EvalController } from './eval.controller';
     QualityGateService,
     FeedbackService,
     MultimodalEvalService,
+    LLMJudgeService,
+    GuardrailsService,
+    ABTestService,
   ],
 })
 export class EvalModule {}

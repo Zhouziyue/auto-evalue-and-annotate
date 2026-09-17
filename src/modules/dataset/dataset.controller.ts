@@ -3,6 +3,7 @@ import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { DatasetService } from './dataset.service';
 import { AiGenerationService } from './ai-generation.service';
+import { DatasetVersionService } from './dataset-version.service';
 import { CreateDatasetDto, UpdateDatasetDto, CreateTestCaseDto, GenerateDto, SelectAnswerDto } from './dataset.dto';
 
 @ApiTags('评测数据集')
@@ -12,6 +13,7 @@ export class DatasetController {
   constructor(
     private readonly datasetService: DatasetService,
     private readonly aiGenerationService: AiGenerationService,
+    private readonly datasetVersionService: DatasetVersionService,
   ) {}
 
   // 数据集 CRUD
@@ -107,5 +109,43 @@ export class DatasetController {
   @ApiOperation({ summary: '导出用例' })
   exportCases(@Param('id') id: string) {
     return this.datasetService.exportCases(id);
+  }
+
+  // ========== 版本管理 ==========
+
+  @Post(':id/versions')
+  @ApiOperation({ summary: '创建数据集版本' })
+  createVersion(@Param('id') id: string, @Body() body: { name: string; description?: string; metadata?: Record<string, any> }) {
+    return this.datasetVersionService.createVersion(id, body);
+  }
+
+  @Get(':id/versions')
+  @ApiOperation({ summary: '获取数据集版本列表' })
+  getVersions(@Param('id') id: string) {
+    return this.datasetVersionService.getVersions(id);
+  }
+
+  @Post(':id/versions/:versionId/publish')
+  @ApiOperation({ summary: '发布版本' })
+  publishVersion(@Param('id') id: string, @Param('versionId') versionId: string) {
+    return this.datasetVersionService.publishVersion(id, versionId);
+  }
+
+  @Post(':id/versions/:versionId/archive')
+  @ApiOperation({ summary: '归档版本' })
+  archiveVersion(@Param('id') id: string, @Param('versionId') versionId: string) {
+    return this.datasetVersionService.archiveVersion(id, versionId);
+  }
+
+  @Post(':id/versions/diff')
+  @ApiOperation({ summary: '对比两个版本' })
+  diffVersions(@Param('id') id: string, @Body() body: { versionId1: string; versionId2: string }) {
+    return this.datasetVersionService.diffVersions(body.versionId1, body.versionId2);
+  }
+
+  @Post(':id/versions/:versionId/rollback')
+  @ApiOperation({ summary: '回滚到指定版本' })
+  rollbackVersion(@Param('id') id: string, @Param('versionId') versionId: string) {
+    return this.datasetVersionService.rollbackToVersion(id, versionId);
   }
 }

@@ -14,6 +14,7 @@ import { ContaminationCheckService, ContaminationCheckConfig } from './contamina
 import { ExperimentService, CreateExperimentInput } from './experiment.service';
 import { QualityGateService, EvalReport } from './quality-gate.service';
 import { FeedbackService, SubmitFeedbackInput, FeedbackType } from './feedback.service';
+import { MultimodalEvalService, MultimodalEvalInput, MultimodalEvalType } from './multimodal-eval.service';
 
 @Controller('api/eval')
 export class EvalController {
@@ -32,6 +33,7 @@ export class EvalController {
     private experimentService: ExperimentService,
     private qualityGateService: QualityGateService,
     private feedbackService: FeedbackService,
+    private multimodalEvalService: MultimodalEvalService,
   ) {}
 
   // ========== 评测指标 API ==========
@@ -458,5 +460,36 @@ export class EvalController {
   @Post('feedback/rate')
   async rate(@Body() body: { traceId: string; rating: number; userId?: string }) {
     return this.feedbackService.rate(body.traceId, body.rating, body.userId);
+  }
+
+  // ========== 多模态评测 API ==========
+
+  // 运行多模态评测
+  @Post('multimodal/run')
+  async runMultimodalEval(@Body() input: MultimodalEvalInput) {
+    return this.multimodalEvalService.runMultimodalEval(input);
+  }
+
+  // 获取支持的多模态评测类型
+  @Get('multimodal/types')
+  getMultimodalTypes() {
+    return {
+      types: Object.values(MultimodalEvalType).map(type => ({
+        id: type,
+        name: this.getMultimodalTypeName(type),
+      })),
+    };
+  }
+
+  private getMultimodalTypeName(type: MultimodalEvalType): string {
+    const names: Record<MultimodalEvalType, string> = {
+      [MultimodalEvalType.IMAGE_CAPTION]: '图像描述',
+      [MultimodalEvalType.IMAGE_QA]: '图像问答',
+      [MultimodalEvalType.IMAGE_CLASSIFICATION]: '图像分类',
+      [MultimodalEvalType.VISUAL_GROUNDING]: '视觉定位',
+      [MultimodalEvalType.AUDIO_TRANSCRIPTION]: '音频转写',
+      [MultimodalEvalType.AUDIO_QA]: '音频问答',
+    };
+    return names[type] || type;
   }
 }

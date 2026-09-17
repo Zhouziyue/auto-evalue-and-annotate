@@ -10,6 +10,7 @@ import {
   Tag,
   BarChart3,
   GitBranch,
+  Trophy,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
@@ -23,6 +24,7 @@ const menuItems = [
   { key: '/annotations', icon: Tag, label: '标注管理' },
   { key: '/reports', icon: BarChart3, label: '评测报告' },
   { key: '/pipelines', icon: GitBranch, label: '流水线' },
+  { key: '/leaderboard', icon: Trophy, label: '排行榜' },
 ]
 
 function MainLayout() {

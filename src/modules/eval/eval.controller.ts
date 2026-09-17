@@ -5,6 +5,9 @@ import { MatrixEvalService, MatrixEvalConfig } from './matrix-eval.service';
 import { TraceService } from './trace.service';
 import { RedTeamService, RedTeamConfig, RedTeamPlugin } from './redteam.service';
 import { YamlImportService } from './yaml-import.service';
+import { RAGMetricsService, RAGEvalInput } from './rag-metrics.service';
+import { ConversationalMetricsService, ConversationEvalInput } from './conversational-metrics.service';
+import { LeaderboardService, LeaderboardConfig } from './leaderboard.service';
 
 @Controller('api/eval')
 export class EvalController {
@@ -14,6 +17,9 @@ export class EvalController {
     private traceService: TraceService,
     private redTeamService: RedTeamService,
     private yamlImportService: YamlImportService,
+    private ragMetricsService: RAGMetricsService,
+    private conversationalMetricsService: ConversationalMetricsService,
+    private leaderboardService: LeaderboardService,
   ) {}
 
   // ========== 评测指标 API ==========
@@ -211,5 +217,71 @@ export class EvalController {
     return {
       template: this.yamlImportService.generateSampleTemplate(),
     };
+  }
+
+  // ========== RAG 评测 API ==========
+
+  // 运行所有 RAG 指标
+  @Post('rag/run')
+  async runRAGMetrics(@Body() input: RAGEvalInput) {
+    return this.ragMetricsService.runAllMetrics(input);
+  }
+
+  // 上下文精度
+  @Post('rag/context-precision')
+  async evaluateContextPrecision(@Body() input: RAGEvalInput) {
+    return this.ragMetricsService.evaluateContextPrecision(input);
+  }
+
+  // 上下文召回
+  @Post('rag/context-recall')
+  async evaluateContextRecall(@Body() input: RAGEvalInput) {
+    return this.ragMetricsService.evaluateContextRecall(input);
+  }
+
+  // ========== 对话评测 API ==========
+
+  // 运行所有对话评测指标
+  @Post('conversation/run')
+  async runConversationMetrics(@Body() input: ConversationEvalInput) {
+    return this.conversationalMetricsService.runAllMetrics(input);
+  }
+
+  // 对话连贯性
+  @Post('conversation/coherence')
+  async evaluateCoherence(@Body() input: ConversationEvalInput) {
+    return this.conversationalMetricsService.evaluateCoherence(input);
+  }
+
+  // 对话完整性
+  @Post('conversation/completeness')
+  async evaluateCompleteness(@Body() input: ConversationEvalInput) {
+    return this.conversationalMetricsService.evaluateCompleteness(input);
+  }
+
+  // ========== 排行榜 API ==========
+
+  // 生成排行榜
+  @Post('leaderboard')
+  async generateLeaderboard(@Body() config: LeaderboardConfig) {
+    return this.leaderboardService.generateLeaderboard(config);
+  }
+
+  // 获取排行榜摘要
+  @Get('leaderboard/summary')
+  async getLeaderboardSummary() {
+    return this.leaderboardService.getLeaderboardSummary();
+  }
+
+  // 模型对比
+  @Post('leaderboard/compare')
+  async compareModels(@Body() body: { modelIds: string[] }) {
+    return this.leaderboardService.compareModels(body.modelIds);
+  }
+
+  // 获取趋势
+  @Get('leaderboard/trend/:modelId')
+  async getTrend(@Param('modelId') modelId: string, @Query('days') days?: string) {
+    return this.leaderboardService.getTrend(modelId, days ? parseInt(days) : 30);
   }
 }

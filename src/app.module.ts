@@ -15,6 +15,7 @@ import { FixerModule } from './modules/fixer/fixer.module';
 import { ReportModule } from './modules/report/report.module';
 import { RegressionModule } from './modules/regression/regression.module';
 import { PipelineModule } from './modules/pipeline/pipeline.module';
+import { PromptModule } from './modules/prompt/prompt.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { PipelineModule } from './modules/pipeline/pipeline.module';
     ReportModule,
     RegressionModule,
     PipelineModule,
+    PromptModule,  // Prompt 版本管理
   ],
 })
 export class AppModule {}

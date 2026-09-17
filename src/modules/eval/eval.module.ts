@@ -5,6 +5,9 @@ import { MatrixEvalService } from './matrix-eval.service';
 import { TraceService } from './trace.service';
 import { RedTeamService } from './redteam.service';
 import { YamlImportService } from './yaml-import.service';
+import { RAGMetricsService } from './rag-metrics.service';
+import { ConversationalMetricsService } from './conversational-metrics.service';
+import { LeaderboardService } from './leaderboard.service';
 import { EvalController } from './eval.controller';
 
 @Module({
@@ -16,6 +19,9 @@ import { EvalController } from './eval.controller';
     TraceService,
     RedTeamService,
     YamlImportService,
+    RAGMetricsService,
+    ConversationalMetricsService,
+    LeaderboardService,
   ],
   exports: [
     EvalService,
@@ -24,6 +30,9 @@ import { EvalController } from './eval.controller';
     TraceService,
     RedTeamService,
     YamlImportService,
+    RAGMetricsService,
+    ConversationalMetricsService,
+    LeaderboardService,
   ],
 })
 export class EvalModule {}

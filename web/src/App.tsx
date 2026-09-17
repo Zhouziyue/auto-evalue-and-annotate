@@ -8,6 +8,7 @@ import EvalRuns from './pages/EvalRuns';
 import Annotations from './pages/Annotations';
 import Reports from './pages/Reports';
 import Pipelines from './pages/Pipelines';
+import Leaderboard from './pages/Leaderboard';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="annotations" element={<Annotations />} />
         <Route path="reports" element={<Reports />} />
         <Route path="pipelines" element={<Pipelines />} />
+        <Route path="leaderboard" element={<Leaderboard />} />
       </Route>
     </Routes>
   );

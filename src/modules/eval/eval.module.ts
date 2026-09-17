@@ -11,6 +11,9 @@ import { LeaderboardService } from './leaderboard.service';
 import { ObservabilityService } from './observability.service';
 import { CapabilityEvalService } from './capability-eval.service';
 import { ContaminationCheckService } from './contamination-check.service';
+import { ExperimentService } from './experiment.service';
+import { QualityGateService } from './quality-gate.service';
+import { FeedbackService } from './feedback.service';
 import { EvalController } from './eval.controller';
 
 @Module({
@@ -28,6 +31,9 @@ import { EvalController } from './eval.controller';
     ObservabilityService,
     CapabilityEvalService,
     ContaminationCheckService,
+    ExperimentService,
+    QualityGateService,
+    FeedbackService,
   ],
   exports: [
     EvalService,
@@ -42,6 +48,9 @@ import { EvalController } from './eval.controller';
     ObservabilityService,
     CapabilityEvalService,
     ContaminationCheckService,
+    ExperimentService,
+    QualityGateService,
+    FeedbackService,
   ],
 })
 export class EvalModule {}

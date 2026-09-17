@@ -11,6 +11,9 @@ import { LeaderboardService, LeaderboardConfig } from './leaderboard.service';
 import { ObservabilityService } from './observability.service';
 import { CapabilityEvalService } from './capability-eval.service';
 import { ContaminationCheckService, ContaminationCheckConfig } from './contamination-check.service';
+import { ExperimentService, CreateExperimentInput } from './experiment.service';
+import { QualityGateService, EvalReport } from './quality-gate.service';
+import { FeedbackService, SubmitFeedbackInput, FeedbackType } from './feedback.service';
 
 @Controller('api/eval')
 export class EvalController {
@@ -26,6 +29,9 @@ export class EvalController {
     private observabilityService: ObservabilityService,
     private capabilityEvalService: CapabilityEvalService,
     private contaminationCheckService: ContaminationCheckService,
+    private experimentService: ExperimentService,
+    private qualityGateService: QualityGateService,
+    private feedbackService: FeedbackService,
   ) {}
 
   // ========== 评测指标 API ==========
@@ -353,5 +359,104 @@ export class EvalController {
   @Post('contamination/check')
   async checkContamination(@Body() config: ContaminationCheckConfig) {
     return this.contaminationCheckService.checkContamination(config);
+  }
+
+  // ========== 实验追踪 API ==========
+
+  // 创建实验
+  @Post('experiments')
+  async createExperiment(@Body() input: CreateExperimentInput) {
+    return this.experimentService.createExperiment(input);
+  }
+
+  // 获取实验列表
+  @Get('experiments')
+  async listExperiments(
+    @Query('status') status?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.experimentService.listExperiments({
+      status,
+      limit: limit ? parseInt(limit) : 50,
+    });
+  }
+
+  // 获取实验详情
+  @Get('experiments/:id')
+  async getExperiment(@Param('id') id: string) {
+    return this.experimentService.getExperiment(id);
+  }
+
+  // 记录实验运行
+  @Post('experiments/:id/runs')
+  async recordExperimentRun(
+    @Param('id') id: string,
+    @Body() data: { input: any; output: any; metrics: Record<string, number>; duration: number; status: 'completed' | 'failed' },
+  ) {
+    return this.experimentService.recordRun(id, data);
+  }
+
+  // 对比实验
+  @Post('experiments/compare')
+  async compareExperiments(@Body() body: { experimentIds: string[] }) {
+    return this.experimentService.compareExperiments(body.experimentIds);
+  }
+
+  // ========== 质量门禁 API ==========
+
+  // 检查质量门禁
+  @Post('quality-gate/check')
+  async checkQualityGate(
+    @Body() body: { report: EvalReport; gateName?: string },
+  ) {
+    return this.qualityGateService.checkQualityGate(body.report, body.gateName);
+  }
+
+  // 获取质量门禁配置
+  @Get('quality-gate/config')
+  async getQualityGateConfig() {
+    return this.qualityGateService.getQualityGates();
+  }
+
+  // ========== 用户反馈 API ==========
+
+  // 提交反馈
+  @Post('feedback')
+  async submitFeedback(@Body() input: SubmitFeedbackInput) {
+    return this.feedbackService.submitFeedback(input);
+  }
+
+  // 获取反馈列表
+  @Get('feedback')
+  async listFeedback(
+    @Query('traceId') traceId?: string,
+    @Query('sessionId') sessionId?: string,
+    @Query('type') type?: FeedbackType,
+  ) {
+    return this.feedbackService.listFeedback({ traceId, sessionId, type });
+  }
+
+  // 获取反馈统计
+  @Get('feedback/stats')
+  async getFeedbackStats(@Query('sessionId') sessionId?: string) {
+    return this.feedbackService.getFeedbackStats({ sessionId });
+  }
+
+  // 点赞
+  @Post('feedback/thumbs-up')
+  async thumbsUp(@Body() body: { traceId: string; userId?: string }) {
+    return this.feedbackService.thumbsUp(body.traceId, body.userId);
+  }
+
+  // 点踩
+  @Post('feedback/thumbs-down')
+  async thumbsDown(@Body() body: { traceId: string; userId?: string; reason?: string }) {
+    return this.feedbackService.thumbsDown(body.traceId, body.userId, body.reason);
+  }
+
+  // 评分
+  @Post('feedback/rate')
+  async rate(@Body() body: { traceId: string; rating: number; userId?: string }) {
+    return this.feedbackService.rate(body.traceId, body.rating, body.userId);
   }
 }

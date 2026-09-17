@@ -2,8 +2,10 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { BullModule } from '@nestjs/bull';
 import { ScheduleModule } from '@nestjs/schedule';
+import * as Redis from 'ioredis-mock';
 
 import { PrismaModule } from './common/prisma/prisma.module';
+import { SkillModule } from './modules/skill/skill.module';
 import { AgentModule } from './modules/agent/agent.module';
 import { DatasetModule } from './modules/dataset/dataset.module';
 import { ExecutorModule } from './modules/executor/executor.module';
@@ -25,18 +27,16 @@ import { PipelineModule } from './modules/pipeline/pipeline.module';
     // 定时任务
     ScheduleModule.forRoot(),
 
-    // 任务队列
+    // 任务队列（使用内存 Redis mock，无需外部 Redis 服务）
     BullModule.forRoot({
-      redis: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379'),
-      },
+      createClient: () => new (Redis as any)(),
     }),
 
     // 公共模块
     PrismaModule,
 
     // 业务模块
+    SkillModule,
     AgentModule,
     DatasetModule,
     ExecutorModule,

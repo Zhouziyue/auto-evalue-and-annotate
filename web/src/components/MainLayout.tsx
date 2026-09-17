@@ -3,6 +3,7 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Layout, Menu } from 'antd';
 import {
   DashboardOutlined,
+  AppstoreOutlined,
   RobotOutlined,
   DatabaseOutlined,
   PlayCircleOutlined,
@@ -15,6 +16,7 @@ const { Sider, Content, Header } = Layout;
 
 const menuItems = [
   { key: '/dashboard', icon: <DashboardOutlined />, label: '看板' },
+  { key: '/skills', icon: <AppstoreOutlined />, label: '技能管理' },
   { key: '/agents', icon: <RobotOutlined />, label: '智能体管理' },
   { key: '/datasets', icon: <DatabaseOutlined />, label: '评测数据集' },
   { key: '/eval-runs', icon: <PlayCircleOutlined />, label: '评测执行' },

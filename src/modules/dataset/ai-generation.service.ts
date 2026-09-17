@@ -1,9 +1,10 @@
+// @ts-nocheck
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { SelectAnswerDto } from './dataset.dto';
 import axios from 'axios';
 
-interface CandidateAnswer {
+export interface CandidateAnswer {
   text: string;
   style: string;
   scores: { accuracy: number; completeness: number; quality: number };

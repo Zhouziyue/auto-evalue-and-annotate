@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './components/MainLayout';
 import Dashboard from './pages/Dashboard';
+import Skills from './pages/Skills';
 import Agents from './pages/Agents';
 import Datasets from './pages/Datasets';
 import EvalRuns from './pages/EvalRuns';
@@ -14,6 +15,7 @@ function App() {
       <Route path="/" element={<MainLayout />}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
+        <Route path="skills" element={<Skills />} />
         <Route path="agents" element={<Agents />} />
         <Route path="datasets" element={<Datasets />} />
         <Route path="eval-runs" element={<EvalRuns />} />

@@ -151,10 +151,11 @@ ${JSON.stringify(Object.fromEntries(dims.map((d) => [d.name, 0.8])))}
 
     try {
       const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
+      const model = process.env.OPENAI_MODEL || 'gpt-4';
       const response = await axios.post(
         `${baseUrl}/chat/completions`,
         {
-          model: 'gpt-4',
+          model: model,
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.1,
         },

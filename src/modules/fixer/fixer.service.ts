@@ -42,9 +42,10 @@ export class FixerService {
       const apiKey = process.env.OPENAI_API_KEY;
       if (apiKey) {
         const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
+        const model = process.env.OPENAI_MODEL || 'gpt-4';
         const response = await axios.post(
           `${baseUrl}/chat/completions`,
-          { model: 'gpt-4', messages: [{ role: 'user', content: prompt }], temperature: 0.3 },
+          { model: model, messages: [{ role: 'user', content: prompt }], temperature: 0.3 },
           { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` }, timeout: 30000 },
         );
         const content = response.data.choices[0]?.message?.content || '{}';

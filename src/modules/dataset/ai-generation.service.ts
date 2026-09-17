@@ -140,6 +140,7 @@ export class AiGenerationService {
   private async callLLM(prompt: string): Promise<string> {
     const apiKey = process.env.OPENAI_API_KEY;
     const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
+    const model = process.env.OPENAI_MODEL || 'gpt-4';
 
     if (!apiKey) {
       // 模拟返回（开发环境）
@@ -155,7 +156,7 @@ export class AiGenerationService {
     const response = await axios.post(
       `${baseUrl}/chat/completions`,
       {
-        model: 'gpt-4',
+        model: model,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.8,
       },

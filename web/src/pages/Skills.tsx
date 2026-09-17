@@ -1,243 +1,249 @@
-import { useState, useEffect } from 'react';
-import { Table, Button, Card, Modal, Form, Input, Space, Tag, message, Popconfirm, Row, Col, Statistic } from 'antd';
-import { PlusOutlined, AppstoreOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
-import axios from 'axios';
+import { useState, useEffect } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
+import { Plus, Edit, Trash2, Eye } from 'lucide-react'
+import axios from 'axios'
 
 interface Skill {
-  id: string;
-  name: string;
-  description: string | null;
-  version: string;
-  createdAt: string;
-  updatedAt: string;
+  id: string
+  name: string
+  description: string | null
+  version: string
+  createdAt: string
+  updatedAt: string
   _count?: {
-    endpoints: number;
-    evalRuns: number;
-    skillVersions: number;
-  };
+    endpoints: number
+    evalRuns: number
+    skillVersions: number
+  }
 }
 
 interface SkillDetail extends Skill {
-  endpoints: any[];
-  evalRuns: any[];
-  skillVersions: any[];
+  endpoints: any[]
+  evalRuns: any[]
+  skillVersions: any[]
 }
 
 export default function Skills() {
-  const [skills, setSkills] = useState<Skill[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [detailModalOpen, setDetailModalOpen] = useState(false);
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [currentSkill, setCurrentSkill] = useState<SkillDetail | null>(null);
-  const [form] = Form.useForm();
-  const [editForm] = Form.useForm();
+  const [skills, setSkills] = useState<Skill[]>([])
+  const [loading, setLoading] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
+  const [detailOpen, setDetailOpen] = useState(false)
+  const [currentSkill, setCurrentSkill] = useState<SkillDetail | null>(null)
+  const [formData, setFormData] = useState({ name: '', description: '', version: '1.0.0' })
 
   const fetchSkills = async () => {
-    setLoading(true);
+    setLoading(true)
     try {
-      const res = await axios.get('/api/skills');
-      setSkills(res.data);
+      const res = await axios.get('/api/skills')
+      setSkills(res.data)
     } catch (e) {
-      console.error(e);
+      console.error(e)
     }
-    setLoading(false);
-  };
+    setLoading(false)
+  }
 
-  useEffect(() => { fetchSkills(); }, []);
+  useEffect(() => { fetchSkills() }, [])
 
-  const handleCreate = async (values: any) => {
+  const handleCreate = async () => {
     try {
-      await axios.post('/api/skills', values);
-      message.success('创建成功');
-      setModalOpen(false);
-      form.resetFields();
-      fetchSkills();
+      await axios.post('/api/skills', formData)
+      setCreateOpen(false)
+      setFormData({ name: '', description: '', version: '1.0.0' })
+      fetchSkills()
     } catch (e: any) {
-      message.error(e?.response?.data?.message || '创建失败');
+      alert(e?.response?.data?.message || '创建失败')
     }
-  };
+  }
 
-  const handleEdit = async (values: any) => {
-    if (!currentSkill) return;
+  const handleEdit = async () => {
+    if (!currentSkill) return
     try {
-      await axios.put(`/api/skills/${currentSkill.id}`, values);
-      message.success('更新成功');
-      setEditModalOpen(false);
-      editForm.resetFields();
-      fetchSkills();
+      await axios.put(`/api/skills/${currentSkill.id}`, formData)
+      setEditOpen(false)
+      fetchSkills()
     } catch (e: any) {
-      message.error(e?.response?.data?.message || '更新失败');
+      alert(e?.response?.data?.message || '更新失败')
     }
-  };
+  }
 
   const handleDelete = async (id: string) => {
+    if (!confirm('确定删除吗？')) return
     try {
-      await axios.delete(`/api/skills/${id}`);
-      message.success('删除成功');
-      fetchSkills();
-    } catch (e: any) {
-      message.error('删除失败');
+      await axios.delete(`/api/skills/${id}`)
+      fetchSkills()
+    } catch (e) {
+      alert('删除失败')
     }
-  };
+  }
 
   const handleViewDetail = async (id: string) => {
     try {
-      const res = await axios.get(`/api/skills/${id}`);
-      setCurrentSkill(res.data);
-      setDetailModalOpen(true);
-    } catch (e: any) {
-      message.error('获取详情失败');
+      const res = await axios.get(`/api/skills/${id}`)
+      setCurrentSkill(res.data)
+      setDetailOpen(true)
+    } catch (e) {
+      alert('获取详情失败')
     }
-  };
+  }
 
-  const openEditModal = (skill: Skill) => {
-    setCurrentSkill(skill as SkillDetail);
-    editForm.setFieldsValue({
-      name: skill.name,
-      description: skill.description,
-      version: skill.version,
-    });
-    setEditModalOpen(true);
-  };
-
-  const columns = [
-    { title: '技能名称', dataIndex: 'name', key: 'name' },
-    { title: '描述', dataIndex: 'description', key: 'description', ellipsis: true },
-    { 
-      title: '版本', dataIndex: 'version', key: 'version',
-      render: (v: string) => <Tag color="blue">{v}</Tag>
-    },
-    {
-      title: '接入点', key: 'endpoints',
-      render: (_: any, record: Skill) => record._count?.endpoints || 0
-    },
-    {
-      title: '评测次数', key: 'evalRuns',
-      render: (_: any, record: Skill) => record._count?.evalRuns || 0
-    },
-    {
-      title: '更新时间', dataIndex: 'updatedAt', key: 'updatedAt',
-      render: (v: string) => new Date(v).toLocaleString()
-    },
-    {
-      title: '操作', key: 'action',
-      render: (_: any, record: Skill) => (
-        <Space>
-          <Button size="small" icon={<EyeOutlined />} onClick={() => handleViewDetail(record.id)}>详情</Button>
-          <Button size="small" icon={<EditOutlined />} onClick={() => openEditModal(record)}>编辑</Button>
-          <Popconfirm title="确定删除吗？" onConfirm={() => handleDelete(record.id)}>
-            <Button size="small" danger icon={<DeleteOutlined />}>删除</Button>
-          </Popconfirm>
-        </Space>
-      )
-    }
-  ];
+  const openEdit = (skill: Skill) => {
+    setCurrentSkill(skill as SkillDetail)
+    setFormData({ name: skill.name, description: skill.description || '', version: skill.version })
+    setEditOpen(true)
+  }
 
   return (
-    <div>
-      <Card
-        title={<><AppstoreOutlined /> 技能管理</>}
-        extra={<Button type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>新建技能</Button>}
-      >
-        <Table columns={columns} dataSource={skills} rowKey="id" loading={loading} />
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>技能管理</CardTitle>
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> 新建技能
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>技能名称</TableHead>
+                <TableHead>描述</TableHead>
+                <TableHead>版本</TableHead>
+                <TableHead className="text-center">接入点</TableHead>
+                <TableHead className="text-center">评测次数</TableHead>
+                <TableHead>更新时间</TableHead>
+                <TableHead className="text-right">操作</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">加载中...</TableCell></TableRow>
+              ) : skills.length === 0 ? (
+                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">暂无数据</TableCell></TableRow>
+              ) : (
+                skills.map((skill) => (
+                  <TableRow key={skill.id}>
+                    <TableCell className="font-medium">{skill.name}</TableCell>
+                    <TableCell className="max-w-[200px] truncate text-muted-foreground">{skill.description || '-'}</TableCell>
+                    <TableCell><Badge variant="secondary">{skill.version}</Badge></TableCell>
+                    <TableCell className="text-center">{skill._count?.endpoints || 0}</TableCell>
+                    <TableCell className="text-center">{skill._count?.evalRuns || 0}</TableCell>
+                    <TableCell className="text-muted-foreground">{new Date(skill.updatedAt).toLocaleString()}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => handleViewDetail(skill.id)}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => openEdit(skill)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(skill.id)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
       </Card>
 
-      {/* 新建技能弹窗 */}
-      <Modal title="新建技能" open={modalOpen} onCancel={() => setModalOpen(false)} onOk={() => form.submit()} destroyOnClose>
-        <Form form={form} layout="vertical" onFinish={handleCreate}>
-          <Form.Item name="name" label="技能名称" rules={[{ required: true, message: '请输入技能名称' }]}>
-            <Input placeholder="如: 客服问答技能" />
-          </Form.Item>
-          <Form.Item name="description" label="描述">
-            <Input.TextArea placeholder="技能描述..." rows={3} />
-          </Form.Item>
-          <Form.Item name="version" label="版本号" initialValue="1.0.0">
-            <Input placeholder="1.0.0" />
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      {/* 编辑技能弹窗 */}
-      <Modal title="编辑技能" open={editModalOpen} onCancel={() => setEditModalOpen(false)} onOk={() => editForm.submit()} destroyOnClose>
-        <Form form={editForm} layout="vertical" onFinish={handleEdit}>
-          <Form.Item name="name" label="技能名称" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="description" label="描述">
-            <Input.TextArea rows={3} />
-          </Form.Item>
-          <Form.Item name="version" label="版本号">
-            <Input />
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      {/* 详情弹窗 */}
-      <Modal 
-        title={`技能详情 - ${currentSkill?.name || ''}`} 
-        open={detailModalOpen} 
-        onCancel={() => setDetailModalOpen(false)} 
-        footer={null}
-        width={720}
-      >
-        {currentSkill && (
-          <div>
-            <Row gutter={16} style={{ marginBottom: 24 }}>
-              <Col span={8}>
-                <Statistic title="接入点数量" value={currentSkill.endpoints?.length || 0} />
-              </Col>
-              <Col span={8}>
-                <Statistic title="评测次数" value={currentSkill.evalRuns?.length || 0} />
-              </Col>
-              <Col span={8}>
-                <Statistic title="版本数" value={currentSkill.skillVersions?.length || 0} />
-              </Col>
-            </Row>
-
-            <h4>基本信息</h4>
-            <p><strong>名称：</strong>{currentSkill.name}</p>
-            <p><strong>描述：</strong>{currentSkill.description || '无'}</p>
-            <p><strong>当前版本：</strong><Tag color="blue">{currentSkill.version}</Tag></p>
-            <p><strong>创建时间：</strong>{new Date(currentSkill.createdAt).toLocaleString()}</p>
-
-            {currentSkill.endpoints && currentSkill.endpoints.length > 0 && (
-              <>
-                <h4 style={{ marginTop: 16 }}>接入点列表</h4>
-                <Table
-                  size="small"
-                  dataSource={currentSkill.endpoints}
-                  rowKey="id"
-                  pagination={false}
-                  columns={[
-                    { title: '名称', dataIndex: 'name' },
-                    { title: '地址', dataIndex: 'url', ellipsis: true },
-                    { title: '认证', dataIndex: 'authType' },
-                  ]}
-                />
-              </>
-            )}
-
-            {currentSkill.evalRuns && currentSkill.evalRuns.length > 0 && (
-              <>
-                <h4 style={{ marginTop: 16 }}>最近评测</h4>
-                <Table
-                  size="small"
-                  dataSource={currentSkill.evalRuns}
-                  rowKey="id"
-                  pagination={false}
-                  columns={[
-                    { title: '状态', dataIndex: 'status', render: (v: string) => <Tag color={v === 'completed' ? 'green' : v === 'running' ? 'blue' : 'default'}>{v}</Tag> },
-                    { title: '通过', dataIndex: 'passedCases' },
-                    { title: '失败', dataIndex: 'failedCases' },
-                    { title: '时间', dataIndex: 'createdAt', render: (v: string) => new Date(v).toLocaleString() },
-                  ]}
-                />
-              </>
-            )}
+      {/* Create Dialog */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>新建技能</DialogTitle>
+            <DialogDescription>创建一个新的评测技能</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">技能名称</label>
+              <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="如: 客服问答技能" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">描述</label>
+              <Input value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="技能描述" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">版本号</label>
+              <Input value={formData.version} onChange={(e) => setFormData({ ...formData, version: e.target.value })} />
+            </div>
           </div>
-        )}
-      </Modal>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>取消</Button>
+            <Button onClick={handleCreate}>创建</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>编辑技能</DialogTitle>
+            <DialogDescription>修改技能信息</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">技能名称</label>
+              <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">描述</label>
+              <Input value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">版本号</label>
+              <Input value={formData.version} onChange={(e) => setFormData({ ...formData, version: e.target.value })} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)}>取消</Button>
+            <Button onClick={handleEdit}>保存</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Detail Dialog */}
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>技能详情 - {currentSkill?.name}</DialogTitle>
+            <DialogDescription>查看技能详细信息</DialogDescription>
+          </DialogHeader>
+          {currentSkill && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="rounded-lg border p-4 text-center">
+                  <div className="text-2xl font-bold">{currentSkill.endpoints?.length || 0}</div>
+                  <div className="text-sm text-muted-foreground">接入点</div>
+                </div>
+                <div className="rounded-lg border p-4 text-center">
+                  <div className="text-2xl font-bold">{currentSkill.evalRuns?.length || 0}</div>
+                  <div className="text-sm text-muted-foreground">评测次数</div>
+                </div>
+                <div className="rounded-lg border p-4 text-center">
+                  <div className="text-2xl font-bold">{currentSkill.skillVersions?.length || 0}</div>
+                  <div className="text-sm text-muted-foreground">版本数</div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div><span className="font-medium">名称：</span>{currentSkill.name}</div>
+                <div><span className="font-medium">描述：</span>{currentSkill.description || '无'}</div>
+                <div><span className="font-medium">版本：</span><Badge variant="secondary">{currentSkill.version}</Badge></div>
+                <div><span className="font-medium">创建时间：</span>{new Date(currentSkill.createdAt).toLocaleString()}</div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
-  );
+  )
 }

@@ -1,109 +1,82 @@
-import { useState, useEffect } from 'react';
-import { Table, Button, Card, Tag, Space, Progress, Select, message } from 'antd';
-import { PlayCircleOutlined, ExperimentOutlined } from '@ant-design/icons';
-import axios from 'axios';
-
-interface EvalRunItem {
-  id: string;
-  skillId: string;
-  endpointId: string;
-  status: string;
-  totalCases: number;
-  passedCases: number;
-  failedCases: number;
-  createdAt: string;
-}
+import { useState, useEffect } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { PlayCircle } from 'lucide-react'
+import axios from 'axios'
 
 export default function EvalRuns() {
-  const [evalRuns, setEvalRuns] = useState<EvalRunItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [agents, setAgents] = useState<any[]>([]);
-  const [datasets, setDatasets] = useState<any[]>([]);
-  const [selectedAgent, setSelectedAgent] = useState<string>('');
-  const [selectedDataset, setSelectedDataset] = useState<string>('');
+  const [runs, setRuns] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const [runsRes, agentsRes, datasetsRes] = await Promise.all([
-        axios.get('/api/eval-runs'),
-        axios.get('/api/agents'),
-        axios.get('/api/datasets'),
-      ]);
-      setEvalRuns(runsRes.data);
-      setAgents(agentsRes.data);
-      setDatasets(datasetsRes.data);
-    } catch (e) {
-      console.error(e);
+  useEffect(() => {
+    const fetch = async () => {
+      setLoading(true)
+      try {
+        const res = await axios.get('/api/eval-runs')
+        setRuns(res.data)
+      } catch (e) { console.error(e) }
+      setLoading(false)
     }
-    setLoading(false);
-  };
+    fetch()
+  }, [])
 
-  useEffect(() => { fetchData(); }, []);
-
-  const handleStartEval = async () => {
-    if (!selectedAgent) { message.warning('请选择智能体'); return; }
-    try {
-      await axios.post('/api/eval-runs', {
-        skillId: selectedAgent,
-        endpointId: selectedAgent,
-        datasetId: selectedDataset || undefined,
-      });
-      message.success('评测已启动');
-      fetchData();
-    } catch (e: any) {
-      message.error('启动失败');
+  const statusColor = (s: string) => {
+    switch (s) {
+      case 'completed': return 'bg-green-100 text-green-700'
+      case 'running': return 'bg-blue-100 text-blue-700'
+      case 'failed': return 'bg-red-100 text-red-700'
+      default: return 'bg-gray-100 text-gray-700'
     }
-  };
-
-  const statusColor: Record<string, string> = {
-    pending: 'default', running: 'processing', completed: 'success', failed: 'error'
-  };
-
-  const columns = [
-    { title: 'ID', dataIndex: 'id', key: 'id', width: 100, ellipsis: true },
-    {
-      title: '状态', dataIndex: 'status', key: 'status',
-      render: (v: string) => <Tag color={statusColor[v] || 'default'}>{v}</Tag>
-    },
-    {
-      title: '进度', key: 'progress',
-      render: (_: any, r: EvalRunItem) => {
-        const total = r.totalCases || 1;
-        const done = r.passedCases + r.failedCases;
-        return <Progress percent={Math.round((done / total) * 100)} size="small" />;
-      }
-    },
-    { title: '总用例', dataIndex: 'totalCases', key: 'totalCases' },
-    { title: '通过', dataIndex: 'passedCases', key: 'passedCases', render: (v: number) => <span style={{ color: '#52c41a' }}>{v}</span> },
-    { title: '失败', dataIndex: 'failedCases', key: 'failedCases', render: (v: number) => <span style={{ color: '#ff4d4f' }}>{v}</span> },
-    { title: '创建时间', dataIndex: 'createdAt', key: 'createdAt', render: (v: string) => new Date(v).toLocaleDateString() },
-    {
-      title: '操作', key: 'action',
-      render: (_: any, record: EvalRunItem) => (
-        <Space>
-          <Button size="small">详情</Button>
-        </Space>
-      )
-    }
-  ];
+  }
 
   return (
-    <div>
-      <Card
-        title={<><ExperimentOutlined /> 评测执行</>}
-        extra={
-          <Space>
-            <Select placeholder="选择智能体" style={{ width: 160 }} value={selectedAgent || undefined} onChange={setSelectedAgent}
-              options={agents.map(a => ({ value: a.id, label: a.name }))} />
-            <Select placeholder="选择数据集(可选)" style={{ width: 180 }} value={selectedDataset || undefined} onChange={setSelectedDataset} allowClear
-              options={datasets.map(d => ({ value: d.id, label: d.name }))} />
-            <Button type="primary" icon={<PlayCircleOutlined />} onClick={handleStartEval}>开始评测</Button>
-          </Space>
-        }
-      >
-        <Table columns={columns} dataSource={evalRuns} rowKey="id" loading={loading} />
-      </Card>
-    </div>
-  );
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2"><PlayCircle className="h-5 w-5" /> 评测执行记录</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>状态</TableHead>
+              <TableHead>总用例</TableHead>
+              <TableHead>通过</TableHead>
+              <TableHead>失败</TableHead>
+              <TableHead>通过率</TableHead>
+              <TableHead>开始时间</TableHead>
+              <TableHead>结束时间</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">加载中...</TableCell></TableRow>
+            ) : runs.length === 0 ? (
+              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">暂无评测记录</TableCell></TableRow>
+            ) : (
+              runs.map((run) => (
+                <TableRow key={run.id}>
+                  <TableCell>
+                    <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${statusColor(run.status)}`}>
+                      {run.status}
+                    </span>
+                  </TableCell>
+                  <TableCell>{run.totalCases}</TableCell>
+                  <TableCell className="text-green-600">{run.passedCases}</TableCell>
+                  <TableCell className="text-red-600">{run.failedCases}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">
+                      {run.totalCases > 0 ? `${((run.passedCases / run.totalCases) * 100).toFixed(1)}%` : '-'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{run.startTime ? new Date(run.startTime).toLocaleString() : '-'}</TableCell>
+                  <TableCell className="text-muted-foreground">{run.endTime ? new Date(run.endTime).toLocaleString() : '-'}</TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  )
 }

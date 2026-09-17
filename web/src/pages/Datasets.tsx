@@ -1,112 +1,117 @@
-import { useState, useEffect } from 'react';
-import { Table, Button, Card, Modal, Form, Input, Upload, Space, Tag, message, Tabs } from 'antd';
-import { PlusOutlined, DatabaseOutlined, UploadOutlined, ThunderboltOutlined } from '@ant-design/icons';
-import axios from 'axios';
+import { useState, useEffect } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
+import { Plus, Database } from 'lucide-react'
+import axios from 'axios'
 
 interface Dataset {
-  id: string;
-  name: string;
-  description?: string;
-  category?: string;
-  testCases?: any[];
-  createdAt: string;
+  id: string
+  name: string
+  description: string | null
+  category: string | null
+  _count?: { testCases: number }
+  createdAt: string
 }
 
 export default function Datasets() {
-  const [datasets, setDatasets] = useState<Dataset[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [genModalOpen, setGenModalOpen] = useState(false);
-  const [currentDataset, setCurrentDataset] = useState<Dataset | null>(null);
-  const [form] = Form.useForm();
-  const [genForm] = Form.useForm();
+  const [datasets, setDatasets] = useState<Dataset[]>([])
+  const [loading, setLoading] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [formData, setFormData] = useState({ name: '', description: '', category: '' })
 
   const fetchDatasets = async () => {
-    setLoading(true);
+    setLoading(true)
     try {
-      const res = await axios.get('/api/datasets');
-      setDatasets(res.data);
-    } catch (e) {
-      console.error(e);
-    }
-    setLoading(false);
-  };
+      const res = await axios.get('/api/datasets')
+      setDatasets(res.data)
+    } catch (e) { console.error(e) }
+    setLoading(false)
+  }
 
-  useEffect(() => { fetchDatasets(); }, []);
+  useEffect(() => { fetchDatasets() }, [])
 
-  const handleCreate = async (values: any) => {
+  const handleCreate = async () => {
     try {
-      await axios.post('/api/datasets', values);
-      message.success('创建成功');
-      setModalOpen(false);
-      form.resetFields();
-      fetchDatasets();
+      await axios.post('/api/datasets', formData)
+      setModalOpen(false)
+      setFormData({ name: '', description: '', category: '' })
+      fetchDatasets()
     } catch (e: any) {
-      message.error('创建失败');
+      alert(e?.response?.data?.message || '创建失败')
     }
-  };
-
-  const handleGenerate = async (values: any) => {
-    try {
-      const res = await axios.post('/api/datasets/generate', {
-        datasetId: currentDataset?.id,
-        input: values.input,
-        count: 3,
-      });
-      message.success('AI生成完成！请查看候选答案');
-      setGenModalOpen(false);
-      genForm.resetFields();
-    } catch (e: any) {
-      message.error('生成失败');
-    }
-  };
-
-  const columns = [
-    { title: '名称', dataIndex: 'name', key: 'name' },
-    { title: '分类', dataIndex: 'category', key: 'category', render: (v: string) => v ? <Tag>{v}</Tag> : '-' },
-    { title: '用例数', key: 'count', render: (_: any, r: Dataset) => r.testCases?.length || 0 },
-    { title: '创建时间', dataIndex: 'createdAt', key: 'createdAt', render: (v: string) => new Date(v).toLocaleDateString() },
-    {
-      title: '操作', key: 'action',
-      render: (_: any, record: Dataset) => (
-        <Space>
-          <Button size="small" icon={<ThunderboltOutlined />} onClick={() => { setCurrentDataset(record); setGenModalOpen(true); }}>AI生成</Button>
-          <Button size="small">详情</Button>
-        </Space>
-      )
-    }
-  ];
+  }
 
   return (
-    <div>
-      <Card
-        title={<><DatabaseOutlined /> 评测数据集</>}
-        extra={<Button type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>新建数据集</Button>}
-      >
-        <Table columns={columns} dataSource={datasets} rowKey="id" loading={loading} />
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2"><Database className="h-5 w-5" /> 评测数据集</CardTitle>
+          <Button onClick={() => setModalOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> 新建数据集
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>名称</TableHead>
+                <TableHead>描述</TableHead>
+                <TableHead>分类</TableHead>
+                <TableHead className="text-center">用例数</TableHead>
+                <TableHead>创建时间</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">加载中...</TableCell></TableRow>
+              ) : datasets.length === 0 ? (
+                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">暂无数据</TableCell></TableRow>
+              ) : (
+                datasets.map((ds) => (
+                  <TableRow key={ds.id}>
+                    <TableCell className="font-medium">{ds.name}</TableCell>
+                    <TableCell className="max-w-[200px] truncate text-muted-foreground">{ds.description || '-'}</TableCell>
+                    <TableCell>{ds.category ? <Badge variant="outline">{ds.category}</Badge> : '-'}</TableCell>
+                    <TableCell className="text-center">{ds._count?.testCases || 0}</TableCell>
+                    <TableCell className="text-muted-foreground">{new Date(ds.createdAt).toLocaleString()}</TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
       </Card>
 
-      <Modal title="新建数据集" open={modalOpen} onCancel={() => setModalOpen(false)} onOk={() => form.submit()} destroyOnClose>
-        <Form form={form} layout="vertical" onFinish={handleCreate}>
-          <Form.Item name="name" label="名称" rules={[{ required: true }]}>
-            <Input placeholder="如: 客服对话评测集" />
-          </Form.Item>
-          <Form.Item name="description" label="描述">
-            <Input.TextArea rows={3} />
-          </Form.Item>
-          <Form.Item name="category" label="分类">
-            <Input placeholder="如: 对话、推理、代码" />
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      <Modal title="AI 生成评测用例" open={genModalOpen} onCancel={() => setGenModalOpen(false)} onOk={() => genForm.submit()} destroyOnClose>
-        <Form form={genForm} layout="vertical" onFinish={handleGenerate}>
-          <Form.Item name="input" label="输入问题/Prompt" rules={[{ required: true }]}>
-            <Input.TextArea rows={3} placeholder="输入一个问题，AI将生成3个候选标准答案" />
-          </Form.Item>
-        </Form>
-      </Modal>
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>新建数据集</DialogTitle>
+            <DialogDescription>创建评测数据集</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">名称</label>
+              <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="如: 客服问答测试集" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">描述</label>
+              <Input value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">分类</label>
+              <Input value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} placeholder="如: 客服" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setModalOpen(false)}>取消</Button>
+            <Button onClick={handleCreate}>创建</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
-  );
+  )
 }

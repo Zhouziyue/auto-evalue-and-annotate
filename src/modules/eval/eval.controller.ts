@@ -8,6 +8,9 @@ import { YamlImportService } from './yaml-import.service';
 import { RAGMetricsService, RAGEvalInput } from './rag-metrics.service';
 import { ConversationalMetricsService, ConversationEvalInput } from './conversational-metrics.service';
 import { LeaderboardService, LeaderboardConfig } from './leaderboard.service';
+import { ObservabilityService } from './observability.service';
+import { CapabilityEvalService } from './capability-eval.service';
+import { ContaminationCheckService, ContaminationCheckConfig } from './contamination-check.service';
 
 @Controller('api/eval')
 export class EvalController {
@@ -20,6 +23,9 @@ export class EvalController {
     private ragMetricsService: RAGMetricsService,
     private conversationalMetricsService: ConversationalMetricsService,
     private leaderboardService: LeaderboardService,
+    private observabilityService: ObservabilityService,
+    private capabilityEvalService: CapabilityEvalService,
+    private contaminationCheckService: ContaminationCheckService,
   ) {}
 
   // ========== 评测指标 API ==========
@@ -283,5 +289,69 @@ export class EvalController {
   @Get('leaderboard/trend/:modelId')
   async getTrend(@Param('modelId') modelId: string, @Query('days') days?: string) {
     return this.leaderboardService.getTrend(modelId, days ? parseInt(days) : 30);
+  }
+
+  // ========== 可观测性 API ==========
+
+  // 记录 LLM 调用
+  @Post('observability/record')
+  async recordLLMCall(@Body() data: {
+    model: string;
+    provider?: string;
+    latency: number;
+    promptTokens: number;
+    completionTokens: number;
+    temperature?: number;
+    maxTokens?: number;
+    status: 'success' | 'error';
+    errorMessage?: string;
+    traceId?: string;
+    sessionId?: string;
+    userId?: string;
+    tags?: string[];
+  }) {
+    return this.observabilityService.recordLLMCall(data);
+  }
+
+  // 获取可观测性统计
+  @Get('observability/stats')
+  async getObservabilityStats(
+    @Query('hours') hours?: string,
+    @Query('model') model?: string,
+  ) {
+    return this.observabilityService.getStats({
+      hours: hours ? parseInt(hours) : 24,
+      model,
+    });
+  }
+
+  // 获取调用记录
+  @Get('observability/records')
+  async getLLMRecords(
+    @Query('hours') hours?: string,
+    @Query('model') model?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.observabilityService.getRecords({
+      since: hours ? new Date(Date.now() - parseInt(hours) * 60 * 60 * 1000) : undefined,
+      model,
+      limit: limit ? parseInt(limit) : 100,
+    });
+  }
+
+  // ========== 多维度能力评估 API ==========
+
+  // 运行能力评测
+  @Post('capability/run')
+  async runCapabilityEval(@Body() body: { modelName?: string }) {
+    return this.capabilityEvalService.runCapabilityEval(body.modelName);
+  }
+
+  // ========== 数据污染检测 API ==========
+
+  // 运行污染检测
+  @Post('contamination/check')
+  async checkContamination(@Body() config: ContaminationCheckConfig) {
+    return this.contaminationCheckService.checkContamination(config);
   }
 }

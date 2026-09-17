@@ -11,6 +11,7 @@ import {
   BarChart3,
   GitBranch,
   Trophy,
+  Activity,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
@@ -25,6 +26,7 @@ const menuItems = [
   { key: '/reports', icon: BarChart3, label: '评测报告' },
   { key: '/pipelines', icon: GitBranch, label: '流水线' },
   { key: '/leaderboard', icon: Trophy, label: '排行榜' },
+  { key: '/observability', icon: Activity, label: '可观测性' },
 ]
 
 function MainLayout() {

@@ -8,6 +8,9 @@ import { YamlImportService } from './yaml-import.service';
 import { RAGMetricsService } from './rag-metrics.service';
 import { ConversationalMetricsService } from './conversational-metrics.service';
 import { LeaderboardService } from './leaderboard.service';
+import { ObservabilityService } from './observability.service';
+import { CapabilityEvalService } from './capability-eval.service';
+import { ContaminationCheckService } from './contamination-check.service';
 import { EvalController } from './eval.controller';
 
 @Module({
@@ -22,6 +25,9 @@ import { EvalController } from './eval.controller';
     RAGMetricsService,
     ConversationalMetricsService,
     LeaderboardService,
+    ObservabilityService,
+    CapabilityEvalService,
+    ContaminationCheckService,
   ],
   exports: [
     EvalService,
@@ -33,6 +39,9 @@ import { EvalController } from './eval.controller';
     RAGMetricsService,
     ConversationalMetricsService,
     LeaderboardService,
+    ObservabilityService,
+    CapabilityEvalService,
+    ContaminationCheckService,
   ],
 })
 export class EvalModule {}

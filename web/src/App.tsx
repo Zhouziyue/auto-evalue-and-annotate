@@ -9,6 +9,7 @@ import Annotations from './pages/Annotations';
 import Reports from './pages/Reports';
 import Pipelines from './pages/Pipelines';
 import Leaderboard from './pages/Leaderboard';
+import Observability from './pages/Observability';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route path="reports" element={<Reports />} />
         <Route path="pipelines" element={<Pipelines />} />
         <Route path="leaderboard" element={<Leaderboard />} />
+        <Route path="observability" element={<Observability />} />
       </Route>
     </Routes>
   );

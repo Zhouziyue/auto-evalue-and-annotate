@@ -35,6 +35,9 @@ import { WorkflowEngineService, WorkflowNodeType } from './workflow-engine.servi
 import { DataLineageService, LineageNodeType } from './data-lineage.service';
 import { ModelComparisonService, ComparisonMode, ComparisonDimension } from './model-comparison.service';
 import { AlertRuleService, AlertSeverity, AlertStatus, AlertOperator } from './alert-rule.service';
+import { PermissionService, Role, ResourceType, Permission } from './permission.service';
+import { DatasetSamplingService, SamplingStrategy } from './dataset-sampling.service';
+import { VisualizationService, ChartType } from './visualization.service';
 
 @Controller('api/eval')
 export class EvalController {
@@ -74,6 +77,9 @@ export class EvalController {
     private dataLineageService: DataLineageService,
     private modelComparisonService: ModelComparisonService,
     private alertRuleService: AlertRuleService,
+    private permissionService: PermissionService,
+    private datasetSamplingService: DatasetSamplingService,
+    private visualizationService: VisualizationService,
   ) {}
 
   // ========== 评测指标 API ==========
@@ -1727,5 +1733,137 @@ export class EvalController {
   @Get('alerts/templates')
   async getAlertTemplates() {
     return this.alertRuleService.getBuiltinTemplates();
+  }
+
+  // ==================== 权限控制 ====================
+
+  // 创建用户
+  @Post('permissions/users')
+  async createUser(@Body() body: any) {
+    return this.permissionService.createUser(body);
+  }
+
+  // 获取用户列表
+  @Get('permissions/users')
+  async listUsers(@Query('role') role?: Role) {
+    return this.permissionService.listUsers(role);
+  }
+
+  // 更新角色
+  @Post('permissions/users/:id/role')
+  async updateUserRole(@Param('id') id: string, @Body() body: { role: Role }) {
+    return this.permissionService.updateRole(id, body.role);
+  }
+
+  // 检查权限
+  @Post('permissions/check')
+  async checkPermission(@Body() body: { userId: string; resource: ResourceType; permission: Permission }) {
+    return this.permissionService.checkPermission(body.userId, body.resource, body.permission);
+  }
+
+  // 创建 API Key
+  @Post('permissions/api-keys')
+  async createApiKey(@Body() body: any) {
+    return this.permissionService.createApiKey(body);
+  }
+
+  // 获取 API Key 列表
+  @Get('permissions/api-keys')
+  async listApiKeys(@Query('userId') userId: string) {
+    return this.permissionService.listApiKeys(userId);
+  }
+
+  // 撤销 API Key
+  @Post('permissions/api-keys/:id/revoke')
+  async revokeApiKey(@Param('id') id: string) {
+    return this.permissionService.revokeApiKey(id);
+  }
+
+  // 获取角色权限
+  @Get('permissions/roles/:role')
+  async getRolePermissions(@Param('role') role: Role) {
+    return this.permissionService.getRolePermissions(role);
+  }
+
+  // 获取所有角色
+  @Get('permissions/roles')
+  async getRoles() {
+    return this.permissionService.getRoles();
+  }
+
+  // 审计日志
+  @Get('permissions/audit-logs')
+  async getAuditLogs(@Query('userId') userId?: string, @Query('limit') limit?: number) {
+    return this.permissionService.getAuditLogs({ userId, limit: limit ? +limit : undefined });
+  }
+
+  // ==================== 数据集采样 ====================
+
+  // 执行采样
+  @Post('sampling/sample')
+  async sampleDataset(@Body() body: any) {
+    return this.datasetSamplingService.sample(body);
+  }
+
+  // 获取采样结果
+  @Get('sampling/results/:id')
+  async getSamplingResult(@Param('id') id: string) {
+    return this.datasetSamplingService.getResult(id);
+  }
+
+  // 获取采样记录
+  @Get('sampling/results')
+  async listSamplingResults() {
+    return this.datasetSamplingService.listResults();
+  }
+
+  // 获取可用策略
+  @Get('sampling/strategies')
+  async getSamplingStrategies() {
+    return this.datasetSamplingService.getStrategies();
+  }
+
+  // ==================== 可视化数据 ====================
+
+  // 获取评测概览
+  @Get('visualization/overview')
+  async getOverviewData() {
+    return this.visualizationService.getOverviewData();
+  }
+
+  // 生成仪表盘
+  @Post('visualization/dashboards')
+  async generateDashboard(@Body() body: { name: string; timeRange?: any }) {
+    return this.visualizationService.generateDashboard(body.name, body);
+  }
+
+  // 获取仪表盘
+  @Get('visualization/dashboards/:id')
+  async getDashboard(@Param('id') id: string) {
+    return this.visualizationService.getDashboard(id);
+  }
+
+  // 获取仪表盘列表
+  @Get('visualization/dashboards')
+  async listDashboards() {
+    return this.visualizationService.listDashboards();
+  }
+
+  // 删除仪表盘
+  @Post('visualization/dashboards/:id/delete')
+  async deleteDashboard(@Param('id') id: string) {
+    return this.visualizationService.deleteDashboard(id);
+  }
+
+  // 模型对比图表
+  @Post('visualization/comparison-chart')
+  async getComparisonChart(@Body() body: { modelIds: string[]; metrics: string[] }) {
+    return this.visualizationService.getComparisonChartData(body.modelIds, body.metrics);
+  }
+
+  // 指标分布图
+  @Get('visualization/distribution/:metric')
+  async getDistributionChart(@Param('metric') metric: string, @Query('model') model?: string) {
+    return this.visualizationService.getDistributionChartData(metric, model);
   }
 }

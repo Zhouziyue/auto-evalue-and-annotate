@@ -35,6 +35,9 @@ import { WorkflowEngineService } from './workflow-engine.service';
 import { DataLineageService } from './data-lineage.service';
 import { ModelComparisonService } from './model-comparison.service';
 import { AlertRuleService } from './alert-rule.service';
+import { PermissionService } from './permission.service';
+import { DatasetSamplingService } from './dataset-sampling.service';
+import { VisualizationService } from './visualization.service';
 import { EvalController } from './eval.controller';
 
 @Module({
@@ -76,6 +79,9 @@ import { EvalController } from './eval.controller';
     DataLineageService,
     ModelComparisonService,
     AlertRuleService,
+    PermissionService,
+    DatasetSamplingService,
+    VisualizationService,
   ],
   exports: [
     EvalService,
@@ -114,6 +120,9 @@ import { EvalController } from './eval.controller';
     DataLineageService,
     ModelComparisonService,
     AlertRuleService,
+    PermissionService,
+    DatasetSamplingService,
+    VisualizationService,
   ],
 })
 export class EvalModule {}

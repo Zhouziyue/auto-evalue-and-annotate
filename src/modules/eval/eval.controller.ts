@@ -38,6 +38,9 @@ import { AlertRuleService, AlertSeverity, AlertStatus, AlertOperator } from './a
 import { PermissionService, Role, ResourceType, Permission } from './permission.service';
 import { DatasetSamplingService, SamplingStrategy } from './dataset-sampling.service';
 import { VisualizationService, ChartType } from './visualization.service';
+import { EvalConfigService, ConfigType } from './config.service';
+import { ResultSearchService } from './result-search.service';
+import { MultiTenantService, TenantPlan, TenantStatus } from './multi-tenant.service';
 
 @Controller('api/eval')
 export class EvalController {
@@ -80,6 +83,9 @@ export class EvalController {
     private permissionService: PermissionService,
     private datasetSamplingService: DatasetSamplingService,
     private visualizationService: VisualizationService,
+    private evalConfigService: EvalConfigService,
+    private resultSearchService: ResultSearchService,
+    private multiTenantService: MultiTenantService,
   ) {}
 
   // ========== 评测指标 API ==========
@@ -1865,5 +1871,170 @@ export class EvalController {
   @Get('visualization/distribution/:metric')
   async getDistributionChart(@Param('metric') metric: string, @Query('model') model?: string) {
     return this.visualizationService.getDistributionChartData(metric, model);
+  }
+
+  // ==================== 配置管理 ====================
+
+  // 获取配置
+  @Get('config/:key')
+  async getConfig(@Param('key') key: string, @Query('scopeId') scopeId?: string) {
+    return this.evalConfigService.get(key, scopeId);
+  }
+
+  // 设置配置
+  @Post('config')
+  async setConfig(@Body() body: any) {
+    return this.evalConfigService.set(body);
+  }
+
+  // 批量获取
+  @Post('config/batch-get')
+  async getManyConfigs(@Body() body: { keys: string[]; scopeId?: string }) {
+    return this.evalConfigService.getMany(body.keys, body.scopeId);
+  }
+
+  // 获取配置列表
+  @Get('config')
+  async listConfigs(@Query('type') type?: ConfigType) {
+    return this.evalConfigService.list(type);
+  }
+
+  // 删除配置
+  @Post('config/:id/delete')
+  async deleteConfig(@Param('id') id: string) {
+    return this.evalConfigService.delete(id);
+  }
+
+  // 变更历史
+  @Get('config/changes')
+  async getConfigChanges(@Query('configId') configId?: string) {
+    return this.evalConfigService.getChangeHistory(configId);
+  }
+
+  // 回滚
+  @Post('config/:id/rollback')
+  async rollbackConfig(@Param('id') id: string, @Body() body: { userId: string }) {
+    return this.evalConfigService.rollback(id, body.userId);
+  }
+
+  // 默认配置
+  @Get('config/defaults/list')
+  async getDefaultConfigs() {
+    return this.evalConfigService.getDefaults();
+  }
+
+  // 导出配置
+  @Get('config/export')
+  async exportConfigs(@Query('scopeId') scopeId?: string) {
+    return this.evalConfigService.exportConfig(scopeId);
+  }
+
+  // 导入配置
+  @Post('config/import')
+  async importConfigs(@Body() body: { json: string; userId: string }) {
+    return this.evalConfigService.importConfig(body.json, body.userId);
+  }
+
+  // ==================== 结果搜索 ====================
+
+  // 搜索
+  @Get('search')
+  async searchResults(
+    @Query('q') q: string,
+    @Query('page') page?: number,
+    @Query('pageSize') pageSize?: number,
+    @Query('sortBy') sortBy?: 'relevance' | 'date' | 'score',
+  ) {
+    return this.resultSearchService.search(q || '', {
+      page: page ? +page : undefined,
+      pageSize: pageSize ? +pageSize : undefined,
+      sortBy,
+    });
+  }
+
+  // 高级搜索
+  @Post('search/advanced')
+  async advancedSearch(@Body() body: { query: string }) {
+    return this.resultSearchService.advancedSearch(body.query);
+  }
+
+  // 重建索引
+  @Post('search/reindex')
+  async reindex() {
+    return this.resultSearchService.reindex();
+  }
+
+  // 搜索统计
+  @Get('search/stats')
+  async getSearchStats() {
+    return this.resultSearchService.getSearchStats();
+  }
+
+  // ==================== 多租户 ====================
+
+  // 创建租户
+  @Post('tenants')
+  async createTenant(@Body() body: any) {
+    return this.multiTenantService.createTenant(body);
+  }
+
+  // 获取租户
+  @Get('tenants/:id')
+  async getTenant(@Param('id') id: string) {
+    return this.multiTenantService.getTenant(id);
+  }
+
+  // 获取租户列表
+  @Get('tenants')
+  async listTenants(@Query('status') status?: TenantStatus) {
+    return this.multiTenantService.listTenants(status);
+  }
+
+  // 更新设置
+  @Post('tenants/:id/settings')
+  async updateTenantSettings(@Param('id') id: string, @Body() body: any) {
+    return this.multiTenantService.updateSettings(id, body);
+  }
+
+  // 升级计划
+  @Post('tenants/:id/upgrade')
+  async upgradeTenantPlan(@Param('id') id: string, @Body() body: { plan: TenantPlan }) {
+    return this.multiTenantService.upgradePlan(id, body.plan);
+  }
+
+  // 检查配额
+  @Get('tenants/:id/quota/:resource')
+  async checkQuota(@Param('id') id: string, @Param('resource') resource: string) {
+    return this.multiTenantService.checkQuota(id, resource as any);
+  }
+
+  // 使用统计
+  @Get('tenants/:id/usage')
+  async getUsageStats(@Param('id') id: string) {
+    return this.multiTenantService.getUsageStats(id);
+  }
+
+  // 添加成员
+  @Post('tenants/:id/members')
+  async addMember(@Param('id') id: string, @Body() body: any) {
+    return this.multiTenantService.addMember(id, body);
+  }
+
+  // 获取成员
+  @Get('tenants/:id/members')
+  async listMembers(@Param('id') id: string) {
+    return this.multiTenantService.listMembers(id);
+  }
+
+  // 移除成员
+  @Post('tenants/:id/members/:userId/remove')
+  async removeMember(@Param('id') id: string, @Param('userId') userId: string) {
+    return this.multiTenantService.removeMember(id, userId);
+  }
+
+  // 获取计划列表
+  @Get('tenants/plans/list')
+  async getPlans() {
+    return this.multiTenantService.getPlans();
   }
 }

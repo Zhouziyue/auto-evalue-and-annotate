@@ -38,6 +38,9 @@ import { AlertRuleService } from './alert-rule.service';
 import { PermissionService } from './permission.service';
 import { DatasetSamplingService } from './dataset-sampling.service';
 import { VisualizationService } from './visualization.service';
+import { EvalConfigService } from './config.service';
+import { ResultSearchService } from './result-search.service';
+import { MultiTenantService } from './multi-tenant.service';
 import { EvalController } from './eval.controller';
 
 @Module({
@@ -82,6 +85,9 @@ import { EvalController } from './eval.controller';
     PermissionService,
     DatasetSamplingService,
     VisualizationService,
+    EvalConfigService,
+    ResultSearchService,
+    MultiTenantService,
   ],
   exports: [
     EvalService,
@@ -123,6 +129,9 @@ import { EvalController } from './eval.controller';
     PermissionService,
     DatasetSamplingService,
     VisualizationService,
+    EvalConfigService,
+    ResultSearchService,
+    MultiTenantService,
   ],
 })
 export class EvalModule {}

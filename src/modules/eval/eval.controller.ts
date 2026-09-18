@@ -59,6 +59,33 @@ import { ResultExplanationService, ExplanationType } from './result-explanation.
 import { AnnotationAssistanceService, AnnotationType } from './annotation-assistance.service';
 import { ModelDistillationService, DistillationStrategy } from './model-distillation.service';
 import { FederatedEvalService, FederatedType, AggregationStrategy } from './federated-eval.service';
+import { ModelRegistryService, ModelProvider } from './model-registry.service';
+import { ComparisonAnalysisService } from './comparison-analysis.service';
+import { DataTransformService, TransformType } from './data-transform.service';
+import { EvalSandboxService } from './eval-sandbox.service';
+import { FinetuneEvalService } from './finetune-eval.service';
+import { KnowledgeBaseEvalService } from './knowledge-base-eval.service';
+import { CustomMetricService } from './custom-metric.service';
+import { ResultAggregationService } from './result-aggregation.service';
+import { TaskTemplateService } from './task-template.service';
+import { ModelVersionService, DataPipelineService, ResultSubscriptionService } from './v1.26-services';
+import {
+  MetricRegressionService, DataValidationService, ResultShardingService,
+  PerformanceAnalysisService, TaskDependencyService, ResultIndexService,
+  DataDeduplicationService, InferenceOptimizationService, ResultArchivalService,
+  TaskRetryService, ValidationRuleService, ResultMergeService,
+  TaskBatchService, DataMigrationService, CanaryReleaseService,
+  ResultVisualizationService, TaskSchedulerService, DataSyncService,
+  EvalBenchmarkService, ResultComparisonService, DataBackupService,
+  AdvancedOrchestrationService, AdvancedTransformService, ModelRoutingService,
+  AdvancedAggregationService, TaskMonitoringService, AdvancedCleaningService,
+  AdvancedModelEvalService, AdvancedExportService, AdvancedQueueService,
+  AdvancedAnnotationService, AdvancedReportService, AdvancedComparisonService,
+  AdvancedSubscriptionService, AdvancedPriorityService, AdvancedShardingService,
+  AdvancedCacheService, AdvancedRetryService, AdvancedRegistryService,
+  AdvancedIndexService, AdvancedValidationService, AdvancedTemplateService,
+  AdvancedPipelineService, AdvancedDependencyService, AdvancedArchiveService
+} from './batch-services';
 
 @Controller('api/eval')
 export class EvalController {
@@ -122,6 +149,63 @@ export class EvalController {
     private annotationAssistanceService: AnnotationAssistanceService,
     private modelDistillationService: ModelDistillationService,
     private federatedEvalService: FederatedEvalService,
+    private modelRegistryService: ModelRegistryService,
+    private comparisonAnalysisService: ComparisonAnalysisService,
+    private dataTransformService: DataTransformService,
+    private evalSandboxService: EvalSandboxService,
+    private finetuneEvalService: FinetuneEvalService,
+    private knowledgeBaseEvalService: KnowledgeBaseEvalService,
+    private customMetricService: CustomMetricService,
+    private resultAggregationService: ResultAggregationService,
+    private taskTemplateService: TaskTemplateService,
+    private modelVersionService: ModelVersionService,
+    private dataPipelineService: DataPipelineService,
+    private resultSubscriptionService: ResultSubscriptionService,
+    private metricRegressionService: MetricRegressionService,
+    private dataValidationService: DataValidationService,
+    private resultShardingService: ResultShardingService,
+    private performanceAnalysisService: PerformanceAnalysisService,
+    private taskDependencyService: TaskDependencyService,
+    private resultIndexService: ResultIndexService,
+    private dataDeduplicationService: DataDeduplicationService,
+    private inferenceOptimizationService: InferenceOptimizationService,
+    private resultArchivalService: ResultArchivalService,
+    private taskRetryService: TaskRetryService,
+    private validationRuleService: ValidationRuleService,
+    private resultMergeService: ResultMergeService,
+    private taskBatchService: TaskBatchService,
+    private dataMigrationService: DataMigrationService,
+    private canaryReleaseService: CanaryReleaseService,
+    private resultVisualizationService: ResultVisualizationService,
+    private taskSchedulerService: TaskSchedulerService,
+    private dataSyncService: DataSyncService,
+    private evalBenchmarkService: EvalBenchmarkService,
+    private resultComparisonService: ResultComparisonService,
+    private dataBackupService: DataBackupService,
+    private advancedOrchestrationService: AdvancedOrchestrationService,
+    private advancedTransformService: AdvancedTransformService,
+    private modelRoutingService: ModelRoutingService,
+    private advancedAggregationService: AdvancedAggregationService,
+    private taskMonitoringService: TaskMonitoringService,
+    private advancedCleaningService: AdvancedCleaningService,
+    private advancedModelEvalService: AdvancedModelEvalService,
+    private advancedExportService: AdvancedExportService,
+    private advancedQueueService: AdvancedQueueService,
+    private advancedAnnotationService: AdvancedAnnotationService,
+    private advancedReportService: AdvancedReportService,
+    private advancedComparisonService: AdvancedComparisonService,
+    private advancedSubscriptionService: AdvancedSubscriptionService,
+    private advancedPriorityService: AdvancedPriorityService,
+    private advancedShardingService: AdvancedShardingService,
+    private advancedCacheService: AdvancedCacheService,
+    private advancedRetryService: AdvancedRetryService,
+    private advancedRegistryService: AdvancedRegistryService,
+    private advancedIndexService: AdvancedIndexService,
+    private advancedValidationService: AdvancedValidationService,
+    private advancedTemplateService: AdvancedTemplateService,
+    private advancedPipelineService: AdvancedPipelineService,
+    private advancedDependencyService: AdvancedDependencyService,
+    private advancedArchiveService: AdvancedArchiveService,
   ) {}
 
   // ========== 评测指标 API ==========
@@ -3084,4 +3168,151 @@ export class EvalController {
   async getFederatedStats() {
     return this.federatedEvalService.getFederatedStats();
   }
+
+  // ==================== v1.23 API ====================
+
+  @Post('model-registry/register')
+  async registerModel(@Body() body: any) { return this.modelRegistryService.register(body); }
+
+  @Get('model-registry/models')
+  async listModels(@Query('provider') provider?: ModelProvider) { return this.modelRegistryService.list(provider); }
+
+  @Get('model-registry/models/:id')
+  async getModel(@Param('id') id: string) { return this.modelRegistryService.get(id); }
+
+  @Post('model-registry/models/:id/update')
+  async updateModel(@Param('id') id: string, @Body() body: any) { return this.modelRegistryService.update(id, body); }
+
+  @Post('model-registry/models/:id/deactivate')
+  async deactivateModel(@Param('id') id: string) { return this.modelRegistryService.deactivate(id); }
+
+  @Post('model-registry/models/:id/delete')
+  async deleteModel(@Param('id') id: string) { return this.modelRegistryService.delete(id); }
+
+  @Post('model-registry/compare')
+  async compareModels(@Body() body: { modelIds: string[] }) { return this.modelRegistryService.compare(body.modelIds); }
+
+  @Get('model-registry/providers')
+  async getProviders() { return this.modelRegistryService.getProviders(); }
+
+  @Post('comparison/create')
+  async createComparison(@Body() body: any) { return this.comparisonAnalysisService.create(body); }
+
+  @Get('comparison/list')
+  async listComparisons() { return this.comparisonAnalysisService.list(); }
+
+  @Get('comparison/:id')
+  async getComparison(@Param('id') id: string) { return this.comparisonAnalysisService.get(id); }
+
+  @Post('comparison/:id/delete')
+  async deleteComparison(@Param('id') id: string) { return this.comparisonAnalysisService.delete(id); }
+
+  @Get('comparison/:id/ranking')
+  async getComparisonRanking(@Param('id') id: string) { return this.comparisonAnalysisService.getRanking(id); }
+
+  @Post('transform/create')
+  async createTransformTask(@Body() body: any) { return this.dataTransformService.createTask(body); }
+
+  @Post('transform/:id/execute')
+  async executeTransform(@Param('id') id: string, @Body() body: { inputData: any[] }) { return this.dataTransformService.execute(id, body.inputData); }
+
+  @Get('transform/list')
+  async listTransformTasks() { return this.dataTransformService.list(); }
+
+  @Get('transform/:id')
+  async getTransformTask(@Param('id') id: string) { return this.dataTransformService.get(id); }
+
+  @Post('transform/:id/delete')
+  async deleteTransformTask(@Param('id') id: string) { return this.dataTransformService.delete(id); }
+
+  @Get('transform/types')
+  async getTransformTypes() { return this.dataTransformService.getTransformTypes(); }
+
+  // ==================== v1.24-v1.42 API ====================
+
+  // Sandbox
+  @Post('sandbox/create') async createSandbox(@Body() body: any) { return this.evalSandboxService.createSandbox(body); }
+  @Post('sandbox/:id/execute') async executeSandbox(@Param('id') id: string, @Body() body: any) { return this.evalSandboxService.execute(id, body); }
+  @Get('sandbox/list') async listSandboxes() { return this.evalSandboxService.listSandboxes(); }
+
+  // Finetune
+  @Post('finetune/evaluate') async evaluateFinetune(@Body() body: any) { return this.finetuneEvalService.evaluate(body); }
+  @Get('finetune/list') async listFinetune(@Query('modelId') modelId?: string) { return this.finetuneEvalService.list(modelId); }
+
+  // Knowledge Base
+  @Post('kb/evaluate') async evaluateKB(@Body() body: any) { return this.knowledgeBaseEvalService.evaluate(body); }
+  @Get('kb/list') async listKB(@Query('kbId') kbId?: string) { return this.knowledgeBaseEvalService.list(kbId); }
+
+  // Custom Metric
+  @Post('custom-metric/create') async createCustomMetric(@Body() body: any) { return this.customMetricService.create(body); }
+  @Get('custom-metric/list') async listCustomMetrics() { return this.customMetricService.list(); }
+  @Post('custom-metric/:id/calculate') async calculateCustomMetric(@Param('id') id: string, @Body() body: any) { return this.customMetricService.calculate(id, body); }
+
+  // Result Aggregation
+  @Post('result-agg/create') async createResultAgg(@Body() body: any) { return this.resultAggregationService.create(body); }
+  @Get('result-agg/list') async listResultAgg() { return this.resultAggregationService.list(); }
+
+  // Task Template
+  @Post('task-template/create') async createTaskTemplate(@Body() body: any) { return this.taskTemplateService.create(body); }
+  @Get('task-template/list') async listTaskTemplates() { return this.taskTemplateService.list(); }
+  @Post('task-template/:id/instantiate') async instantiateTemplate(@Param('id') id: string, @Body() body: any) { return this.taskTemplateService.instantiate(id, body); }
+
+  // Model Version
+  @Post('model-version/create') async createModelVersion(@Body() body: any) { return this.modelVersionService.create(body); }
+  @Get('model-version/list/:modelId') async listModelVersions(@Param('modelId') modelId: string) { return this.modelVersionService.list(modelId); }
+
+  // Data Pipeline
+  @Post('data-pipeline/create') async createDataPipeline(@Body() body: any) { return this.dataPipelineService.create(body); }
+  @Post('data-pipeline/:id/execute') async executeDataPipeline(@Param('id') id: string) { return this.dataPipelineService.execute(id); }
+
+  // Result Subscription
+  @Post('result-sub/create') async createResultSub(@Body() body: any) { return this.resultSubscriptionService.create(body); }
+  @Get('result-sub/list') async listResultSubs() { return this.resultSubscriptionService.list(); }
+
+  // Batch Services (v1.27-v1.42)
+  @Post('metric-regression/detect') async detectMetricRegression(@Body() body: any) { return this.metricRegressionService.detect(body); }
+  @Post('data-validation/validate') async validateData(@Body() body: any) { return this.dataValidationService.validate(body.data, body.rules); }
+  @Post('result-sharding/shard') async shardResults(@Body() body: any) { return this.resultShardingService.shard(body.data, body.shardCount); }
+  @Post('performance/analyze') async analyzePerformance(@Body() body: any) { return this.performanceAnalysisService.analyze(body); }
+  @Post('task-dependency/add') async addTaskDependency(@Body() body: any) { return this.taskDependencyService.addDependency(body.taskId, body.dependsOn); }
+  @Post('result-index/index') async indexResult(@Body() body: any) { return this.resultIndexService.indexResult(body); }
+  @Post('data-dedup/deduplicate') async deduplicateData(@Body() body: any) { return this.dataDeduplicationService.deduplicate(body); }
+  @Post('inference-opt/optimize') async optimizeInference(@Body() body: any) { return this.inferenceOptimizationService.optimize(body.modelId, body.config); }
+  @Post('result-archive/archive') async archiveResult(@Body() body: any) { return this.resultArchivalService.archive(body); }
+  @Post('task-retry/should-retry') async shouldRetryTask(@Body() body: any) { return this.taskRetryService.shouldRetry(body.taskId, body.maxRetries); }
+  @Post('validation-rule/create') async createValidationRule(@Body() body: any) { return this.validationRuleService.create(body); }
+  @Post('result-merge/merge') async mergeResults(@Body() body: any) { return this.resultMergeService.merge(body); }
+  @Post('task-batch/create') async createTaskBatch(@Body() body: any) { return this.taskBatchService.createBatch(body); }
+  @Post('data-migration/migrate') async migrateData(@Body() body: any) { return this.dataMigrationService.migrate(body.source, body.target); }
+  @Post('canary-release/create') async createCanaryRelease(@Body() body: any) { return this.canaryReleaseService.createRelease(body); }
+  @Post('result-viz/chart') async generateChart(@Body() body: any) { return this.resultVisualizationService.generateChart(body.data, body.type); }
+  @Post('task-scheduler/schedule') async scheduleTask(@Body() body: any) { return this.taskSchedulerService.schedule(body.task, body.cron); }
+  @Post('data-sync/sync') async syncData(@Body() body: any) { return this.dataSyncService.sync(body.source, body.target); }
+  @Post('eval-benchmark/create') async createBenchmark(@Body() body: any) { return this.evalBenchmarkService.create(body); }
+  @Post('result-compare/compare') async compareResults(@Body() body: any) { return this.resultComparisonService.compare(body.resultA, body.resultB); }
+  @Post('data-backup/create') async createBackup(@Body() body: any) { return this.dataBackupService.createBackup(body); }
+  @Post('advanced-orchestration/create') async createAdvancedWorkflow(@Body() body: any) { return this.advancedOrchestrationService.createWorkflow(body); }
+  @Post('advanced-transform/transform') async advancedTransform(@Body() body: any) { return this.advancedTransformService.transform(body.data, body.rules); }
+  @Post('model-routing/add') async addModelRoute(@Body() body: any) { return this.modelRoutingService.addRoute(body.pattern, body.modelId); }
+  @Post('advanced-agg/aggregate') async advancedAggregate(@Body() body: any) { return this.advancedAggregationService.aggregate(body.data, body.strategy); }
+  @Post('task-monitor/monitor') async monitorTask(@Body() body: any) { return this.taskMonitoringService.monitor(body.taskId, body.config); }
+  @Post('advanced-clean/clean') async advancedClean(@Body() body: any) { return this.advancedCleaningService.clean(body.data, body.options); }
+  @Post('advanced-model-eval/evaluate') async advancedModelEval(@Body() body: any) { return this.advancedModelEvalService.evaluate(body.modelId, body.dataset); }
+  @Post('advanced-export/export') async advancedExport(@Body() body: any) { return this.advancedExportService.export(body.data, body.format); }
+  @Post('advanced-queue/enqueue') async advancedEnqueue(@Body() body: any) { return this.advancedQueueService.enqueue(body); }
+  @Post('advanced-annotation/annotate') async advancedAnnotate(@Body() body: any) { return this.advancedAnnotationService.annotate(body.data, body.labels); }
+  @Post('advanced-report/generate') async advancedGenerateReport(@Body() body: any) { return this.advancedReportService.generate(body); }
+  @Post('advanced-compare/compare') async advancedCompare(@Body() body: any) { return this.advancedComparisonService.compare(body); }
+  @Post('advanced-sub/subscribe') async advancedSubscribe(@Body() body: any) { return this.advancedSubscriptionService.subscribe(body.topic, body.callback); }
+  @Post('advanced-priority/enqueue') async advancedPriorityEnqueue(@Body() body: any) { return this.advancedPriorityService.enqueue(body.task, body.priority); }
+  @Post('advanced-shard/shard') async advancedShard(@Body() body: any) { return this.advancedShardingService.shard(body.data, body.count); }
+  @Post('advanced-cache/set') async advancedCacheSet(@Body() body: any) { return this.advancedCacheService.set(body.key, body.value, body.ttl); }
+  @Post('advanced-retry/should-retry') async advancedShouldRetry(@Body() body: any) { return this.advancedRetryService.shouldRetry(body.id, body.max); }
+  @Post('advanced-registry/register') async advancedRegister(@Body() body: any) { return this.advancedRegistryService.register(body); }
+  @Post('advanced-index/index') async advancedIndex(@Body() body: any) { return this.advancedIndexService.index(body); }
+  @Post('advanced-validation/validate') async advancedValidate(@Body() body: any) { return this.advancedValidationService.validate(body.data, body.schema); }
+  @Post('advanced-template/create') async advancedCreateTemplate(@Body() body: any) { return this.advancedTemplateService.create(body); }
+  @Post('advanced-pipeline/create') async advancedCreatePipeline(@Body() body: any) { return this.advancedPipelineService.create(body); }
+  @Post('advanced-dependency/add') async advancedAddDependency(@Body() body: any) { return this.advancedDependencyService.add(body.taskId, body.deps); }
+  @Post('advanced-archive/archive') async advancedArchive(@Body() body: any) { return this.advancedArchiveService.archive(body); }
 }

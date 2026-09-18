@@ -24,6 +24,8 @@ import { BenchmarkService } from './benchmark.service';
 import { EloRatingService } from './elo-rating.service';
 import { RegressionDetectionService } from './regression-detection.service';
 import { EvalSnapshotService } from './eval-snapshot.service';
+import { SemanticCacheService } from './semantic-cache.service';
+import { EvalTemplateService } from './eval-template.service';
 import { EvalController } from './eval.controller';
 
 @Module({
@@ -54,6 +56,8 @@ import { EvalController } from './eval.controller';
     EloRatingService,
     RegressionDetectionService,
     EvalSnapshotService,
+    SemanticCacheService,
+    EvalTemplateService,
   ],
   exports: [
     EvalService,
@@ -81,6 +85,8 @@ import { EvalController } from './eval.controller';
     EloRatingService,
     RegressionDetectionService,
     EvalSnapshotService,
+    SemanticCacheService,
+    EvalTemplateService,
   ],
 })
 export class EvalModule {}

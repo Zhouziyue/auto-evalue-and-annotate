@@ -24,6 +24,8 @@ import { BenchmarkService, BenchmarkType } from './benchmark.service';
 import { EloRatingService } from './elo-rating.service';
 import { RegressionDetectionService, RegressionType } from './regression-detection.service';
 import { EvalSnapshotService } from './eval-snapshot.service';
+import { SemanticCacheService } from './semantic-cache.service';
+import { EvalTemplateService, EvalTemplateCategory } from './eval-template.service';
 
 @Controller('api/eval')
 export class EvalController {
@@ -52,6 +54,8 @@ export class EvalController {
     private eloRatingService: EloRatingService,
     private regressionDetectionService: RegressionDetectionService,
     private evalSnapshotService: EvalSnapshotService,
+    private semanticCacheService: SemanticCacheService,
+    private evalTemplateService: EvalTemplateService,
   ) {}
 
   // ========== 评测指标 API ==========
@@ -972,5 +976,178 @@ export class EvalController {
   @Get('snapshots/tags')
   async getAllTags() {
     return this.evalSnapshotService.getAllTags();
+  }
+
+  // ========== 语义缓存 API ==========
+
+  // 查询缓存
+  @Get('cache/lookup')
+  async cacheLookup(@Query('query') query: string, @Query('model') model?: string) {
+    return this.semanticCacheService.lookup(query, model);
+  }
+
+  // 存储到缓存
+  @Post('cache/store')
+  async cacheStore(@Body() body: {
+    query: string;
+    response: string;
+    model?: string;
+    parameters?: Record<string, any>;
+    tags?: string[];
+    metadata?: Record<string, any>;
+    ttlSeconds?: number;
+  }) {
+    return this.semanticCacheService.store(body.query, body.response, {
+      model: body.model,
+      parameters: body.parameters,
+      tags: body.tags,
+      metadata: body.metadata,
+      ttlSeconds: body.ttlSeconds,
+    });
+  }
+
+  // 删除缓存条目
+  @Post('cache/:id/delete')
+  async cacheDelete(@Param('id') id: string) {
+    return this.semanticCacheService.delete(id);
+  }
+
+  // 按标签删除
+  @Post('cache/delete-by-tag')
+  async cacheDeleteByTag(@Body() body: { tag: string }) {
+    return this.semanticCacheService.deleteByTag(body.tag);
+  }
+
+  // 清空缓存
+  @Post('cache/clear')
+  async cacheClear() {
+    return this.semanticCacheService.clear();
+  }
+
+  // 获取缓存统计
+  @Get('cache/stats')
+  async cacheStats() {
+    return this.semanticCacheService.getStats();
+  }
+
+  // 获取缓存列表
+  @Get('cache/entries')
+  async cacheList(
+    @Query('model') model?: string,
+    @Query('tags') tags?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.semanticCacheService.list({
+      model,
+      tags: tags ? tags.split(',') : undefined,
+      limit: limit ? parseInt(limit) : undefined,
+    });
+  }
+
+  // 更新缓存配置
+  @Post('cache/config')
+  async cacheUpdateConfig(@Body() config: { maxEntries?: number; ttlSeconds?: number; similarityThreshold?: number; enabled?: boolean }) {
+    return this.semanticCacheService.updateConfig(config);
+  }
+
+  // 获取缓存配置
+  @Get('cache/config')
+  async cacheGetConfig() {
+    return this.semanticCacheService.getConfig();
+  }
+
+  // 预热缓存
+  @Post('cache/warmup')
+  async cacheWarmup(@Body() body: { entries: Array<{ query: string; response: string; model?: string; tags?: string[] }> }) {
+    return this.semanticCacheService.warmup(body.entries);
+  }
+
+  // 获取命中率趋势
+  @Get('cache/hit-rate-trend')
+  async cacheHitRateTrend(@Query('buckets') buckets?: string) {
+    return this.semanticCacheService.getHitRateTrend(buckets ? parseInt(buckets) : 24);
+  }
+
+  // ========== 评测模板 API ==========
+
+  // 获取模板列表
+  @Get('templates')
+  async listTemplates(
+    @Query('category') category?: EvalTemplateCategory,
+    @Query('tags') tags?: string,
+    @Query('includeBuiltIn') includeBuiltIn?: string,
+  ) {
+    return this.evalTemplateService.listTemplates({
+      category,
+      tags: tags ? tags.split(',') : undefined,
+      includeBuiltIn: includeBuiltIn !== 'false',
+    });
+  }
+
+  // 获取模板详情
+  @Get('templates/:id')
+  async getTemplate(@Param('id') id: string) {
+    return this.evalTemplateService.getTemplate(id);
+  }
+
+  // 创建自定义模板
+  @Post('templates')
+  async createTemplate(@Body() data: {
+    name: string;
+    description?: string;
+    category: EvalTemplateCategory;
+    config: any;
+    variables?: any[];
+    tags?: string[];
+  }) {
+    return this.evalTemplateService.createTemplate(data);
+  }
+
+  // 更新模板
+  @Post('templates/:id/update')
+  async updateTemplate(@Param('id') id: string, @Body() updates: any) {
+    return this.evalTemplateService.updateTemplate(id, updates);
+  }
+
+  // 删除模板
+  @Post('templates/:id/delete')
+  async deleteTemplate(@Param('id') id: string) {
+    return this.evalTemplateService.deleteTemplate(id);
+  }
+
+  // 实例化模板
+  @Post('templates/:id/instantiate')
+  async instantiateTemplate(
+    @Param('id') id: string,
+    @Body() body: { variables: Record<string, any> },
+  ) {
+    return this.evalTemplateService.instantiateTemplate(id, body.variables);
+  }
+
+  // 获取模板分类
+  @Get('templates/categories/list')
+  async getTemplateCategories() {
+    return this.evalTemplateService.getCategories();
+  }
+
+  // 复制模板
+  @Post('templates/:id/duplicate')
+  async duplicateTemplate(
+    @Param('id') id: string,
+    @Body() body?: { newName?: string },
+  ) {
+    return this.evalTemplateService.duplicateTemplate(id, body?.newName);
+  }
+
+  // 导出模板
+  @Get('templates/:id/export')
+  async exportTemplate(@Param('id') id: string) {
+    return this.evalTemplateService.exportTemplate(id);
+  }
+
+  // 导入模板
+  @Post('templates/import')
+  async importTemplate(@Body() template: any) {
+    return this.evalTemplateService.importTemplate(template);
   }
 }

@@ -44,6 +44,9 @@ import { MultiTenantService, TenantPlan, TenantStatus } from './multi-tenant.ser
 import { EvalCacheService } from './eval-cache.service';
 import { PromptVersionService } from './prompt-version.service';
 import { EvalReplayService } from './eval-replay.service';
+import { ExperimentTrackingService } from './experiment-tracking.service';
+import { DataAnonymizationService } from './data-anonymization.service';
+import { RateLimitingService } from './rate-limiting.service';
 
 @Controller('api/eval')
 export class EvalController {
@@ -92,6 +95,9 @@ export class EvalController {
     private evalCacheService: EvalCacheService,
     private promptVersionService: PromptVersionService,
     private evalReplayService: EvalReplayService,
+    private experimentTrackingService: ExperimentTrackingService,
+    private dataAnonymizationService: DataAnonymizationService,
+    private rateLimitingService: RateLimitingService,
   ) {}
 
   // ========== 评测指标 API ==========
@@ -2188,5 +2194,156 @@ export class EvalController {
   @Post('replay/:id/delete')
   async deleteReplay(@Param('id') id: string) {
     return this.evalReplayService.deleteTask(id);
+  }
+
+  // ==================== 实验追踪 ====================
+
+  @Post('experiments')
+  async createExperiment(@Body() body: any) {
+    return this.experimentTrackingService.createExperiment(body);
+  }
+
+  @Get('experiments')
+  async listExperiments() {
+    return this.experimentTrackingService.listExperiments();
+  }
+
+  @Get('experiments/:id')
+  async getExperiment(@Param('id') id: string) {
+    return this.experimentTrackingService.getExperiment(id);
+  }
+
+  @Post('experiments/:id/runs')
+  async startRun(@Param('id') id: string, @Body() body: any) {
+    return this.experimentTrackingService.startRun(id, body);
+  }
+
+  @Get('experiments/:id/runs')
+  async listRuns(@Param('id') id: string) {
+    return this.experimentTrackingService.listRuns(id);
+  }
+
+  @Get('experiments/runs/:runId')
+  async getRun(@Param('runId') runId: string) {
+    return this.experimentTrackingService.getRun(runId);
+  }
+
+  @Post('experiments/runs/:runId/metrics')
+  async logMetrics(@Param('runId') runId: string, @Body() body: Record<string, number>) {
+    return this.experimentTrackingService.logMetrics(runId, body);
+  }
+
+  @Post('experiments/runs/:runId/params')
+  async logParams(@Param('runId') runId: string, @Body() body: Record<string, any>) {
+    return this.experimentTrackingService.logParams(runId, body);
+  }
+
+  @Post('experiments/runs/:runId/end')
+  async endRun(@Param('runId') runId: string, @Body() body: any) {
+    return this.experimentTrackingService.endRun(runId, body.status);
+  }
+
+  @Post('experiments/compare')
+  async compareRuns(@Body() body: { runIds: string[] }) {
+    return this.experimentTrackingService.compareRuns(body.runIds);
+  }
+
+  @Post('experiments/search')
+  async searchRuns(@Body() body: any) {
+    return this.experimentTrackingService.searchRuns(body);
+  }
+
+  @Get('experiments/:id/best')
+  async getBestRun(@Param('id') id: string, @Query('metric') metric: string) {
+    return this.experimentTrackingService.getBestRun(id, metric);
+  }
+
+  @Post('experiments/:id/delete')
+  async deleteExperiment(@Param('id') id: string) {
+    return this.experimentTrackingService.deleteExperiment(id);
+  }
+
+  // ==================== 数据脱敏 ====================
+
+  @Post('anonymization/anonymize')
+  async anonymizeText(@Body() body: { text: string }) {
+    return this.dataAnonymizationService.anonymize(body.text);
+  }
+
+  @Post('anonymization/anonymize-batch')
+  async anonymizeBatch(@Body() body: { texts: string[] }) {
+    return this.dataAnonymizationService.anonymizeBatch(body.texts);
+  }
+
+  @Post('anonymization/anonymize-json')
+  async anonymizeJson(@Body() body: { data: any; fields?: string[] }) {
+    return this.dataAnonymizationService.anonymizeJson(body.data, body.fields);
+  }
+
+  @Post('anonymization/detect')
+  async detectSensitiveData(@Body() body: { text: string }) {
+    return this.dataAnonymizationService.detectSensitiveData(body.text);
+  }
+
+  @Get('anonymization/rules')
+  async getAnonymizationRules() {
+    return this.dataAnonymizationService.getRules();
+  }
+
+  @Post('anonymization/rules')
+  async addAnonymizationRule(@Body() body: any) {
+    return this.dataAnonymizationService.addRule(body);
+  }
+
+  @Post('anonymization/rules/:id/toggle')
+  async toggleAnonymizationRule(@Param('id') id: string, @Body() body: { enabled: boolean }) {
+    return this.dataAnonymizationService.toggleRule(id, body.enabled);
+  }
+
+  @Post('anonymization/rules/:id/delete')
+  async deleteAnonymizationRule(@Param('id') id: string) {
+    return this.dataAnonymizationService.deleteRule(id);
+  }
+
+  // ==================== API 限流 ====================
+
+  @Post('rate-limiting/check')
+  async checkRateLimit(@Body() body: { configId: string; key: string }) {
+    return this.rateLimitingService.check(body.configId, body.key);
+  }
+
+  @Get('rate-limiting/configs')
+  async listRateLimitConfigs() {
+    return this.rateLimitingService.listConfigs();
+  }
+
+  @Post('rate-limiting/configs')
+  async createRateLimitConfig(@Body() body: any) {
+    return this.rateLimitingService.createConfig(body);
+  }
+
+  @Post('rate-limiting/configs/:id')
+  async updateRateLimitConfig(@Param('id') id: string, @Body() body: any) {
+    return this.rateLimitingService.updateConfig(id, body);
+  }
+
+  @Post('rate-limiting/configs/:id/delete')
+  async deleteRateLimitConfig(@Param('id') id: string) {
+    return this.rateLimitingService.deleteConfig(id);
+  }
+
+  @Get('rate-limiting/stats')
+  async getRateLimitStats() {
+    return this.rateLimitingService.getStats();
+  }
+
+  @Get('rate-limiting/blocklist')
+  async getRateLimitBlocklist() {
+    return this.rateLimitingService.getBlocklist();
+  }
+
+  @Post('rate-limiting/reset')
+  async resetRateLimitCounters(@Body() body: { configId?: string }) {
+    return this.rateLimitingService.resetCounters(body.configId);
   }
 }

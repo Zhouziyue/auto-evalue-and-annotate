@@ -44,6 +44,9 @@ import { MultiTenantService } from './multi-tenant.service';
 import { EvalCacheService } from './eval-cache.service';
 import { PromptVersionService } from './prompt-version.service';
 import { EvalReplayService } from './eval-replay.service';
+import { ExperimentTrackingService } from './experiment-tracking.service';
+import { DataAnonymizationService } from './data-anonymization.service';
+import { RateLimitingService } from './rate-limiting.service';
 import { EvalController } from './eval.controller';
 
 @Module({
@@ -94,6 +97,9 @@ import { EvalController } from './eval.controller';
     EvalCacheService,
     PromptVersionService,
     EvalReplayService,
+    ExperimentTrackingService,
+    DataAnonymizationService,
+    RateLimitingService,
   ],
   exports: [
     EvalService,
@@ -141,6 +147,9 @@ import { EvalController } from './eval.controller';
     EvalCacheService,
     PromptVersionService,
     EvalReplayService,
+    ExperimentTrackingService,
+    DataAnonymizationService,
+    RateLimitingService,
   ],
 })
 export class EvalModule {}

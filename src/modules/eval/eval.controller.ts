@@ -56,6 +56,9 @@ import { ScenarioManagementService, ScenarioType } from './scenario-management.s
 import { DataQualityService, QualityDimension, QualityCheckType } from './data-quality.service';
 import { TaskOrchestrationService, TaskStatus, TaskType } from './task-orchestration.service';
 import { ResultExplanationService, ExplanationType } from './result-explanation.service';
+import { AnnotationAssistanceService, AnnotationType } from './annotation-assistance.service';
+import { ModelDistillationService, DistillationStrategy } from './model-distillation.service';
+import { FederatedEvalService, FederatedType, AggregationStrategy } from './federated-eval.service';
 
 @Controller('api/eval')
 export class EvalController {
@@ -116,6 +119,9 @@ export class EvalController {
     private dataQualityService: DataQualityService,
     private taskOrchestrationService: TaskOrchestrationService,
     private resultExplanationService: ResultExplanationService,
+    private annotationAssistanceService: AnnotationAssistanceService,
+    private modelDistillationService: ModelDistillationService,
+    private federatedEvalService: FederatedEvalService,
   ) {}
 
   // ========== 评测指标 API ==========
@@ -2853,5 +2859,229 @@ export class EvalController {
   @Post('result-explanation/compare')
   async compareExplanations(@Body() body: { explanationIds: string[] }) {
     return this.resultExplanationService.compareExplanations(body.explanationIds);
+  }
+
+  // ==================== 标注辅助 API ====================
+
+  @Post('annotation/tasks')
+  async createAnnotationTask(@Body() body: any) {
+    return this.annotationAssistanceService.createTask(body);
+  }
+
+  @Get('annotation/tasks')
+  async listAnnotationTasks(
+    @Query('type') type?: AnnotationType,
+    @Query('status') status?: string,
+  ) {
+    return this.annotationAssistanceService.listTasks(type, status);
+  }
+
+  @Get('annotation/tasks/:id')
+  async getAnnotationTask(@Param('id') id: string) {
+    return this.annotationAssistanceService.getTask(id);
+  }
+
+  @Post('annotation/tasks/:id/pre-annotate')
+  async generatePreAnnotations(@Param('id') id: string) {
+    return this.annotationAssistanceService.generatePreAnnotations(id);
+  }
+
+  @Post('annotation/tasks/:id/submit')
+  async submitAnnotation(
+    @Param('id') id: string,
+    @Body() body: { itemId: string; annotation: any },
+  ) {
+    return this.annotationAssistanceService.submitAnnotation(id, body.itemId, body.annotation);
+  }
+
+  @Post('annotation/tasks/:id/review')
+  async reviewAnnotation(
+    @Param('id') id: string,
+    @Body() body: { itemId: string; approved: boolean },
+  ) {
+    return this.annotationAssistanceService.reviewAnnotation(id, body.itemId, body.approved);
+  }
+
+  @Get('annotation/tasks/:id/pending')
+  async getPendingItems(
+    @Param('id') id: string,
+    @Query('limit') limit?: number,
+  ) {
+    return this.annotationAssistanceService.getPendingItems(id, limit ? +limit : 10);
+  }
+
+  @Get('annotation/tasks/:id/annotated')
+  async getAnnotatedItems(
+    @Param('id') id: string,
+    @Query('limit') limit?: number,
+  ) {
+    return this.annotationAssistanceService.getAnnotatedItems(id, limit ? +limit : 10);
+  }
+
+  @Post('annotation/tasks/:id/activate')
+  async activateAnnotationTask(@Param('id') id: string) {
+    return this.annotationAssistanceService.activateTask(id);
+  }
+
+  @Post('annotation/tasks/:id/complete')
+  async completeAnnotationTask(@Param('id') id: string) {
+    return this.annotationAssistanceService.completeTask(id);
+  }
+
+  @Get('annotation/tasks/:id/quality')
+  async getAnnotationQuality(@Param('id') id: string) {
+    return this.annotationAssistanceService.getQualityMetrics(id);
+  }
+
+  @Get('annotation/tasks/:id/export')
+  async exportAnnotations(@Param('id') id: string) {
+    return this.annotationAssistanceService.exportAnnotations(id);
+  }
+
+  @Get('annotation/types')
+  async getAnnotationTypes() {
+    return this.annotationAssistanceService.getAnnotationTypes();
+  }
+
+  // ==================== 模型蒸馏 API ====================
+
+  @Post('distillation/tasks')
+  async createDistillationTask(@Body() body: any) {
+    return this.modelDistillationService.createTask(body);
+  }
+
+  @Get('distillation/tasks')
+  async listDistillationTasks(@Query('status') status?: string) {
+    return this.modelDistillationService.listTasks(status);
+  }
+
+  @Get('distillation/tasks/:id')
+  async getDistillationTask(@Param('id') id: string) {
+    return this.modelDistillationService.getTask(id);
+  }
+
+  @Post('distillation/tasks/:id/execute')
+  async executeDistillation(@Param('id') id: string) {
+    return this.modelDistillationService.execute(id);
+  }
+
+  @Post('distillation/tasks/:id/generate-data')
+  async generateDistillationData(
+    @Param('id') id: string,
+    @Body() body: { count?: number },
+  ) {
+    return this.modelDistillationService.generateDistillationData(id, body.count || 100);
+  }
+
+  @Get('distillation/tasks/:id/data')
+  async getDistillationData(
+    @Param('id') id: string,
+    @Query('limit') limit?: number,
+  ) {
+    return this.modelDistillationService.getDistillationData(id, limit ? +limit : 50);
+  }
+
+  @Get('distillation/tasks/:id/metrics')
+  async getDistillationMetrics(@Param('id') id: string) {
+    return this.modelDistillationService.getTaskMetrics(id);
+  }
+
+  @Get('distillation/tasks/:id/compare')
+  async compareDistillationModels(@Param('id') id: string) {
+    return this.modelDistillationService.compareModels(id);
+  }
+
+  @Get('distillation/templates')
+  async getDistillationTemplates(@Query('strategy') strategy?: DistillationStrategy) {
+    return this.modelDistillationService.getTemplates(strategy);
+  }
+
+  @Get('distillation/templates/:id')
+  async getDistillationTemplate(@Param('id') id: string) {
+    return this.modelDistillationService.getTemplate(id);
+  }
+
+  @Get('distillation/strategies')
+  async getDistillationStrategies() {
+    return this.modelDistillationService.getStrategies();
+  }
+
+  @Get('distillation/stats')
+  async getDistillationStats() {
+    return this.modelDistillationService.getDistillationStats();
+  }
+
+  // ==================== 联邦学习评测 API ====================
+
+  @Post('federated/tasks')
+  async createFederatedTask(@Body() body: any) {
+    return this.federatedEvalService.createTask(body);
+  }
+
+  @Get('federated/tasks')
+  async listFederatedTasks(@Query('status') status?: string) {
+    return this.federatedEvalService.listTasks(status);
+  }
+
+  @Get('federated/tasks/:id')
+  async getFederatedTask(@Param('id') id: string) {
+    return this.federatedEvalService.getTask(id);
+  }
+
+  @Post('federated/tasks/:id/execute')
+  async executeFederated(@Param('id') id: string) {
+    return this.federatedEvalService.execute(id);
+  }
+
+  @Get('federated/tasks/:id/history')
+  async getFederatedRoundHistory(@Param('id') id: string) {
+    return this.federatedEvalService.getRoundHistory(id);
+  }
+
+  @Get('federated/tasks/:id/participants')
+  async getFederatedParticipants(@Param('id') id: string) {
+    return this.federatedEvalService.getParticipantStatus(id);
+  }
+
+  @Post('federated/tasks/:id/participants/:participantId/status')
+  async updateParticipantStatus(
+    @Param('id') id: string,
+    @Param('participantId') participantId: string,
+    @Body() body: { status: string },
+  ) {
+    return this.federatedEvalService.updateParticipantStatus(id, participantId, body.status as any);
+  }
+
+  @Get('federated/tasks/:id/metrics')
+  async getFederatedMetrics(@Param('id') id: string) {
+    return this.federatedEvalService.getFederatedMetrics(id);
+  }
+
+  @Post('federated/tasks/:id/privacy')
+  async setFederatedPrivacyConfig(
+    @Param('id') id: string,
+    @Body() body: any,
+  ) {
+    return this.federatedEvalService.setPrivacyConfig(id, body);
+  }
+
+  @Get('federated/tasks/:id/privacy')
+  async getFederatedPrivacyConfig(@Param('id') id: string) {
+    return this.federatedEvalService.getPrivacyConfig(id);
+  }
+
+  @Get('federated/types')
+  async getFederatedTypes() {
+    return this.federatedEvalService.getFederatedTypes();
+  }
+
+  @Get('federated/strategies')
+  async getAggregationStrategies() {
+    return this.federatedEvalService.getAggregationStrategies();
+  }
+
+  @Get('federated/stats')
+  async getFederatedStats() {
+    return this.federatedEvalService.getFederatedStats();
   }
 }

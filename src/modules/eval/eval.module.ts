@@ -56,6 +56,9 @@ import { ScenarioManagementService } from './scenario-management.service';
 import { DataQualityService } from './data-quality.service';
 import { TaskOrchestrationService } from './task-orchestration.service';
 import { ResultExplanationService } from './result-explanation.service';
+import { AnnotationAssistanceService } from './annotation-assistance.service';
+import { ModelDistillationService } from './model-distillation.service';
+import { FederatedEvalService } from './federated-eval.service';
 import { EvalController } from './eval.controller';
 
 @Module({
@@ -118,6 +121,9 @@ import { EvalController } from './eval.controller';
     DataQualityService,
     TaskOrchestrationService,
     ResultExplanationService,
+    AnnotationAssistanceService,
+    ModelDistillationService,
+    FederatedEvalService,
   ],
   exports: [
     EvalService,
@@ -177,6 +183,9 @@ import { EvalController } from './eval.controller';
     DataQualityService,
     TaskOrchestrationService,
     ResultExplanationService,
+    AnnotationAssistanceService,
+    ModelDistillationService,
+    FederatedEvalService,
   ],
 })
 export class EvalModule {}

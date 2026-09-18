@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
+import { useToastActions } from '@/components/ui/toast'
 import { Plus, Edit, Trash2, Eye, Search } from 'lucide-react'
 import axios from 'axios'
 
@@ -28,6 +29,48 @@ interface SkillDetail extends Skill {
   skillVersions: any[]
 }
 
+const CATEGORIES = ['function_call', 'rag', 'agent', 'chat', 'classification', 'summarization']
+
+// 骨架屏
+function SkeletonTable() {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="w-[40px]"><div className="h-4 w-4 animate-skeleton rounded" /></TableHead>
+          <TableHead><div className="h-4 w-20 animate-skeleton rounded" /></TableHead>
+          <TableHead><div className="h-4 w-16 animate-skeleton rounded" /></TableHead>
+          <TableHead><div className="h-4 w-12 animate-skeleton rounded" /></TableHead>
+          <TableHead><div className="h-4 w-12 animate-skeleton rounded" /></TableHead>
+          <TableHead><div className="h-4 w-12 animate-skeleton rounded" /></TableHead>
+          <TableHead><div className="h-4 w-24 animate-skeleton rounded" /></TableHead>
+          <TableHead><div className="h-4 w-16 animate-skeleton rounded" /></TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {[1, 2, 3, 4, 5].map(i => (
+          <TableRow key={i}>
+            <TableCell><div className="h-4 w-4 animate-skeleton rounded" /></TableCell>
+            <TableCell><div className="h-4 w-28 animate-skeleton rounded" /></TableCell>
+            <TableCell><div className="h-4 w-40 animate-skeleton rounded" /></TableCell>
+            <TableCell><div className="h-5 w-12 animate-skeleton rounded-full" /></TableCell>
+            <TableCell><div className="h-4 w-6 animate-skeleton rounded" /></TableCell>
+            <TableCell><div className="h-4 w-6 animate-skeleton rounded" /></TableCell>
+            <TableCell><div className="h-4 w-32 animate-skeleton rounded" /></TableCell>
+            <TableCell>
+              <div className="flex justify-end gap-2">
+                <div className="h-8 w-8 animate-skeleton rounded" />
+                <div className="h-8 w-8 animate-skeleton rounded" />
+                <div className="h-8 w-8 animate-skeleton rounded" />
+              </div>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  )
+}
+
 export default function Skills() {
   const [skills, setSkills] = useState<Skill[]>([])
   const [loading, setLoading] = useState(false)
@@ -40,8 +83,7 @@ export default function Skills() {
   const [formData, setFormData] = useState({ name: '', description: '', version: '1.0.0', category: '', tags: '' })
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
-
-  const CATEGORIES = ['function_call', 'rag', 'agent', 'chat', 'classification', 'summarization']
+  const { toastSuccess, toastError } = useToastActions()
 
   const fetchSkills = async () => {
     setLoading(true)
@@ -50,6 +92,7 @@ export default function Skills() {
       setSkills(res.data)
     } catch (e) {
       console.error(e)
+      toastError('加载技能列表失败')
     }
     setLoading(false)
   }
@@ -68,9 +111,10 @@ export default function Skills() {
       await axios.post('/api/skills', payload)
       setCreateOpen(false)
       setFormData({ name: '', description: '', version: '1.0.0', category: '', tags: '' })
+      toastSuccess('技能创建成功')
       fetchSkills()
     } catch (e: any) {
-      alert(e?.response?.data?.message || '创建失败')
+      toastError(e?.response?.data?.message || '创建失败')
     }
   }
 
@@ -86,13 +130,14 @@ export default function Skills() {
       }
       await axios.put(`/api/skills/${currentSkill.id}`, payload)
       setEditOpen(false)
+      toastSuccess('技能更新成功')
       fetchSkills()
     } catch (e: any) {
-      alert(e?.response?.data?.message || '更新失败')
+      toastError(e?.response?.data?.message || '更新失败')
     }
   }
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     setDeleteTarget([id])
     setDeleteConfirmOpen(true)
   }
@@ -110,9 +155,10 @@ export default function Skills() {
       setSelectedIds([])
       setDeleteConfirmOpen(false)
       setDeleteTarget([])
+      toastSuccess(`已删除 ${ids.length} 个技能`)
       fetchSkills()
     } catch (e) {
-      alert('删除失败')
+      toastError('删除失败')
     }
   }
 
@@ -122,7 +168,7 @@ export default function Skills() {
       setCurrentSkill(res.data)
       setDetailOpen(true)
     } catch (e) {
-      alert('获取详情失败')
+      toastError('获取详情失败')
     }
   }
 
@@ -185,70 +231,78 @@ export default function Skills() {
             )}
           </div>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[40px]">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.length === filteredSkills.length && filteredSkills.length > 0}
-                    onChange={toggleSelectAll}
-                    className="h-4 w-4"
-                  />
-                </TableHead>
-                <TableHead>技能名称</TableHead>
-                <TableHead>描述</TableHead>
-                <TableHead>版本</TableHead>
-                <TableHead className="text-center">接入点</TableHead>
-                <TableHead className="text-center">评测次数</TableHead>
-                <TableHead>更新时间</TableHead>
-                <TableHead className="text-right">操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">加载中...</TableCell></TableRow>
-              ) : filteredSkills.length === 0 ? (
-                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">暂无数据</TableCell></TableRow>
-              ) : (
-                filteredSkills.map((skill) => (
-                  <TableRow key={skill.id}>
-                    <TableCell>
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.includes(skill.id)}
-                        onChange={() => toggleSelect(skill.id)}
-                        className="h-4 w-4"
-                      />
-                    </TableCell>
-                    <TableCell className="font-medium">{skill.name}</TableCell>
-                    <TableCell className="max-w-[200px] truncate text-muted-foreground">{skill.description || '-'}</TableCell>
-                    <TableCell><Badge variant="secondary">{skill.version}</Badge></TableCell>
-                    <TableCell className="text-center">{skill._count?.endpoints || 0}</TableCell>
-                    <TableCell className="text-center">{skill._count?.evalRuns || 0}</TableCell>
-                    <TableCell className="text-muted-foreground">{new Date(skill.updatedAt).toLocaleString()}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleViewDetail(skill.id)} aria-label="查看技能详情">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(skill)} aria-label="编辑技能">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(skill.id)} aria-label="删除技能">
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+          {loading ? <SkeletonTable /> : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[40px]">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.length === filteredSkills.length && filteredSkills.length > 0}
+                      onChange={toggleSelectAll}
+                      className="h-4 w-4 rounded border-border"
+                    />
+                  </TableHead>
+                  <TableHead>技能名称</TableHead>
+                  <TableHead>描述</TableHead>
+                  <TableHead>版本</TableHead>
+                  <TableHead className="text-center">接入点</TableHead>
+                  <TableHead className="text-center">评测次数</TableHead>
+                  <TableHead>更新时间</TableHead>
+                  <TableHead className="text-right">操作</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredSkills.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center">
+                      <div className="py-12">
+                        <Eye className="mx-auto h-12 w-12 text-muted-foreground/40" />
+                        <p className="mt-4 text-muted-foreground">暂无数据</p>
+                        <p className="mt-1 text-xs text-muted-foreground">点击"新建技能"开始创建</p>
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  filteredSkills.map((skill) => (
+                    <TableRow key={skill.id} className="hover:bg-muted/50 transition-colors duration-150">
+                      <TableCell>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(skill.id)}
+                          onChange={() => toggleSelect(skill.id)}
+                          className="h-4 w-4 rounded border-border"
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">{skill.name}</TableCell>
+                      <TableCell className="max-w-[200px] truncate text-muted-foreground">{skill.description || '-'}</TableCell>
+                      <TableCell><Badge variant="secondary">{skill.version}</Badge></TableCell>
+                      <TableCell className="text-center">{skill._count?.endpoints || 0}</TableCell>
+                      <TableCell className="text-center">{skill._count?.evalRuns || 0}</TableCell>
+                      <TableCell className="text-muted-foreground">{new Date(skill.updatedAt).toLocaleString()}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="sm" onClick={() => handleViewDetail(skill.id)} aria-label="查看技能详情">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => openEdit(skill)} aria-label="编辑技能">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(skill.id)} aria-label="删除技能">
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
-      {/* Create Dialog */}
+      {/* Create Dialog — 规范 §6.5: 确认按钮在右，取消在左 */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
           <DialogHeader>
@@ -257,7 +311,7 @@ export default function Skills() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">技能名称</label>
+              <label className="text-sm font-medium">技能名称 <span className="text-destructive">*</span></label>
               <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="如：客服问答技能" />
             </div>
             <div className="space-y-2">
@@ -269,7 +323,7 @@ export default function Skills() {
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <option value="">请选择分类</option>
                 {CATEGORIES.map(cat => (
@@ -288,7 +342,7 @@ export default function Skills() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>取消</Button>
-            <Button onClick={handleCreate}>创建</Button>
+            <Button onClick={handleCreate} disabled={!formData.name}>创建</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -314,7 +368,7 @@ export default function Skills() {
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <option value="">请选择分类</option>
                 {CATEGORIES.map(cat => (
@@ -348,15 +402,15 @@ export default function Skills() {
           {currentSkill && (
             <div className="space-y-6">
               <div className="grid grid-cols-3 gap-4">
-                <div className="rounded-lg border p-4 text-center">
+                <div className="rounded-lg border border-border-light p-4 text-center">
                   <div className="text-2xl font-bold">{currentSkill.endpoints?.length || 0}</div>
                   <div className="text-sm text-muted-foreground">接入点</div>
                 </div>
-                <div className="rounded-lg border p-4 text-center">
+                <div className="rounded-lg border border-border-light p-4 text-center">
                   <div className="text-2xl font-bold">{currentSkill.evalRuns?.length || 0}</div>
                   <div className="text-sm text-muted-foreground">评测次数</div>
                 </div>
-                <div className="rounded-lg border p-4 text-center">
+                <div className="rounded-lg border border-border-light p-4 text-center">
                   <div className="text-2xl font-bold">{currentSkill.skillVersions?.length || 0}</div>
                   <div className="text-sm text-muted-foreground">版本数</div>
                 </div>

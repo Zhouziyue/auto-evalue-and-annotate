@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Trophy, TrendingUp, Medal, Award } from 'lucide-react'
@@ -22,6 +21,36 @@ interface LeaderboardSummary {
   totalEvaluations: number
   topModel: { id: string; name: string; score: number } | null
   recentActivity: { date: string; evaluations: number; avgScore: number }[]
+}
+
+// 骨架屏
+function SkeletonTable() {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead><div className="h-4 w-12 animate-skeleton rounded" /></TableHead>
+          <TableHead><div className="h-4 w-28 animate-skeleton rounded" /></TableHead>
+          <TableHead><div className="h-4 w-16 animate-skeleton rounded" /></TableHead>
+          <TableHead><div className="h-4 w-12 animate-skeleton rounded" /></TableHead>
+          <TableHead><div className="h-4 w-16 animate-skeleton rounded" /></TableHead>
+          <TableHead><div className="h-4 w-24 animate-skeleton rounded" /></TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {[1, 2, 3, 4, 5].map(i => (
+          <TableRow key={i}>
+            <TableCell><div className="h-5 w-8 animate-skeleton rounded-full mx-auto" /></TableCell>
+            <TableCell><div className="h-4 w-32 animate-skeleton rounded" /></TableCell>
+            <TableCell><div className="h-4 w-14 animate-skeleton rounded mx-auto" /></TableCell>
+            <TableCell><div className="h-5 w-10 animate-skeleton rounded-full mx-auto" /></TableCell>
+            <TableCell><div className="h-4 w-14 animate-skeleton rounded mx-auto" /></TableCell>
+            <TableCell><div className="h-4 w-24 animate-skeleton rounded" /></TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  )
 }
 
 export default function Leaderboard() {
@@ -54,23 +83,24 @@ export default function Leaderboard() {
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1: return <Trophy className="h-5 w-5 text-yellow-500" />
-      case 2: return <Medal className="h-5 w-5 text-gray-400" />
-      case 3: return <Award className="h-5 w-5 text-amber-600" />
+      case 2: return <Medal className="h-5 w-5 text-muted-foreground" />
+      case 3: return <Award className="h-5 w-5 text-warning" />
       default: return <span className="text-muted-foreground">#{rank}</span>
     }
   }
 
+  // 规范 §7.3: 语义色映射
   const getScoreColor = (score: number) => {
-    if (score >= 0.8) return 'text-green-600'
-    if (score >= 0.6) return 'text-yellow-600'
-    return 'text-red-600'
+    if (score >= 0.8) return 'text-success'
+    if (score >= 0.6) return 'text-warning'
+    return 'text-destructive'
   }
 
   return (
     <div className="space-y-6">
       {/* 摘要卡片 */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
+        <Card className="hover:shadow-sm transition-shadow duration-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">模型总数</CardTitle>
             <Trophy className="h-4 w-4 text-muted-foreground" />
@@ -80,7 +110,7 @@ export default function Leaderboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-sm transition-shadow duration-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">评测总数</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -90,7 +120,7 @@ export default function Leaderboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-sm transition-shadow duration-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">最佳模型</CardTitle>
             <Medal className="h-4 w-4 text-muted-foreground" />
@@ -107,7 +137,7 @@ export default function Leaderboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-sm transition-shadow duration-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">今日评测</CardTitle>
             <Award className="h-4 w-4 text-muted-foreground" />
@@ -128,58 +158,58 @@ export default function Leaderboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[80px]">排名</TableHead>
-                <TableHead>模型名称</TableHead>
-                <TableHead className="text-center">综合得分</TableHead>
-                <TableHead className="text-center">评测次数</TableHead>
-                <TableHead className="text-center">平均延迟</TableHead>
-                <TableHead>最后评测</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
+          {loading ? <SkeletonTable /> : (
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
-                    加载中...
-                  </TableCell>
+                  <TableHead className="w-[80px]">排名</TableHead>
+                  <TableHead>模型名称</TableHead>
+                  <TableHead className="text-center">综合得分</TableHead>
+                  <TableHead className="text-center">评测次数</TableHead>
+                  <TableHead className="text-center">平均延迟</TableHead>
+                  <TableHead>最后评测</TableHead>
                 </TableRow>
-              ) : entries.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
-                    暂无评测数据
-                  </TableCell>
-                </TableRow>
-              ) : (
-                entries.map((entry) => (
-                  <TableRow key={entry.modelId}>
-                    <TableCell>
-                      <div className="flex items-center justify-center">
-                        {getRankIcon(entry.rank)}
+              </TableHeader>
+              <TableBody>
+                {entries.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center">
+                      <div className="py-12">
+                        <Trophy className="mx-auto h-12 w-12 text-muted-foreground/40" />
+                        <p className="mt-4 text-muted-foreground">暂无评测数据</p>
+                        <p className="mt-1 text-xs text-muted-foreground">完成评测后，模型排行会显示在此处</p>
                       </div>
                     </TableCell>
-                    <TableCell className="font-medium">{entry.modelName}</TableCell>
-                    <TableCell className="text-center">
-                      <span className={`font-bold ${getScoreColor(entry.overallScore)}`}>
-                        {(entry.overallScore * 100).toFixed(1)}%
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant="outline">{entry.totalEvaluations}</Badge>
-                    </TableCell>
-                    <TableCell className="text-center text-muted-foreground">
-                      {entry.avgLatency > 0 ? `${entry.avgLatency.toFixed(0)}ms` : '-'}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(entry.lastEvaluatedAt).toLocaleDateString()}
-                    </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  entries.map((entry) => (
+                    <TableRow key={entry.modelId} className="hover:bg-muted/50 transition-colors duration-150">
+                      <TableCell>
+                        <div className="flex items-center justify-center">
+                          {getRankIcon(entry.rank)}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">{entry.modelName}</TableCell>
+                      <TableCell className="text-center">
+                        <span className={`font-bold ${getScoreColor(entry.overallScore)}`}>
+                          {(entry.overallScore * 100).toFixed(1)}%
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline">{entry.totalEvaluations}</Badge>
+                      </TableCell>
+                      <TableCell className="text-center text-muted-foreground">
+                        {entry.avgLatency > 0 ? `${entry.avgLatency.toFixed(0)}ms` : '-'}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {new Date(entry.lastEvaluatedAt).toLocaleDateString()}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 

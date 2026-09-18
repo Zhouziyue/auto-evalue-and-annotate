@@ -15,8 +15,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Search,
+  Settings,
 } from 'lucide-react'
 
+// 规范 §7.1: 后台应用标准布局
+// 侧边栏 w:240px(折叠64px) | 顶栏 h:56px | 内容区 padding:24px
 const menuItems = [
   { key: '/dashboard', icon: LayoutDashboard, label: '看板' },
   { key: '/skills', icon: AppWindow, label: '技能管理' },
@@ -50,27 +53,36 @@ function MainLayout() {
   }
 
   return (
-    <div className="flex min-h-screen">
-      {/* Sidebar */}
+    <div className="flex min-h-screen bg-secondary/30">
+      {/* ===== Sidebar ===== */}
       <aside
         className={cn(
-          'flex flex-col border-r bg-card transition-all duration-300',
+          'flex flex-col border-r bg-card transition-[width] duration-300 ease-in-out',
           collapsed ? 'w-16' : 'w-60'
         )}
       >
-        {/* Logo */}
+        {/* Logo — h:56px 与顶栏对齐 */}
         <div className="flex h-14 items-center justify-between border-b px-4">
-          {!collapsed && <span className="text-lg font-bold">技能评测系统</span>}
+          {!collapsed && (
+            <span className="text-lg font-bold text-foreground truncate">
+              技能评测系统
+            </span>
+          )}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="ml-auto rounded-md p-1 hover:bg-accent"
+            className={cn(
+              'ml-auto flex h-7 w-7 items-center justify-center rounded-md',
+              'text-muted-foreground hover:bg-accent hover:text-foreground',
+              'transition-colors duration-150'
+            )}
+            aria-label={collapsed ? '展开侧边栏' : '折叠侧边栏'}
           >
             {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </button>
         </div>
 
         {/* Menu */}
-        <nav className="flex-1 space-y-1 p-2">
+        <nav className="flex-1 space-y-1 p-2 overflow-y-auto">
           {menuItems.map((item) => {
             const Icon = item.icon
             const isActive = location.pathname === item.key
@@ -78,16 +90,17 @@ function MainLayout() {
               <button
                 key={item.key}
                 onClick={() => navigate(item.key)}
-                className={cn(
-                  'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                )}
                 title={collapsed ? item.label : undefined}
+                className={cn(
+                  'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium',
+                  'transition-colors duration-150',
+                  isActive
+                    ? 'bg-primary text-primary-foreground shadow-xs'
+                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                )}
               >
-                <Icon className="h-4 w-4 shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
+                <Icon className="h-5 w-5 shrink-0" />
+                {!collapsed && <span className="truncate">{item.label}</span>}
               </button>
             )
           })}
@@ -101,12 +114,12 @@ function MainLayout() {
         )}
       </aside>
 
-      {/* Main Content */}
-      <div className="flex flex-1 flex-col">
-        {/* Header */}
-        <header className="flex h-14 items-center justify-between border-b bg-background px-6">
+      {/* ===== Main Content ===== */}
+      <div className="flex flex-1 flex-col min-w-0">
+        {/* Header — h:56px */}
+        <header className="flex h-14 items-center justify-between border-b bg-card px-6 shadow-xs">
           <div className="flex items-center gap-4">
-            <h1 className="text-lg font-semibold">
+            <h1 className="text-xl font-semibold text-foreground">
               {currentPage?.label || '看板'}
             </h1>
           </div>
@@ -116,18 +129,24 @@ function MainLayout() {
             <div className="relative">
               <button
                 onClick={() => setSearchOpen(!searchOpen)}
-                className="flex h-8 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm text-muted-foreground hover:bg-accent"
+                className={cn(
+                  'flex h-9 items-center gap-2 rounded-md border border-border',
+                  'bg-background px-3 text-sm text-muted-foreground',
+                  'hover:border-primary/50 hover:text-foreground',
+                  'transition-colors duration-150'
+                )}
+                aria-label="搜索页面"
               >
                 <Search className="h-4 w-4" />
                 <span className="hidden sm:inline">搜索页面...</span>
-                <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium">
+                <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
                   ⌘K
                 </kbd>
               </button>
 
               {searchOpen && (
-                <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-md border bg-popover p-2 shadow-lg">
-                  <div className="flex items-center gap-2 border-b pb-2">
+                <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-lg border bg-popover p-2 shadow-lg animate-toast-in">
+                  <div className="flex items-center gap-2 border-b border-border-light pb-2">
                     <Search className="h-4 w-4 text-muted-foreground" />
                     <input
                       autoFocus
@@ -144,21 +163,34 @@ function MainLayout() {
                         <button
                           key={item.key}
                           onClick={() => handleNavigate(item.key)}
-                          className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+                          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors duration-150"
                         >
                           <Icon className="h-4 w-4 text-muted-foreground" />
                           {item.label}
                         </button>
                       )
                     })}
+                    {filteredMenuItems.length === 0 && (
+                      <div className="py-4 text-center text-sm text-muted-foreground">
+                        未找到匹配页面
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
             </div>
+
+            {/* Settings */}
+            <button
+              className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors duration-150"
+              aria-label="系统设置"
+            >
+              <Settings className="h-5 w-5" />
+            </button>
           </div>
         </header>
 
-        {/* Content */}
+        {/* Content — 规范 §7.3: padding:24px (p-6) */}
         <main className="flex-1 overflow-auto p-6">
           <Outlet />
         </main>

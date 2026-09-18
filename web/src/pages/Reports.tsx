@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { useToastActions } from '@/components/ui/toast'
 import { BarChart3, FileText, Download, TrendingUp, TrendingDown, Minus, Plus } from 'lucide-react'
 import axios from 'axios'
 
@@ -29,12 +30,52 @@ interface Report {
   updatedAt: string
 }
 
+// 骨架屏
+function SkeletonTable() {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead><div className="h-4 w-28 animate-skeleton rounded" /></TableHead>
+          <TableHead><div className="h-4 w-16 animate-skeleton rounded" /></TableHead>
+          <TableHead><div className="h-4 w-16 animate-skeleton rounded" /></TableHead>
+          <TableHead><div className="h-4 w-16 animate-skeleton rounded" /></TableHead>
+          <TableHead><div className="h-4 w-12 animate-skeleton rounded" /></TableHead>
+          <TableHead><div className="h-4 w-12 animate-skeleton rounded" /></TableHead>
+          <TableHead><div className="h-4 w-28 animate-skeleton rounded" /></TableHead>
+          <TableHead><div className="h-4 w-20 animate-skeleton rounded" /></TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {[1, 2, 3].map(i => (
+          <TableRow key={i}>
+            <TableCell><div className="h-4 w-32 animate-skeleton rounded" /></TableCell>
+            <TableCell><div className="h-5 w-14 animate-skeleton rounded-full" /></TableCell>
+            <TableCell><div className="h-4 w-14 animate-skeleton rounded" /></TableCell>
+            <TableCell><div className="h-4 w-14 animate-skeleton rounded" /></TableCell>
+            <TableCell><div className="h-4 w-8 animate-skeleton rounded" /></TableCell>
+            <TableCell><div className="h-4 w-10 animate-skeleton rounded" /></TableCell>
+            <TableCell><div className="h-4 w-32 animate-skeleton rounded" /></TableCell>
+            <TableCell>
+              <div className="flex justify-end gap-2">
+                <div className="h-8 w-14 animate-skeleton rounded" />
+                <div className="h-8 w-8 animate-skeleton rounded" />
+              </div>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  )
+}
+
 export default function Reports() {
   const [reports, setReports] = useState<Report[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedReport, setSelectedReport] = useState<Report | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
   const [generating, setGenerating] = useState(false)
+  const { toastSuccess, toastError } = useToastActions()
 
   useEffect(() => {
     fetchReports()
@@ -47,6 +88,7 @@ export default function Reports() {
       setReports(res.data)
     } catch (e) {
       console.error(e)
+      toastError('加载报告列表失败')
     }
     setLoading(false)
   }
@@ -57,7 +99,7 @@ export default function Reports() {
       setSelectedReport(res.data)
       setDetailOpen(true)
     } catch (e) {
-      console.error(e)
+      toastError('获取报告详情失败')
     }
   }
 
@@ -68,8 +110,9 @@ export default function Reports() {
         name: `评测报告 ${new Date().toLocaleDateString()}`,
       })
       await fetchReports()
+      toastSuccess('报告生成成功')
     } catch (e) {
-      console.error(e)
+      toastError('报告生成失败')
     }
     setGenerating(false)
   }
@@ -86,35 +129,37 @@ export default function Reports() {
       document.body.appendChild(link)
       link.click()
       link.remove()
+      toastSuccess('报告下载成功')
     } catch (e) {
-      console.error(e)
+      toastError('下载失败')
     }
   }
 
+  // 规范 §7.3: 语义色映射
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge className="bg-green-100 text-green-700">已完成</Badge>
+        return <Badge className="border-success/30 bg-success-light text-success">已完成</Badge>
       case 'generating':
-        return <Badge className="bg-blue-100 text-blue-700">生成中</Badge>
+        return <Badge className="border-info/30 bg-info-light text-info">生成中</Badge>
       case 'failed':
-        return <Badge className="bg-red-100 text-red-700">失败</Badge>
+        return <Badge className="border-destructive/30 bg-error-light text-destructive">失败</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
     }
   }
 
   const getScoreColor = (score: number) => {
-    if (score >= 0.8) return 'text-green-600'
-    if (score >= 0.6) return 'text-yellow-600'
-    return 'text-red-600'
+    if (score >= 0.8) return 'text-success'
+    if (score >= 0.6) return 'text-warning'
+    return 'text-destructive'
   }
 
   const getTrendIcon = (current: number, previous: number) => {
     if (previous === 0) return <Minus className="h-4 w-4 text-muted-foreground" />
     const diff = current - previous
-    if (diff > 0) return <TrendingUp className="h-4 w-4 text-green-500" />
-    if (diff < 0) return <TrendingDown className="h-4 w-4 text-red-500" />
+    if (diff > 0) return <TrendingUp className="h-4 w-4 text-success" />
+    if (diff < 0) return <TrendingDown className="h-4 w-4 text-destructive" />
     return <Minus className="h-4 w-4 text-muted-foreground" />
   }
 
@@ -137,87 +182,86 @@ export default function Reports() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>报告名称</TableHead>
-                <TableHead>状态</TableHead>
-                <TableHead className="text-center">通过率</TableHead>
-                <TableHead className="text-center">平均分</TableHead>
-                <TableHead className="text-center">用例数</TableHead>
-                <TableHead className="text-center">耗时</TableHead>
-                <TableHead>生成时间</TableHead>
-                <TableHead className="text-right">操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
+          {loading ? <SkeletonTable /> : (
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground">加载中...</TableCell>
+                  <TableHead>报告名称</TableHead>
+                  <TableHead>状态</TableHead>
+                  <TableHead className="text-center">通过率</TableHead>
+                  <TableHead className="text-center">平均分</TableHead>
+                  <TableHead className="text-center">用例数</TableHead>
+                  <TableHead className="text-center">耗时</TableHead>
+                  <TableHead>生成时间</TableHead>
+                  <TableHead className="text-right">操作</TableHead>
                 </TableRow>
-              ) : reports.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center">
-                    <div className="py-12">
-                      <BarChart3 className="mx-auto h-12 w-12 text-muted-foreground/50" />
-                      <p className="mt-4 text-muted-foreground">暂无评测报告</p>
-                      <p className="mt-2 text-sm text-muted-foreground">完成评测后，可在此生成详细报告</p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                reports.map((report) => (
-                  <TableRow key={report.id}>
-                    <TableCell className="font-medium">{report.name}</TableCell>
-                    <TableCell>{getStatusBadge(report.status)}</TableCell>
-                    <TableCell className="text-center">
-                      {report.summary ? (
-                        <span className={`font-semibold ${getScoreColor(report.summary.passRate)}`}>
-                          {(report.summary.passRate * 100).toFixed(1)}%
-                        </span>
-                      ) : '-'}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {report.summary ? (
-                        <span className={`font-semibold ${getScoreColor(report.summary.avgScore)}`}>
-                          {(report.summary.avgScore * 100).toFixed(1)}%
-                        </span>
-                      ) : '-'}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {report.summary ? report.summary.totalCases : '-'}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {report.summary ? `${(report.summary.duration / 1000).toFixed(1)}s` : '-'}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(report.createdAt).toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleViewDetail(report)}
-                          disabled={report.status !== 'completed'}
-                        >
-                          查看
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDownload(report.id)}
-                          disabled={report.status !== 'completed'}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
+              </TableHeader>
+              <TableBody>
+                {reports.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center">
+                      <div className="py-12">
+                        <BarChart3 className="mx-auto h-12 w-12 text-muted-foreground/40" />
+                        <p className="mt-4 text-muted-foreground">暂无评测报告</p>
+                        <p className="mt-1 text-xs text-muted-foreground">完成评测后，可在此生成详细报告</p>
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  reports.map((report) => (
+                    <TableRow key={report.id} className="hover:bg-muted/50 transition-colors duration-150">
+                      <TableCell className="font-medium">{report.name}</TableCell>
+                      <TableCell>{getStatusBadge(report.status)}</TableCell>
+                      <TableCell className="text-center">
+                        {report.summary ? (
+                          <span className={`font-semibold ${getScoreColor(report.summary.passRate)}`}>
+                            {(report.summary.passRate * 100).toFixed(1)}%
+                          </span>
+                        ) : '-'}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {report.summary ? (
+                          <span className={`font-semibold ${getScoreColor(report.summary.avgScore)}`}>
+                            {(report.summary.avgScore * 100).toFixed(1)}%
+                          </span>
+                        ) : '-'}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {report.summary ? report.summary.totalCases : '-'}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {report.summary ? `${(report.summary.duration / 1000).toFixed(1)}s` : '-'}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {new Date(report.createdAt).toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewDetail(report)}
+                            disabled={report.status !== 'completed'}
+                          >
+                            查看
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDownload(report.id)}
+                            disabled={report.status !== 'completed'}
+                            aria-label="下载报告"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
@@ -267,9 +311,9 @@ export default function Reports() {
                   <CardContent>
                     <div className="text-2xl font-bold">{selectedReport.summary.totalCases}</div>
                     <p className="text-xs text-muted-foreground">
-                      <span className="text-green-600">{selectedReport.summary.passedCases} 通过</span>
+                      <span className="text-success">{selectedReport.summary.passedCases} 通过</span>
                       {' / '}
-                      <span className="text-red-600">{selectedReport.summary.failedCases} 失败</span>
+                      <span className="text-destructive">{selectedReport.summary.failedCases} 失败</span>
                     </p>
                   </CardContent>
                 </Card>
@@ -303,7 +347,7 @@ export default function Reports() {
                       </TableHeader>
                       <TableBody>
                         {selectedReport.metrics.map((metric, idx) => (
-                          <TableRow key={idx}>
+                          <TableRow key={idx} className="hover:bg-muted/50 transition-colors duration-150">
                             <TableCell className="font-medium">{metric.name}</TableCell>
                             <TableCell className="text-center">
                               <span className={`font-semibold ${getScoreColor(metric.score)}`}>

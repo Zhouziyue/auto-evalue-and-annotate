@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { useToastActions } from '@/components/ui/toast'
 import { Tag, CheckCircle, XCircle, Clock, Edit3, Filter } from 'lucide-react'
 import axios from 'axios'
 
@@ -40,6 +40,7 @@ export default function Annotations() {
   const [workbenchOpen, setWorkbenchOpen] = useState(false)
   const [currentItem, setCurrentItem] = useState<AnnotationItem | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const { toastSuccess, toastError } = useToastActions()
 
   useEffect(() => {
     fetchTasks()
@@ -52,6 +53,7 @@ export default function Annotations() {
       setTasks(res.data)
     } catch (e) {
       console.error(e)
+      toastError('加载标注任务失败')
     }
     setLoading(false)
   }
@@ -62,6 +64,7 @@ export default function Annotations() {
       setItems(res.data)
     } catch (e) {
       console.error(e)
+      toastError('加载标注项失败')
     }
   }
 
@@ -82,8 +85,9 @@ export default function Annotations() {
       })
       if (selectedTask) await fetchItems(selectedTask.id)
       setWorkbenchOpen(false)
+      toastSuccess('已通过审核')
     } catch (e) {
-      console.error(e)
+      toastError('操作失败')
     }
   }
 
@@ -94,25 +98,27 @@ export default function Annotations() {
       })
       if (selectedTask) await fetchItems(selectedTask.id)
       setWorkbenchOpen(false)
+      toastSuccess('已拒绝')
     } catch (e) {
-      console.error(e)
+      toastError('操作失败')
     }
   }
 
+  // 规范 §7.3: 语义色映射
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge className="bg-green-100 text-green-700">已完成</Badge>
+        return <Badge className="border-success/30 bg-success-light text-success">已完成</Badge>
       case 'in_progress':
-        return <Badge className="bg-blue-100 text-blue-700">进行中</Badge>
+        return <Badge className="border-info/30 bg-info-light text-info">进行中</Badge>
       case 'pending':
         return <Badge variant="outline">待处理</Badge>
       case 'approved':
-        return <Badge className="bg-green-100 text-green-700"><CheckCircle className="mr-1 h-3 w-3" />已通过</Badge>
+        return <Badge className="border-success/30 bg-success-light text-success"><CheckCircle className="mr-1 h-3 w-3" />已通过</Badge>
       case 'rejected':
-        return <Badge className="bg-red-100 text-red-700"><XCircle className="mr-1 h-3 w-3" />已拒绝</Badge>
+        return <Badge className="border-destructive/30 bg-error-light text-destructive"><XCircle className="mr-1 h-3 w-3" />已拒绝</Badge>
       case 'modified':
-        return <Badge className="bg-yellow-100 text-yellow-700"><Edit3 className="mr-1 h-3 w-3" />已修改</Badge>
+        return <Badge className="border-warning/30 bg-warning-light text-warning"><Edit3 className="mr-1 h-3 w-3" />已修改</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
     }
@@ -144,10 +150,10 @@ export default function Annotations() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">已完成</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
+            <CheckCircle className="h-4 w-4 text-success" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-success">
               {tasks.filter(t => t.status === 'completed').length}
             </div>
           </CardContent>
@@ -156,10 +162,10 @@ export default function Annotations() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">进行中</CardTitle>
-            <Clock className="h-4 w-4 text-blue-500" />
+            <Clock className="h-4 w-4 text-info" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-2xl font-bold text-info">
               {tasks.filter(t => t.status === 'in_progress').length}
             </div>
           </CardContent>
@@ -200,15 +206,20 @@ export default function Annotations() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">加载中...</TableCell>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    <div className="flex items-center justify-center gap-2 py-4">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                      加载中...
+                    </div>
+                  </TableCell>
                 </TableRow>
               ) : tasks.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center">
-                    <div className="py-8">
-                      <Tag className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                    <div className="py-12">
+                      <Tag className="mx-auto h-12 w-12 text-muted-foreground/40" />
                       <p className="mt-4 text-muted-foreground">暂无标注任务</p>
-                      <p className="mt-2 text-sm text-muted-foreground">完成评测后，系统会自动创建标注任务</p>
+                      <p className="mt-1 text-xs text-muted-foreground">完成评测后，系统会自动创建标注任务</p>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -216,7 +227,7 @@ export default function Annotations() {
                 tasks.map((task) => (
                   <TableRow
                     key={task.id}
-                    className="cursor-pointer hover:bg-muted/50"
+                    className="cursor-pointer hover:bg-muted/50 transition-colors duration-150"
                     onClick={() => handleTaskClick(task)}
                   >
                     <TableCell className="font-medium">{task.name}</TableCell>
@@ -225,7 +236,7 @@ export default function Annotations() {
                       <div className="flex items-center gap-2">
                         <div className="h-2 w-20 rounded-full bg-muted">
                           <div
-                            className="h-full rounded-full bg-primary"
+                            className="h-full rounded-full bg-primary transition-all duration-300"
                             style={{ width: `${getProgressPercent(task)}%` }}
                           />
                         </div>
@@ -234,8 +245,8 @@ export default function Annotations() {
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-center text-green-600">{task.approvedItems}</TableCell>
-                    <TableCell className="text-center text-red-600">{task.rejectedItems}</TableCell>
+                    <TableCell className="text-center text-success">{task.approvedItems}</TableCell>
+                    <TableCell className="text-center text-destructive">{task.rejectedItems}</TableCell>
                     <TableCell className="text-muted-foreground">
                       {new Date(task.createdAt).toLocaleString()}
                     </TableCell>
@@ -257,7 +268,7 @@ export default function Annotations() {
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4 text-muted-foreground" />
               <select
-                className="h-8 rounded-md border border-input bg-transparent px-3 text-sm"
+                className="h-8 rounded-md border border-input bg-background px-3 text-sm"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
@@ -289,7 +300,7 @@ export default function Annotations() {
                   </TableRow>
                 ) : (
                   filteredItems.map((item) => (
-                    <TableRow key={item.id}>
+                    <TableRow key={item.id} className="hover:bg-muted/50 transition-colors duration-150">
                       <TableCell className="max-w-[200px] truncate">{item.input}</TableCell>
                       <TableCell className="max-w-[200px] truncate text-muted-foreground">
                         {item.aiOutput}
@@ -353,7 +364,7 @@ export default function Annotations() {
                       <CardTitle className="text-sm font-medium">期望输出</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="rounded-md bg-green-50 p-3 text-sm">{currentItem.expectedOutput}</p>
+                      <p className="rounded-md bg-success-light p-3 text-sm">{currentItem.expectedOutput}</p>
                     </CardContent>
                   </Card>
                 )}
@@ -384,7 +395,7 @@ export default function Annotations() {
 
                     <div className="flex gap-2">
                       <Button
-                        className="flex-1 bg-green-600 hover:bg-green-700"
+                        className="flex-1 bg-success hover:bg-success/90 text-white"
                         onClick={() => handleApprove(currentItem.id)}
                       >
                         <CheckCircle className="mr-2 h-4 w-4" /> 通过

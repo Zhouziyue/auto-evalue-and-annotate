@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
+import { useToastActions } from '@/components/ui/toast'
 import { GitBranch, Play, Plus, Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import axios from 'axios'
 
@@ -28,6 +29,7 @@ export default function Pipelines() {
   const [createOpen, setCreateOpen] = useState(false)
   const [customPipeline, setCustomPipeline] = useState({ name: '', description: '', nodes: '' })
   const [runningIds, setRunningIds] = useState<Set<string>>(new Set())
+  const { toastSuccess, toastError } = useToastActions()
 
   useEffect(() => {
     fetchExecutions()
@@ -40,6 +42,7 @@ export default function Pipelines() {
       setExecutions(res.data)
     } catch (e) {
       console.error(e)
+      toastError('加载执行记录失败')
     }
     setLoading(false)
   }
@@ -56,8 +59,9 @@ export default function Pipelines() {
         name: preset.name,
       })
       await fetchExecutions()
+      toastSuccess(`${preset.name}执行完成`)
     } catch (e) {
-      console.error(e)
+      toastError(`${preset.name}执行失败`)
     }
     setRunningIds(prev => {
       const next = new Set(prev)
@@ -76,20 +80,22 @@ export default function Pipelines() {
       })
       setCreateOpen(false)
       setCustomPipeline({ name: '', description: '', nodes: '' })
+      toastSuccess('流水线创建成功')
       await fetchExecutions()
     } catch (e) {
-      console.error(e)
+      toastError('创建失败')
     }
   }
 
+  // 规范 §7.3: 语义色映射
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge className="bg-green-100 text-green-700"><CheckCircle className="mr-1 h-3 w-3" />完成</Badge>
+        return <Badge className="border-success/30 bg-success-light text-success"><CheckCircle className="mr-1 h-3 w-3" />完成</Badge>
       case 'running':
-        return <Badge className="bg-blue-100 text-blue-700"><Loader2 className="mr-1 h-3 w-3 animate-spin" />运行中</Badge>
+        return <Badge className="border-info/30 bg-info-light text-info"><Loader2 className="mr-1 h-3 w-3 animate-spin" />运行中</Badge>
       case 'failed':
-        return <Badge className="bg-red-100 text-red-700"><XCircle className="mr-1 h-3 w-3" />失败</Badge>
+        return <Badge className="border-destructive/30 bg-error-light text-destructive"><XCircle className="mr-1 h-3 w-3" />失败</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
     }
@@ -108,7 +114,7 @@ export default function Pipelines() {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
             {presets.map((p) => (
-              <div key={p.id} className="rounded-lg border p-4 hover:border-primary/50 transition-colors">
+              <div key={p.id} className="rounded-lg border p-4 hover:border-primary/50 hover:shadow-sm transition-all duration-200">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold flex items-center gap-2">
                     <span>{p.icon}</span> {p.name}
@@ -155,21 +161,26 @@ export default function Pipelines() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">加载中...</TableCell>
+                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                    <div className="flex items-center justify-center gap-2 py-4">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                      加载中...
+                    </div>
+                  </TableCell>
                 </TableRow>
               ) : executions.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center">
-                    <div className="py-8">
-                      <GitBranch className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                    <div className="py-12">
+                      <GitBranch className="mx-auto h-12 w-12 text-muted-foreground/40" />
                       <p className="mt-4 text-muted-foreground">暂无执行记录</p>
-                      <p className="mt-2 text-sm text-muted-foreground">点击上方"立即执行"开始运行流水线</p>
+                      <p className="mt-1 text-xs text-muted-foreground">点击上方"立即执行"开始运行流水线</p>
                     </div>
                   </TableCell>
                 </TableRow>
               ) : (
                 executions.map((exec) => (
-                  <TableRow key={exec.id}>
+                  <TableRow key={exec.id} className="hover:bg-muted/50 transition-colors duration-150">
                     <TableCell className="font-medium">{exec.pipelineName}</TableCell>
                     <TableCell>{getStatusBadge(exec.status)}</TableCell>
                     <TableCell className="text-muted-foreground">
@@ -198,9 +209,9 @@ export default function Pipelines() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">流水线名称 <span className="text-red-500">*</span></label>
+              <label className="text-sm font-medium">流水线名称 <span className="text-destructive">*</span></label>
               <input
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 value={customPipeline.name}
                 onChange={(e) => setCustomPipeline({ ...customPipeline, name: e.target.value })}
                 placeholder="如: 自定义评测流程"
@@ -209,7 +220,7 @@ export default function Pipelines() {
             <div className="space-y-2">
               <label className="text-sm font-medium">描述</label>
               <input
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 value={customPipeline.description}
                 onChange={(e) => setCustomPipeline({ ...customPipeline, description: e.target.value })}
                 placeholder="流水线描述"
@@ -218,7 +229,7 @@ export default function Pipelines() {
             <div className="space-y-2">
               <label className="text-sm font-medium">节点（逗号分隔）</label>
               <input
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 value={customPipeline.nodes}
                 onChange={(e) => setCustomPipeline({ ...customPipeline, nodes: e.target.value })}
                 placeholder="如: execute, rule-eval, ai-eval, annotate"

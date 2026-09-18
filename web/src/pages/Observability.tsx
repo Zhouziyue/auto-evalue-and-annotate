@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { useToastActions } from '@/components/ui/toast'
 import { Activity, DollarSign, Clock, Cpu, Zap, AlertTriangle } from 'lucide-react'
 import axios from 'axios'
 
@@ -44,11 +45,32 @@ interface LLMRecord {
   errorMessage?: string
 }
 
+// 骨架屏
+function SkeletonCards() {
+  return (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {[1, 2, 3, 4].map(i => (
+        <Card key={i}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div className="h-4 w-20 animate-skeleton rounded" />
+            <div className="h-4 w-4 animate-skeleton rounded" />
+          </CardHeader>
+          <CardContent>
+            <div className="h-8 w-24 animate-skeleton rounded" />
+            <div className="mt-2 h-3 w-32 animate-skeleton rounded" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  )
+}
+
 export default function Observability() {
   const [stats, setStats] = useState<ObservabilityStats | null>(null)
   const [records, setRecords] = useState<LLMRecord[]>([])
   const [loading, setLoading] = useState(false)
   const [hours, setHours] = useState(24)
+  const { toastError } = useToastActions()
 
   useEffect(() => {
     fetchData()
@@ -65,6 +87,7 @@ export default function Observability() {
       setRecords(recordsRes.data)
     } catch (e) {
       console.error(e)
+      toastError('加载监控数据失败')
     }
     setLoading(false)
   }
@@ -96,61 +119,63 @@ export default function Observability() {
       </div>
 
       {/* 统计卡片 */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">总调用次数</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalCalls || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              错误率: {((stats?.errorRate || 0) * 100).toFixed(1)}%
-            </p>
-          </CardContent>
-        </Card>
+      {loading ? <SkeletonCards /> : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card className="hover:shadow-sm transition-shadow duration-200">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">总调用次数</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats?.totalCalls || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                错误率: {((stats?.errorRate || 0) * 100).toFixed(1)}%
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">总 Token 数</CardTitle>
-            <Cpu className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {stats?.totalTokens ? (stats.totalTokens / 1000).toFixed(1) + 'K' : '0'}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              平均 {stats?.totalCalls ? Math.round(stats.totalTokens / stats.totalCalls) : 0} tokens/次
-            </p>
-          </CardContent>
-        </Card>
+          <Card className="hover:shadow-sm transition-shadow duration-200">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">总 Token 数</CardTitle>
+              <Cpu className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {stats?.totalTokens ? (stats.totalTokens / 1000).toFixed(1) + 'K' : '0'}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                平均 {stats?.totalCalls ? Math.round(stats.totalTokens / stats.totalCalls) : 0} tokens/次
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">总成本</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCost(stats?.totalCost || 0)}</div>
-            <p className="text-xs text-muted-foreground">
-              平均 {stats?.totalCalls ? formatCost(stats.totalCost / stats.totalCalls) : '$0'}/次
-            </p>
-          </CardContent>
-        </Card>
+          <Card className="hover:shadow-sm transition-shadow duration-200">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">总成本</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCost(stats?.totalCost || 0)}</div>
+              <p className="text-xs text-muted-foreground">
+                平均 {stats?.totalCalls ? formatCost(stats.totalCost / stats.totalCalls) : '$0'}/次
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">平均延迟</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatLatency(stats?.avgLatency || 0)}</div>
-            <p className="text-xs text-muted-foreground">
-              P95: {formatLatency(stats?.p95Latency || 0)}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+          <Card className="hover:shadow-sm transition-shadow duration-200">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">平均延迟</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatLatency(stats?.avgLatency || 0)}</div>
+              <p className="text-xs text-muted-foreground">
+                P95: {formatLatency(stats?.p95Latency || 0)}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* 延迟分布 */}
       <Card>
@@ -161,17 +186,17 @@ export default function Observability() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-4">
-            <div className="rounded-lg border p-4 text-center">
+            <div className="rounded-lg border p-4 text-center hover:shadow-sm transition-shadow duration-200">
               <div className="text-sm text-muted-foreground">P50</div>
               <div className="text-xl font-bold">{formatLatency(stats?.p50Latency || 0)}</div>
             </div>
-            <div className="rounded-lg border p-4 text-center">
+            <div className="rounded-lg border p-4 text-center hover:shadow-sm transition-shadow duration-200">
               <div className="text-sm text-muted-foreground">P95</div>
-              <div className="text-xl font-bold text-yellow-600">{formatLatency(stats?.p95Latency || 0)}</div>
+              <div className="text-xl font-bold text-warning">{formatLatency(stats?.p95Latency || 0)}</div>
             </div>
-            <div className="rounded-lg border p-4 text-center">
+            <div className="rounded-lg border p-4 text-center hover:shadow-sm transition-shadow duration-200">
               <div className="text-sm text-muted-foreground">P99</div>
-              <div className="text-xl font-bold text-red-600">{formatLatency(stats?.p99Latency || 0)}</div>
+              <div className="text-xl font-bold text-destructive">{formatLatency(stats?.p99Latency || 0)}</div>
             </div>
           </div>
         </CardContent>
@@ -198,7 +223,7 @@ export default function Observability() {
               </TableHeader>
               <TableBody>
                 {stats.modelBreakdown.map((m) => (
-                  <TableRow key={m.model}>
+                  <TableRow key={m.model} className="hover:bg-muted/50 transition-colors duration-150">
                     <TableCell className="font-medium">{m.model}</TableCell>
                     <TableCell className="text-center">{m.calls}</TableCell>
                     <TableCell className="text-center">{(m.tokens / 1000).toFixed(1)}K</TableCell>
@@ -232,15 +257,26 @@ export default function Observability() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">加载中...</TableCell>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    <div className="flex items-center justify-center gap-2 py-4">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                      加载中...
+                    </div>
+                  </TableCell>
                 </TableRow>
               ) : records.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">暂无记录</TableCell>
+                  <TableCell colSpan={6} className="text-center">
+                    <div className="py-12">
+                      <Activity className="mx-auto h-12 w-12 text-muted-foreground/40" />
+                      <p className="mt-4 text-muted-foreground">暂无记录</p>
+                      <p className="mt-1 text-xs text-muted-foreground">调用 LLM 后，记录会显示在此处</p>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ) : (
                 records.map((r) => (
-                  <TableRow key={r.id}>
+                  <TableRow key={r.id} className="hover:bg-muted/50 transition-colors duration-150">
                     <TableCell className="text-muted-foreground">
                       {new Date(r.timestamp).toLocaleString()}
                     </TableCell>

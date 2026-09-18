@@ -2,50 +2,116 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===== Design Tokens (per WebUI设计规范 v1.0) ===== */
 @layer base {
   :root {
+    /* Brand / Primary — Indigo 500 */
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 243 75% 59%;
+    --primary-active: 245 76% 52%;
+    --primary-light: 226 100% 97%;
+
+    /* Semantic — Success */
+    --success: 142 71% 45%;
+    --success-light: 138 76% 97%;
+    /* Warning */
+    --warning: 38 92% 50%;
+    --warning-light: 48 100% 96%;
+    /* Error / Destructive */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --error-light: 0 93% 94%;
+    /* Info */
+    --info: 217 91% 60%;
+    --info-light: 214 95% 96%;
+
+    /* Surfaces */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 222 47% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --popover-foreground: 222 47% 11%;
+
+    /* Secondary / Muted / Accent */
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 214 32% 91%;
+    --accent-foreground: 222 47% 11%;
+
+    /* Borders & Input */
+    --border: 214 32% 91%;
+    --border-light: 214 32% 96%;
+    --input: 214 32% 91%;
+    --ring: 239 84% 67%;
+
+    /* Radius */
     --radius: 0.5rem;
+
+    /* Font */
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Consolas,
+      "Liberation Mono", Menlo, monospace;
+
+    /* Shadows */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+
+    /* Transitions (per spec §8.2) */
+    --transition-fast: 150ms ease-out;
+    --transition-normal: 200ms ease-in-out;
+    --transition-slow: 300ms ease-in-out;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 222 47% 11%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 222 47% 11%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
+
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 243 75% 59%;
+    --primary-active: 245 76% 52%;
+    --primary-light: 226 100% 12%;
+
+    --success: 142 71% 45%;
+    --success-light: 138 76% 10%;
+    --warning: 38 92% 50%;
+    --warning-light: 48 100% 10%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 100%;
+    --error-light: 0 93% 10%;
+    --info: 217 91% 60%;
+    --info-light: 214 95% 10%;
+
+    --secondary: 217 33% 17%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 33% 17%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+
+    --border: 217 33% 17%;
+    --border-light: 217 33% 12%;
+    --input: 217 33% 17%;
+    --ring: 212 27% 84%;
+
+    /* Dark mode: shadows减弱, 用边框区分层级 */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
   }
 }
 
@@ -53,12 +119,80 @@
   * {
     @apply border-border;
   }
+
+  html {
+    font-size: 14px; /* 规范 §3.2: 正文 14px */
+  }
+
   body {
     @apply bg-background text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: var(--font-sans);
+    line-height: 1.57; /* 规范 §3.4: 中文正文行高 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* 规范 §3.3: 字重使用 */
+  h1, h2, h3, h4 {
+    @apply font-semibold;
+  }
+
+  /* 规范 §8.2: 动画时长 */
+  *, *::before, *::after {
+    transition-duration: var(--transition-normal);
+  }
+
+  /* 规范 §10.2: 尊重 prefers-reduced-motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
 #root {
   min-height: 100vh;
+}
+
+/* ===== Utility: Skeleton Loading (骨架屏) ===== */
+@layer utilities {
+  .animate-skeleton {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 25%,
+      hsl(var(--muted-foreground) / 0.08) 50%,
+      hsl(var(--muted)) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  }
+
+  @keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* 规范 §5.2: 阴影工具类 */
+  .shadow-xs { box-shadow: var(--shadow-xs); }
+  .shadow-sm { box-shadow: var(--shadow-sm); }
+  .shadow-md { box-shadow: var(--shadow-md); }
+  .shadow-lg { box-shadow: var(--shadow-lg); }
+  .shadow-xl { box-shadow: var(--shadow-xl); }
+}
+
+/* ===== Toast Animation ===== */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes toast-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-8px); }
+}
+.animate-toast-in {
+  animation: toast-in var(--transition-normal) ease-out;
+}
+.animate-toast-out {
+  animation: toast-out 150ms ease-in forwards;
 }

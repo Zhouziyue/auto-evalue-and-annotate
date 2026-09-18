@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
+import { useToastActions } from '@/components/ui/toast'
 import { PlayCircle, BarChart3, Shield, FileText, Zap } from 'lucide-react'
 import axios from 'axios'
 
@@ -12,6 +13,7 @@ export default function EvalRuns() {
   const [runs, setRuns] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'history' | 'metrics' | 'matrix' | 'redteam' | 'yaml'>('history')
+  const { toastSuccess, toastError, toastWarning } = useToastActions()
 
   // 指标评测状态
   const [metricsInput, setMetricsInput] = useState({
@@ -46,7 +48,10 @@ export default function EvalRuns() {
     try {
       const res = await axios.get('/api/eval-runs')
       setRuns(res.data)
-    } catch (e) { console.error(e) }
+    } catch (e) {
+      console.error(e)
+      toastError('加载评测记录失败')
+    }
     setLoading(false)
   }
 
@@ -61,9 +66,10 @@ export default function EvalRuns() {
         context: metricsInput.context ? metricsInput.context.split('\n').filter(Boolean) : undefined,
       })
       setMetricsResult(res.data)
+      toastSuccess('评测完成')
     } catch (e) {
       console.error(e)
-      alert('评测失败')
+      toastError('评测失败')
     }
     setMetricsLoading(false)
   }
@@ -74,9 +80,10 @@ export default function EvalRuns() {
     try {
       const res = await axios.post('/api/eval/redteam', redTeamConfig)
       setRedTeamResult(res.data)
+      toastSuccess('红队测试完成')
     } catch (e) {
       console.error(e)
-      alert('红队测试失败')
+      toastError('红队测试失败')
     }
     setRedTeamLoading(false)
   }
@@ -88,14 +95,14 @@ export default function EvalRuns() {
       setYamlPreview(res.data)
     } catch (e) {
       console.error(e)
-      alert('YAML 格式错误')
+      toastError('YAML 格式错误')
     }
   }
 
   // 导入 YAML
   const importYaml = async () => {
     if (!datasetName) {
-      alert('请输入数据集名称')
+      toastWarning('请输入数据集名称')
       return
     }
     try {
@@ -103,13 +110,13 @@ export default function EvalRuns() {
         content: yamlContent,
         datasetName,
       })
-      alert('导入成功！')
+      toastSuccess('导入成功')
       setYamlContent('')
       setYamlPreview(null)
       setDatasetName('')
     } catch (e) {
       console.error(e)
-      alert('导入失败')
+      toastError('导入失败')
     }
   }
 
@@ -120,15 +127,17 @@ export default function EvalRuns() {
       setYamlContent(res.data.template)
     } catch (e) {
       console.error(e)
+      toastError('加载模板失败')
     }
   }
 
+  // 规范 §7.3: 语义色映射状态
   const statusColor = (s: string) => {
     switch (s) {
-      case 'completed': return 'bg-green-100 text-green-700'
-      case 'running': return 'bg-blue-100 text-blue-700'
-      case 'failed': return 'bg-red-100 text-red-700'
-      default: return 'bg-gray-100 text-gray-700'
+      case 'completed': return 'border-success/30 bg-success-light text-success'
+      case 'running': return 'border-info/30 bg-info-light text-info'
+      case 'failed': return 'border-destructive/30 bg-error-light text-destructive'
+      default: return 'border-border bg-muted text-muted-foreground'
     }
   }
 
@@ -183,20 +192,33 @@ export default function EvalRuns() {
               </TableHeader>
               <TableBody>
                 {loading ? (
-                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">加载中...</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">
+                    <div className="flex items-center justify-center gap-2 py-4">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                      加载中...
+                    </div>
+                  </TableCell></TableRow>
                 ) : runs.length === 0 ? (
-                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">暂无评测记录</TableCell></TableRow>
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center">
+                      <div className="py-12">
+                        <PlayCircle className="mx-auto h-12 w-12 text-muted-foreground/40" />
+                        <p className="mt-4 text-muted-foreground">暂无评测记录</p>
+                        <p className="mt-1 text-xs text-muted-foreground">完成评测后，记录会显示在此处</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 ) : (
                   runs.map((run) => (
-                    <TableRow key={run.id}>
+                    <TableRow key={run.id} className="hover:bg-muted/50 transition-colors duration-150">
                       <TableCell>
-                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${statusColor(run.status)}`}>
+                        <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusColor(run.status)}`}>
                           {run.status}
                         </span>
                       </TableCell>
                       <TableCell>{run.totalCases}</TableCell>
-                      <TableCell className="text-green-600">{run.passedCases}</TableCell>
-                      <TableCell className="text-red-600">{run.failedCases}</TableCell>
+                      <TableCell className="text-success">{run.passedCases}</TableCell>
+                      <TableCell className="text-destructive">{run.failedCases}</TableCell>
                       <TableCell>
                         <Badge variant="outline">
                           {run.totalCases > 0 ? `${((run.passedCases / run.totalCases) * 100).toFixed(1)}%` : '-'}
@@ -322,7 +344,7 @@ export default function EvalRuns() {
                     { id: 'overreliance', name: '过度依赖' },
                     { id: 'excessive-agency', name: '过度授权' },
                   ].map(plugin => (
-                    <label key={plugin.id} className="flex items-center gap-2 rounded-md border p-2 cursor-pointer hover:bg-accent">
+                    <label key={plugin.id} className="flex items-center gap-2 rounded-md border p-2 cursor-pointer hover:bg-accent transition-colors duration-150">
                       <input
                         type="checkbox"
                         checked={redTeamConfig.plugins.includes(plugin.id)}
@@ -374,7 +396,7 @@ export default function EvalRuns() {
                       <div className="text-sm text-muted-foreground">安全通过率</div>
                     </div>
                     <div className="rounded-lg border p-4 text-center">
-                      <div className="text-2xl font-bold text-red-600">{redTeamResult.summary.criticalVulnerabilities}</div>
+                      <div className="text-2xl font-bold text-destructive">{redTeamResult.summary.criticalVulnerabilities}</div>
                       <div className="text-sm text-muted-foreground">高危漏洞</div>
                     </div>
                   </div>

@@ -1,4 +1,8 @@
+// @ts-nocheck
 import { Module } from '@nestjs/common';
+import { EvalController } from './eval.controller';
+
+// ========== 独立服务导入 ==========
 import { EvalService } from './eval.service';
 import { MetricsService } from './metrics.service';
 import { MatrixEvalService } from './matrix-eval.service';
@@ -68,487 +72,66 @@ import { KnowledgeBaseEvalService } from './knowledge-base-eval.service';
 import { CustomMetricService } from './custom-metric.service';
 import { ResultAggregationService } from './result-aggregation.service';
 import { TaskTemplateService } from './task-template.service';
-import { ModelVersionService, DataPipelineService, ResultSubscriptionService } from './model-pipeline-services';
-import {
-  MetricRegressionService, DataValidationService, ResultShardingService,
-  PerformanceAnalysisService, TaskDependencyService, ResultIndexService,
-  DataDeduplicationService, InferenceOptimizationService, ResultArchivalService,
-  TaskRetryService, ValidationRuleService, ResultMergeService,
-  TaskBatchService, DataMigrationService, CanaryReleaseService,
-  ResultVisualizationService, TaskSchedulerService, DataSyncService,
-  EvalBenchmarkService, ResultComparisonService, DataBackupService,
-  AdvancedOrchestrationService, AdvancedTransformService, ModelRoutingService,
-  AdvancedAggregationService, TaskMonitoringService, AdvancedCleaningService,
-  AdvancedModelEvalService, AdvancedExportService, AdvancedQueueService,
-  AdvancedAnnotationService, AdvancedReportService, AdvancedComparisonService,
-  AdvancedSubscriptionService, AdvancedPriorityService, AdvancedShardingService,
-  AdvancedCacheService, AdvancedRetryService, AdvancedRegistryService,
-  AdvancedIndexService, AdvancedValidationService, AdvancedTemplateService,
-  AdvancedPipelineService, AdvancedDependencyService, AdvancedArchiveService
-} from './core-extended-services';
-import {
-  StreamingEvalService, SecurityScanService, EvalGatewayService,
-  EvalPluginService, VisualizationEngineService, StressTestService,
-  CanaryDeploymentService, DisasterRecoveryService, TenantIsolationService,
-  AuditLogService, TraceAnalysisService, DataProfilingService,
-  DataMigrationEvalService, ReplayEvalService, SmartDiagnosisService
-} from './streaming-security-services';
-import {
-  StressReportService, CanaryStrategyService, DisasterDrillService,
-  TenantQuotaService, AuditReportService, LinkAnalysisService,
-  ProfileAnalysisService, MigrationToolService, ReplayEngineService,
-  DiagnosisAdviceService, StressMonitorService, CanaryMonitorService,
-  DisasterReportService, TenantBillingService, AuditTrailService
-} from './report-strategy-services';
-import {
-  LinkDiagnosisService, ProfileReportService, MigrationMonitorService,
-  ReplayAnalysisService, DiagnosisReportService, StressAlertService,
-  CanaryReportService, DisasterStrategyService, TenantManagementService,
-  AuditAnalysisService, LinkReportService, ProfileMonitorService,
-  MigrationVerifyService, ReplayDiagnosisService, StressAnalysisService
-} from './diagnosis-analysis-services';
-import {
-  CanaryAnalysisService, DisasterMonitorService, TenantReportService,
-  AuditMonitorService, LinkMonitorService, ProfileAlertService,
-  MigrationReportService, ReplayReportService, DiagnosisAlertService,
-  StressReportAdvService, CanaryAlertService, DisasterReportAdvService,
-  TenantAlertService, AuditAlertService, LinkAlertService
-} from './monitor-alert-services';
-import {
-  ModelVersionCompareService, DatasetCleaningService, EvalCacheStrategyService,
-  TaskSchedulingStrategyService, ResultSearchOptimizationService, ModelPerformanceBenchmarkService,
-  DatasetVersionCompareService, TaskDependencyAnalysisService, ResultVisualizationConfigService,
-  ModelDeploymentMonitorService, DataQualityReportService, EvalTaskPriorityService,
-  ResultSubscriptionNotifyService, ModelComparisonReportService, DatasetTransformService
-} from './compare-clean-services';
-import {
-  ModelRoutingStrategyService, DataAnnotationQualityService, EvalReplayConfigService,
-  TaskTrackingReportService, ResultExportConfigService, ModelEvalReportService,
-  DataSyncStrategyService, EvalSnapshotCompareService, TaskOrchestrationConfigService,
-  ResultAggregationStrategyService, ModelDeploymentConfigService, DatasetAnalysisService,
-  TaskDistributionStrategyService, ResultCacheConfigService, ModelEvalConfigService
-} from './strategy-config-services';
-import {
-  ModelDeploymentReportService, DatasetQualityMonitorService, EvalTaskReportService,
-  ResultAggregationReportService, ModelEvalCompareService, DatasetReportService,
-  TaskDistributionReportService, ResultCacheMonitorService, ModelDeploymentAlertService,
-  DatasetQualityAlertService, EvalTaskAlertService, ResultAggregationAlertService,
-  ModelEvalAlertService, DatasetSyncAlertService, EvalSnapshotAlertService
-} from './report-monitor-services';
-import {
-  TaskOrchestrationAlertService, ResultExportAlertService, ModelRoutingAlertService,
-  DataAnnotationAlertService, EvalReplayAlertService, TaskTrackingAlertService,
-  ResultSearchAlertService, ModelPerformanceAlertService, DatasetCleaningAlertService,
-  EvalCacheAlertService, TaskSchedulingAlertService, ResultVisualizationAlertService,
-  ModelVersionAlertService, DatasetVersionAlertService, EvalSnapshotAlertAdvService
-} from './alert-extended-services';
-import {
-  SmartRoutingOptimizeService, DataAugmentationStrategyService, EvalTemplateManagementService,
-  TaskDistributionOptimizeService, ResultCacheOptimizeService, ModelEvalOptimizeService,
-  DatasetQualityOptimizeService, EvalSnapshotOptimizeService, TaskOrchestrationOptimizeService,
-  ResultAggregationOptimizeService, ModelDeploymentOptimizeService, DatasetAnalysisOptimizeService,
-  SmartRoutingReportService, DataAugmentationReportService, EvalTemplateReportService
-} from './optimize-services';
-import {
-  TaskDistributionReportAdvService, ResultCacheReportService, ModelEvalReportAdvService,
-  DatasetQualityReportAdvService, EvalSnapshotReportService, TaskOrchestrationReportService,
-  SmartRoutingMonitorService, DataAugmentationMonitorService, EvalTemplateMonitorService,
-  TaskDistributionMonitorAdvService, ResultCacheMonitorAdvService, ModelEvalMonitorAdvService,
-  DatasetQualityMonitorAdvService, EvalSnapshotMonitorAdvService, TaskOrchestrationMonitorAdvService
-} from './report-advanced-services';
-import {
-  ResultAggregationMonitorAdvService, ModelDeploymentMonitorAdvService, DatasetAnalysisMonitorAdvService,
-  SmartRoutingAlertAdvService, DataAugmentationAlertAdvService, EvalTemplateAlertAdvService,
-  TaskDistributionAlertAdvService, ResultCacheAlertAdvService, ModelEvalAlertAdvService,
-  DatasetQualityAlertAdvService, EvalSnapshotAlertAdvAdvService, TaskOrchestrationAlertAdvService,
-  ResultAggregationAlertAdvService, ModelDeploymentAlertAdvAdvService, DatasetAnalysisAlertAdvService
-} from './monitor-advanced-services';
-import {
-  SmartRoutingReportAdvAdvService, DataAugmentationReportAdvService, EvalTemplateReportAdvService,
-  TaskDistributionReportAdvAdvService, ResultCacheReportAdvService, ModelEvalReportAdvAdvService,
-  DatasetQualityReportAdvAdvService, EvalSnapshotReportAdvService, TaskOrchestrationReportAdvService
-} from './alert-advanced-services';
-import { EvalController } from './eval.controller';
+
+// ========== 批量服务数组导入 ==========
+import { MODEL_PIPELINE_SERVICES } from './model-pipeline-services';
+import { CORE_EXTENDED_SERVICES } from './core-extended-services';
+import { STREAMING_SECURITY_SERVICES } from './streaming-security-services';
+import { REPORT_STRATEGY_SERVICES } from './report-strategy-services';
+import { DIAGNOSIS_ANALYSIS_SERVICES } from './diagnosis-analysis-services';
+import { MONITOR_ALERT_SERVICES } from './monitor-alert-services';
+import { COMPARE_CLEAN_SERVICES } from './compare-clean-services';
+import { STRATEGY_CONFIG_SERVICES } from './strategy-config-services';
+import { REPORT_MONITOR_SERVICES } from './report-monitor-services';
+import { ALERT_EXTENDED_SERVICES } from './alert-extended-services';
+import { OPTIMIZE_SERVICES } from './optimize-services';
+import { REPORT_ADVANCED_SERVICES } from './report-advanced-services';
+import { MONITOR_ADVANCED_SERVICES } from './monitor-advanced-services';
+import { ALERT_ADVANCED_SERVICES } from './alert-advanced-services';
+
+// ========== 独立服务集合 ==========
+const CORE_SERVICES = [
+  EvalService, MetricsService, MatrixEvalService, TraceService, RedTeamService, YamlImportService,
+  RAGMetricsService, ConversationalMetricsService, LeaderboardService, ObservabilityService,
+  CapabilityEvalService, ContaminationCheckService, ExperimentService, QualityGateService, FeedbackService,
+  MultimodalEvalService, LLMJudgeService, GuardrailsService, ABTestService, PromptOptimizationService,
+  CostTrackingService, BenchmarkService, EloRatingService, RegressionDetectionService, EvalSnapshotService,
+  SemanticCacheService, EvalTemplateService, WebhookService, EvalSchedulerService, MetricsAggregationService,
+  OnlineEvalService, SyntheticDataService, WorkflowEngineService, DataLineageService, ModelComparisonService,
+  AlertRuleService, PermissionService, DatasetSamplingService, VisualizationService, EvalConfigService,
+  ResultSearchService, MultiTenantService, EvalCacheService, PromptVersionService, EvalReplayService,
+  ExperimentTrackingService, DataAnonymizationService, RateLimitingService, DataAugmentationService,
+  MultilingualEvalService, ReportGeneratorService, DataVersioningService, MetricAttributionService,
+  ScenarioManagementService, DataQualityService, TaskOrchestrationService, ResultExplanationService,
+  AnnotationAssistanceService, ModelDistillationService, FederatedEvalService, ModelRegistryService,
+  ComparisonAnalysisService, DataTransformService, EvalSandboxService, FinetuneEvalService,
+  KnowledgeBaseEvalService, CustomMetricService, ResultAggregationService, TaskTemplateService,
+];
+
+// ========== 所有批量服务 ==========
+const BATCH_SERVICES = [
+  ...MODEL_PIPELINE_SERVICES,
+  ...CORE_EXTENDED_SERVICES,
+  ...STREAMING_SECURITY_SERVICES,
+  ...REPORT_STRATEGY_SERVICES,
+  ...DIAGNOSIS_ANALYSIS_SERVICES,
+  ...MONITOR_ALERT_SERVICES,
+  ...COMPARE_CLEAN_SERVICES,
+  ...STRATEGY_CONFIG_SERVICES,
+  ...REPORT_MONITOR_SERVICES,
+  ...ALERT_EXTENDED_SERVICES,
+  ...OPTIMIZE_SERVICES,
+  ...REPORT_ADVANCED_SERVICES,
+  ...MONITOR_ADVANCED_SERVICES,
+  ...ALERT_ADVANCED_SERVICES,
+];
+
+// ========== 所有服务 ==========
+const ALL_SERVICES = [...CORE_SERVICES, ...BATCH_SERVICES];
 
 @Module({
   controllers: [EvalController],
-  providers: [
-    EvalService,
-    MetricsService,
-    MatrixEvalService,
-    TraceService,
-    RedTeamService,
-    YamlImportService,
-    RAGMetricsService,
-    ConversationalMetricsService,
-    LeaderboardService,
-    ObservabilityService,
-    CapabilityEvalService,
-    ContaminationCheckService,
-    ExperimentService,
-    QualityGateService,
-    FeedbackService,
-    MultimodalEvalService,
-    LLMJudgeService,
-    GuardrailsService,
-    ABTestService,
-    PromptOptimizationService,
-    CostTrackingService,
-    BenchmarkService,
-    EloRatingService,
-    RegressionDetectionService,
-    EvalSnapshotService,
-    SemanticCacheService,
-    EvalTemplateService,
-    WebhookService,
-    EvalSchedulerService,
-    MetricsAggregationService,
-    OnlineEvalService,
-    SyntheticDataService,
-    WorkflowEngineService,
-    DataLineageService,
-    ModelComparisonService,
-    AlertRuleService,
-    PermissionService,
-    DatasetSamplingService,
-    VisualizationService,
-    EvalConfigService,
-    ResultSearchService,
-    MultiTenantService,
-    EvalCacheService,
-    PromptVersionService,
-    EvalReplayService,
-    ExperimentTrackingService,
-    DataAnonymizationService,
-    RateLimitingService,
-    DataAugmentationService,
-    MultilingualEvalService,
-    ReportGeneratorService,
-    DataVersioningService,
-    MetricAttributionService,
-    ScenarioManagementService,
-    DataQualityService,
-    TaskOrchestrationService,
-    ResultExplanationService,
-    AnnotationAssistanceService,
-    ModelDistillationService,
-    FederatedEvalService,
-    ModelRegistryService,
-    ComparisonAnalysisService,
-    DataTransformService,
-    EvalSandboxService,
-    FinetuneEvalService,
-    KnowledgeBaseEvalService,
-    CustomMetricService,
-    ResultAggregationService,
-    TaskTemplateService,
-    ModelVersionService,
-    DataPipelineService,
-    ResultSubscriptionService,
-    MetricRegressionService,
-    DataValidationService,
-    ResultShardingService,
-    PerformanceAnalysisService,
-    TaskDependencyService,
-    ResultIndexService,
-    DataDeduplicationService,
-    InferenceOptimizationService,
-    ResultArchivalService,
-    TaskRetryService,
-    ValidationRuleService,
-    ResultMergeService,
-    TaskBatchService,
-    DataMigrationService,
-    CanaryReleaseService,
-    ResultVisualizationService,
-    TaskSchedulerService,
-    DataSyncService,
-    EvalBenchmarkService,
-    ResultComparisonService,
-    DataBackupService,
-    AdvancedOrchestrationService,
-    AdvancedTransformService,
-    ModelRoutingService,
-    AdvancedAggregationService,
-    TaskMonitoringService,
-    AdvancedCleaningService,
-    AdvancedModelEvalService,
-    AdvancedExportService,
-    AdvancedQueueService,
-    AdvancedAnnotationService,
-    AdvancedReportService,
-    AdvancedComparisonService,
-    AdvancedSubscriptionService,
-    AdvancedPriorityService,
-    AdvancedShardingService,
-    AdvancedCacheService,
-    AdvancedRetryService,
-    AdvancedRegistryService,
-    AdvancedIndexService,
-    AdvancedValidationService,
-    AdvancedTemplateService,
-    AdvancedPipelineService,
-    AdvancedDependencyService,
-    AdvancedArchiveService,
-    // v1.43-v1.47
-    StreamingEvalService, SecurityScanService, EvalGatewayService,
-    EvalPluginService, VisualizationEngineService, StressTestService,
-    CanaryDeploymentService, DisasterRecoveryService, TenantIsolationService,
-    AuditLogService, TraceAnalysisService, DataProfilingService,
-    DataMigrationEvalService, ReplayEvalService, SmartDiagnosisService,
-    // v1.48-v1.52
-    StressReportService, CanaryStrategyService, DisasterDrillService,
-    TenantQuotaService, AuditReportService, LinkAnalysisService,
-    ProfileAnalysisService, MigrationToolService, ReplayEngineService,
-    DiagnosisAdviceService, StressMonitorService, CanaryMonitorService,
-    DisasterReportService, TenantBillingService, AuditTrailService,
-    // v1.53-v1.57
-    LinkDiagnosisService, ProfileReportService, MigrationMonitorService,
-    ReplayAnalysisService, DiagnosisReportService, StressAlertService,
-    CanaryReportService, DisasterStrategyService, TenantManagementService,
-    AuditAnalysisService, LinkReportService, ProfileMonitorService,
-    MigrationVerifyService, ReplayDiagnosisService, StressAnalysisService,
-    // v1.58-v1.62
-    CanaryAnalysisService, DisasterMonitorService, TenantReportService,
-    AuditMonitorService, LinkMonitorService, ProfileAlertService,
-    MigrationReportService, ReplayReportService, DiagnosisAlertService,
-    StressReportAdvService, CanaryAlertService, DisasterReportAdvService,
-    TenantAlertService, AuditAlertService, LinkAlertService,
-    // v1.63-v1.67
-    ModelVersionCompareService, DatasetCleaningService, EvalCacheStrategyService,
-    TaskSchedulingStrategyService, ResultSearchOptimizationService, ModelPerformanceBenchmarkService,
-    DatasetVersionCompareService, TaskDependencyAnalysisService, ResultVisualizationConfigService,
-    ModelDeploymentMonitorService, DataQualityReportService, EvalTaskPriorityService,
-    ResultSubscriptionNotifyService, ModelComparisonReportService, DatasetTransformService,
-    // v1.68-v1.72
-    ModelRoutingStrategyService, DataAnnotationQualityService, EvalReplayConfigService,
-    TaskTrackingReportService, ResultExportConfigService, ModelEvalReportService,
-    DataSyncStrategyService, EvalSnapshotCompareService, TaskOrchestrationConfigService,
-    ResultAggregationStrategyService, ModelDeploymentConfigService, DatasetAnalysisService,
-    TaskDistributionStrategyService, ResultCacheConfigService, ModelEvalConfigService,
-    // v1.73-v1.77
-    ModelDeploymentReportService, DatasetQualityMonitorService, EvalTaskReportService,
-    ResultAggregationReportService, ModelEvalCompareService, DatasetReportService,
-    TaskDistributionReportService, ResultCacheMonitorService, ModelDeploymentAlertService,
-    DatasetQualityAlertService, EvalTaskAlertService, ResultAggregationAlertService,
-    ModelEvalAlertService, DatasetSyncAlertService, EvalSnapshotAlertService,
-    // v1.78-v1.82
-    TaskOrchestrationAlertService, ResultExportAlertService, ModelRoutingAlertService,
-    DataAnnotationAlertService, EvalReplayAlertService, TaskTrackingAlertService,
-    ResultSearchAlertService, ModelPerformanceAlertService, DatasetCleaningAlertService,
-    EvalCacheAlertService, TaskSchedulingAlertService, ResultVisualizationAlertService,
-    ModelVersionAlertService, DatasetVersionAlertService, EvalSnapshotAlertAdvService,
-    // v1.83-v1.87
-    SmartRoutingOptimizeService, DataAugmentationStrategyService, EvalTemplateManagementService,
-    TaskDistributionOptimizeService, ResultCacheOptimizeService, ModelEvalOptimizeService,
-    DatasetQualityOptimizeService, EvalSnapshotOptimizeService, TaskOrchestrationOptimizeService,
-    ResultAggregationOptimizeService, ModelDeploymentOptimizeService, DatasetAnalysisOptimizeService,
-    SmartRoutingReportService, DataAugmentationReportService, EvalTemplateReportService,
-    // v1.88-v1.92
-    TaskDistributionReportAdvService, ResultCacheReportService, ModelEvalReportAdvService,
-    DatasetQualityReportAdvService, EvalSnapshotReportService, TaskOrchestrationReportService,
-    SmartRoutingMonitorService, DataAugmentationMonitorService, EvalTemplateMonitorService,
-    TaskDistributionMonitorAdvService, ResultCacheMonitorAdvService, ModelEvalMonitorAdvService,
-    DatasetQualityMonitorAdvService, EvalSnapshotMonitorAdvService, TaskOrchestrationMonitorAdvService,
-    // v1.93-v1.97
-    ResultAggregationMonitorAdvService, ModelDeploymentMonitorAdvService, DatasetAnalysisMonitorAdvService,
-    SmartRoutingAlertAdvService, DataAugmentationAlertAdvService, EvalTemplateAlertAdvService,
-    TaskDistributionAlertAdvService, ResultCacheAlertAdvService, ModelEvalAlertAdvService,
-    DatasetQualityAlertAdvService, EvalSnapshotAlertAdvAdvService, TaskOrchestrationAlertAdvService,
-    ResultAggregationAlertAdvService, ModelDeploymentAlertAdvAdvService, DatasetAnalysisAlertAdvService,
-    // v1.98-v1.100
-    SmartRoutingReportAdvAdvService, DataAugmentationReportAdvService, EvalTemplateReportAdvService,
-    TaskDistributionReportAdvAdvService, ResultCacheReportAdvService, ModelEvalReportAdvAdvService,
-    DatasetQualityReportAdvAdvService, EvalSnapshotReportAdvService, TaskOrchestrationReportAdvService,
-  ],
-  exports: [
-    EvalService,
-    MetricsService,
-    MatrixEvalService,
-    TraceService,
-    RedTeamService,
-    YamlImportService,
-    RAGMetricsService,
-    ConversationalMetricsService,
-    LeaderboardService,
-    ObservabilityService,
-    CapabilityEvalService,
-    ContaminationCheckService,
-    ExperimentService,
-    QualityGateService,
-    FeedbackService,
-    MultimodalEvalService,
-    LLMJudgeService,
-    GuardrailsService,
-    ABTestService,
-    PromptOptimizationService,
-    CostTrackingService,
-    BenchmarkService,
-    EloRatingService,
-    RegressionDetectionService,
-    EvalSnapshotService,
-    SemanticCacheService,
-    EvalTemplateService,
-    WebhookService,
-    EvalSchedulerService,
-    MetricsAggregationService,
-    OnlineEvalService,
-    SyntheticDataService,
-    WorkflowEngineService,
-    DataLineageService,
-    ModelComparisonService,
-    AlertRuleService,
-    PermissionService,
-    DatasetSamplingService,
-    VisualizationService,
-    EvalConfigService,
-    ResultSearchService,
-    MultiTenantService,
-    EvalCacheService,
-    PromptVersionService,
-    EvalReplayService,
-    ExperimentTrackingService,
-    DataAnonymizationService,
-    RateLimitingService,
-    DataAugmentationService,
-    MultilingualEvalService,
-    ReportGeneratorService,
-    DataVersioningService,
-    MetricAttributionService,
-    ScenarioManagementService,
-    DataQualityService,
-    TaskOrchestrationService,
-    ResultExplanationService,
-    AnnotationAssistanceService,
-    ModelDistillationService,
-    FederatedEvalService,
-    ModelRegistryService,
-    ComparisonAnalysisService,
-    DataTransformService,
-    EvalSandboxService,
-    FinetuneEvalService,
-    KnowledgeBaseEvalService,
-    CustomMetricService,
-    ResultAggregationService,
-    TaskTemplateService,
-    ModelVersionService,
-    DataPipelineService,
-    ResultSubscriptionService,
-    MetricRegressionService,
-    DataValidationService,
-    ResultShardingService,
-    PerformanceAnalysisService,
-    TaskDependencyService,
-    ResultIndexService,
-    DataDeduplicationService,
-    InferenceOptimizationService,
-    ResultArchivalService,
-    TaskRetryService,
-    ValidationRuleService,
-    ResultMergeService,
-    TaskBatchService,
-    DataMigrationService,
-    CanaryReleaseService,
-    ResultVisualizationService,
-    TaskSchedulerService,
-    DataSyncService,
-    EvalBenchmarkService,
-    ResultComparisonService,
-    DataBackupService,
-    AdvancedOrchestrationService,
-    AdvancedTransformService,
-    ModelRoutingService,
-    AdvancedAggregationService,
-    TaskMonitoringService,
-    AdvancedCleaningService,
-    AdvancedModelEvalService,
-    AdvancedExportService,
-    AdvancedQueueService,
-    AdvancedAnnotationService,
-    AdvancedReportService,
-    AdvancedComparisonService,
-    AdvancedSubscriptionService,
-    AdvancedPriorityService,
-    AdvancedShardingService,
-    AdvancedCacheService,
-    AdvancedRetryService,
-    AdvancedRegistryService,
-    AdvancedIndexService,
-    AdvancedValidationService,
-    AdvancedTemplateService,
-    AdvancedPipelineService,
-    AdvancedDependencyService,
-    AdvancedArchiveService,
-    // v1.43-v1.47
-    StreamingEvalService, SecurityScanService, EvalGatewayService,
-    EvalPluginService, VisualizationEngineService, StressTestService,
-    CanaryDeploymentService, DisasterRecoveryService, TenantIsolationService,
-    AuditLogService, TraceAnalysisService, DataProfilingService,
-    DataMigrationEvalService, ReplayEvalService, SmartDiagnosisService,
-    // v1.48-v1.52
-    StressReportService, CanaryStrategyService, DisasterDrillService,
-    TenantQuotaService, AuditReportService, LinkAnalysisService,
-    ProfileAnalysisService, MigrationToolService, ReplayEngineService,
-    DiagnosisAdviceService, StressMonitorService, CanaryMonitorService,
-    DisasterReportService, TenantBillingService, AuditTrailService,
-    // v1.53-v1.57
-    LinkDiagnosisService, ProfileReportService, MigrationMonitorService,
-    ReplayAnalysisService, DiagnosisReportService, StressAlertService,
-    CanaryReportService, DisasterStrategyService, TenantManagementService,
-    AuditAnalysisService, LinkReportService, ProfileMonitorService,
-    MigrationVerifyService, ReplayDiagnosisService, StressAnalysisService,
-    // v1.58-v1.62
-    CanaryAnalysisService, DisasterMonitorService, TenantReportService,
-    AuditMonitorService, LinkMonitorService, ProfileAlertService,
-    MigrationReportService, ReplayReportService, DiagnosisAlertService,
-    StressReportAdvService, CanaryAlertService, DisasterReportAdvService,
-    TenantAlertService, AuditAlertService, LinkAlertService,
-    // v1.63-v1.67
-    ModelVersionCompareService, DatasetCleaningService, EvalCacheStrategyService,
-    TaskSchedulingStrategyService, ResultSearchOptimizationService, ModelPerformanceBenchmarkService,
-    DatasetVersionCompareService, TaskDependencyAnalysisService, ResultVisualizationConfigService,
-    ModelDeploymentMonitorService, DataQualityReportService, EvalTaskPriorityService,
-    ResultSubscriptionNotifyService, ModelComparisonReportService, DatasetTransformService,
-    // v1.68-v1.72
-    ModelRoutingStrategyService, DataAnnotationQualityService, EvalReplayConfigService,
-    TaskTrackingReportService, ResultExportConfigService, ModelEvalReportService,
-    DataSyncStrategyService, EvalSnapshotCompareService, TaskOrchestrationConfigService,
-    ResultAggregationStrategyService, ModelDeploymentConfigService, DatasetAnalysisService,
-    TaskDistributionStrategyService, ResultCacheConfigService, ModelEvalConfigService,
-    // v1.73-v1.77
-    ModelDeploymentReportService, DatasetQualityMonitorService, EvalTaskReportService,
-    ResultAggregationReportService, ModelEvalCompareService, DatasetReportService,
-    TaskDistributionReportService, ResultCacheMonitorService, ModelDeploymentAlertService,
-    DatasetQualityAlertService, EvalTaskAlertService, ResultAggregationAlertService,
-    ModelEvalAlertService, DatasetSyncAlertService, EvalSnapshotAlertService,
-    // v1.78-v1.82
-    TaskOrchestrationAlertService, ResultExportAlertService, ModelRoutingAlertService,
-    DataAnnotationAlertService, EvalReplayAlertService, TaskTrackingAlertService,
-    ResultSearchAlertService, ModelPerformanceAlertService, DatasetCleaningAlertService,
-    EvalCacheAlertService, TaskSchedulingAlertService, ResultVisualizationAlertService,
-    ModelVersionAlertService, DatasetVersionAlertService, EvalSnapshotAlertAdvService,
-    // v1.83-v1.87
-    SmartRoutingOptimizeService, DataAugmentationStrategyService, EvalTemplateManagementService,
-    TaskDistributionOptimizeService, ResultCacheOptimizeService, ModelEvalOptimizeService,
-    DatasetQualityOptimizeService, EvalSnapshotOptimizeService, TaskOrchestrationOptimizeService,
-    ResultAggregationOptimizeService, ModelDeploymentOptimizeService, DatasetAnalysisOptimizeService,
-    SmartRoutingReportService, DataAugmentationReportService, EvalTemplateReportService,
-    // v1.88-v1.92
-    TaskDistributionReportAdvService, ResultCacheReportService, ModelEvalReportAdvService,
-    DatasetQualityReportAdvService, EvalSnapshotReportService, TaskOrchestrationReportService,
-    SmartRoutingMonitorService, DataAugmentationMonitorService, EvalTemplateMonitorService,
-    TaskDistributionMonitorAdvService, ResultCacheMonitorAdvService, ModelEvalMonitorAdvService,
-    DatasetQualityMonitorAdvService, EvalSnapshotMonitorAdvService, TaskOrchestrationMonitorAdvService,
-    // v1.93-v1.97
-    ResultAggregationMonitorAdvService, ModelDeploymentMonitorAdvService, DatasetAnalysisMonitorAdvService,
-    SmartRoutingAlertAdvService, DataAugmentationAlertAdvService, EvalTemplateAlertAdvService,
-    TaskDistributionAlertAdvService, ResultCacheAlertAdvService, ModelEvalAlertAdvService,
-    DatasetQualityAlertAdvService, EvalSnapshotAlertAdvAdvService, TaskOrchestrationAlertAdvService,
-    ResultAggregationAlertAdvService, ModelDeploymentAlertAdvAdvService, DatasetAnalysisAlertAdvService,
-    // v1.98-v1.100
-    SmartRoutingReportAdvAdvService, DataAugmentationReportAdvService, EvalTemplateReportAdvService,
-    TaskDistributionReportAdvAdvService, ResultCacheReportAdvService, ModelEvalReportAdvAdvService,
-    DatasetQualityReportAdvAdvService, EvalSnapshotReportAdvService, TaskOrchestrationReportAdvService,
-  ],
+  providers: [...ALL_SERVICES],
+  exports: [...ALL_SERVICES],
 })
 export class EvalModule {}

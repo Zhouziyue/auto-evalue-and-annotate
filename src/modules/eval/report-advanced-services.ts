@@ -125,3 +125,5 @@ export class TaskOrchestrationMonitorAdvService {
   async check(workflowId: string): Promise<any> { return { workflowId, tasks: Math.floor(Math.random() * 100), completed: Math.floor(Math.random() * 100) }; }
   async list(): Promise<any[]> { return Array.from(this.monitors.values()); }
 }
+
+export const REPORT_ADVANCED_SERVICES = [TaskDistributionReportAdvService, ResultCacheReportService, ModelEvalReportAdvService, DatasetQualityReportAdvService, EvalSnapshotReportService, TaskOrchestrationReportService, SmartRoutingMonitorService, DataAugmentationMonitorService, EvalTemplateMonitorService, TaskDistributionMonitorAdvService, ResultCacheMonitorAdvService, ModelEvalMonitorAdvService, DatasetQualityMonitorAdvService, EvalSnapshotMonitorAdvService, TaskOrchestrationMonitorAdvService];

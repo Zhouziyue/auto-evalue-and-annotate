@@ -129,3 +129,5 @@ export class DatasetTransformService {
   async execute(id: string): Promise<any> { return { transformId: id, status: 'completed', transformedAt: new Date() }; }
   async list(): Promise<any[]> { return this.transforms; }
 }
+
+export const COMPARE_CLEAN_SERVICES = [ModelVersionCompareService, DatasetCleaningService, EvalCacheStrategyService, TaskSchedulingStrategyService, ResultSearchOptimizationService, ModelPerformanceBenchmarkService, DatasetVersionCompareService, TaskDependencyAnalysisService, ResultVisualizationConfigService, ModelDeploymentMonitorService, DataQualityReportService, EvalTaskPriorityService, ResultSubscriptionNotifyService, ModelComparisonReportService, DatasetTransformService];

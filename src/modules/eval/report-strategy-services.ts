@@ -127,3 +127,5 @@ export class AuditTrailService {
   async query(filter: any): Promise<any[]> { return this.trails; }
   async list(): Promise<any[]> { return this.trails; }
 }
+
+export const REPORT_STRATEGY_SERVICES = [StressReportService, CanaryStrategyService, DisasterDrillService, TenantQuotaService, AuditReportService, LinkAnalysisService, ProfileAnalysisService, MigrationToolService, ReplayEngineService, DiagnosisAdviceService, StressMonitorService, CanaryMonitorService, DisasterReportService, TenantBillingService, AuditTrailService];

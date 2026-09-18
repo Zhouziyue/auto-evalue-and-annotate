@@ -125,3 +125,5 @@ export class LinkAlertService {
   async check(traceId: string, latency: number): Promise<any> { return { traceId, latency, alertTriggered: latency > 5000 }; }
   async list(): Promise<any[]> { return this.alerts; }
 }
+
+export const MONITOR_ALERT_SERVICES = [CanaryAnalysisService, DisasterMonitorService, TenantReportService, AuditMonitorService, LinkMonitorService, ProfileAlertService, MigrationReportService, ReplayReportService, DiagnosisAlertService, StressReportAdvService, CanaryAlertService, DisasterReportAdvService, TenantAlertService, AuditAlertService, LinkAlertService];

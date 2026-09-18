@@ -127,3 +127,5 @@ export class StressAnalysisService {
   async get(testId: string): Promise<any> { return this.analyses.get(testId); }
   async list(): Promise<any[]> { return Array.from(this.analyses.values()); }
 }
+
+export const DIAGNOSIS_ANALYSIS_SERVICES = [LinkDiagnosisService, ProfileReportService, MigrationMonitorService, ReplayAnalysisService, DiagnosisReportService, StressAlertService, CanaryReportService, DisasterStrategyService, TenantManagementService, AuditAnalysisService, LinkReportService, ProfileMonitorService, MigrationVerifyService, ReplayDiagnosisService, StressAnalysisService];

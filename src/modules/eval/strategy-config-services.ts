@@ -135,3 +135,5 @@ export class ModelEvalConfigService {
   async list(): Promise<any[]> { return Array.from(this.configs.values()); }
   async update(id: string, data: any): Promise<any> { const c = this.configs.get(id); Object.assign(c, data); return c; }
 }
+
+export const STRATEGY_CONFIG_SERVICES = [ModelRoutingStrategyService, DataAnnotationQualityService, EvalReplayConfigService, TaskTrackingReportService, ResultExportConfigService, ModelEvalReportService, DataSyncStrategyService, EvalSnapshotCompareService, TaskOrchestrationConfigService, ResultAggregationStrategyService, ModelDeploymentConfigService, DatasetAnalysisService, TaskDistributionStrategyService, ResultCacheConfigService, ModelEvalConfigService];

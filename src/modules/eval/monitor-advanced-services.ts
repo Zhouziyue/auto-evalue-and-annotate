@@ -125,3 +125,5 @@ export class DatasetAnalysisAlertAdvService {
   async check(datasetId: string, freshness: number): Promise<any> { return { datasetId, freshness, alertTriggered: freshness < 0.5 }; }
   async list(): Promise<any[]> { return this.alerts; }
 }
+
+export const MONITOR_ADVANCED_SERVICES = [ResultAggregationMonitorAdvService, ModelDeploymentMonitorAdvService, DatasetAnalysisMonitorAdvService, SmartRoutingAlertAdvService, DataAugmentationAlertAdvService, EvalTemplateAlertAdvService, TaskDistributionAlertAdvService, ResultCacheAlertAdvService, ModelEvalAlertAdvService, DatasetQualityAlertAdvService, EvalSnapshotAlertAdvAdvService, TaskOrchestrationAlertAdvService, ResultAggregationAlertAdvService, ModelDeploymentAlertAdvAdvService, DatasetAnalysisAlertAdvService];

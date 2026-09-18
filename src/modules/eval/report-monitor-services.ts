@@ -125,3 +125,5 @@ export class EvalSnapshotAlertService {
   async check(snapshotId: string, consistency: number): Promise<any> { return { snapshotId, consistency, alertTriggered: consistency < 0.8 }; }
   async list(): Promise<any[]> { return this.alerts; }
 }
+
+export const REPORT_MONITOR_SERVICES = [ModelDeploymentReportService, DatasetQualityMonitorService, EvalTaskReportService, ResultAggregationReportService, ModelEvalCompareService, DatasetReportService, TaskDistributionReportService, ResultCacheMonitorService, ModelDeploymentAlertService, DatasetQualityAlertService, EvalTaskAlertService, ResultAggregationAlertService, ModelEvalAlertService, DatasetSyncAlertService, EvalSnapshotAlertService];

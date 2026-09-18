@@ -75,3 +75,5 @@ export class TaskOrchestrationReportAdvService {
   async list(): Promise<any[]> { return this.reports; }
   async get(id: string): Promise<any> { return this.reports.find(r => r.id === id); }
 }
+
+export const ALERT_ADVANCED_SERVICES = [SmartRoutingReportAdvAdvService, DataAugmentationReportAdvService, EvalTemplateReportAdvService, TaskDistributionReportAdvAdvService, ResultCacheReportAdvService, ModelEvalReportAdvAdvService, DatasetQualityReportAdvAdvService, EvalSnapshotReportAdvService, TaskOrchestrationReportAdvService];

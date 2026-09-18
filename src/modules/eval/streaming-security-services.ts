@@ -134,3 +134,5 @@ export class SmartDiagnosisService {
   async list(): Promise<any[]> { return this.diagnoses; }
   async get(id: string): Promise<any> { return this.diagnoses.find(d => d.id === id); }
 }
+
+export const STREAMING_SECURITY_SERVICES = [StreamingEvalService, SecurityScanService, EvalGatewayService, EvalPluginService, VisualizationEngineService, StressTestService, CanaryDeploymentService, DisasterRecoveryService, TenantIsolationService, AuditLogService, TraceAnalysisService, DataProfilingService, DataMigrationEvalService, ReplayEvalService, SmartDiagnosisService];

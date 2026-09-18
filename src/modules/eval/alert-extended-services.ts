@@ -125,3 +125,5 @@ export class EvalSnapshotAlertAdvService {
   async check(snapshotId: string, diff: number): Promise<any> { return { snapshotId, diff, alertTriggered: diff > 0.3 }; }
   async list(): Promise<any[]> { return this.alerts; }
 }
+
+export const ALERT_EXTENDED_SERVICES = [TaskOrchestrationAlertService, ResultExportAlertService, ModelRoutingAlertService, DataAnnotationAlertService, EvalReplayAlertService, TaskTrackingAlertService, ResultSearchAlertService, ModelPerformanceAlertService, DatasetCleaningAlertService, EvalCacheAlertService, TaskSchedulingAlertService, ResultVisualizationAlertService, ModelVersionAlertService, DatasetVersionAlertService, EvalSnapshotAlertAdvService];

@@ -127,3 +127,5 @@ export class EvalTemplateReportService {
   async list(): Promise<any[]> { return this.reports; }
   async get(id: string): Promise<any> { return this.reports.find(r => r.id === id); }
 }
+
+export const OPTIMIZE_SERVICES = [SmartRoutingOptimizeService, DataAugmentationStrategyService, EvalTemplateManagementService, TaskDistributionOptimizeService, ResultCacheOptimizeService, ModelEvalOptimizeService, DatasetQualityOptimizeService, EvalSnapshotOptimizeService, TaskOrchestrationOptimizeService, ResultAggregationOptimizeService, ModelDeploymentOptimizeService, DatasetAnalysisOptimizeService, SmartRoutingReportService, DataAugmentationReportService, EvalTemplateReportService];

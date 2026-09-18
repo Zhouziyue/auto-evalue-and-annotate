@@ -55,3 +55,5 @@ export class ResultSubscriptionService {
     }
   }
 }
+
+export const MODEL_PIPELINE_SERVICES = [ModelVersionService, DataPipelineService, ResultSubscriptionService];

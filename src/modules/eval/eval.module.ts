@@ -26,6 +26,9 @@ import { RegressionDetectionService } from './regression-detection.service';
 import { EvalSnapshotService } from './eval-snapshot.service';
 import { SemanticCacheService } from './semantic-cache.service';
 import { EvalTemplateService } from './eval-template.service';
+import { WebhookService } from './webhook.service';
+import { EvalSchedulerService } from './eval-scheduler.service';
+import { MetricsAggregationService } from './metrics-aggregation.service';
 import { EvalController } from './eval.controller';
 
 @Module({
@@ -58,6 +61,9 @@ import { EvalController } from './eval.controller';
     EvalSnapshotService,
     SemanticCacheService,
     EvalTemplateService,
+    WebhookService,
+    EvalSchedulerService,
+    MetricsAggregationService,
   ],
   exports: [
     EvalService,
@@ -87,6 +93,9 @@ import { EvalController } from './eval.controller';
     EvalSnapshotService,
     SemanticCacheService,
     EvalTemplateService,
+    WebhookService,
+    EvalSchedulerService,
+    MetricsAggregationService,
   ],
 })
 export class EvalModule {}

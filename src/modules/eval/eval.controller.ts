@@ -26,6 +26,9 @@ import { RegressionDetectionService, RegressionType } from './regression-detecti
 import { EvalSnapshotService } from './eval-snapshot.service';
 import { SemanticCacheService } from './semantic-cache.service';
 import { EvalTemplateService, EvalTemplateCategory } from './eval-template.service';
+import { WebhookService, WebhookEvent } from './webhook.service';
+import { EvalSchedulerService, ScheduleType, ScheduleStatus } from './eval-scheduler.service';
+import { MetricsAggregationService, AggregationDimension, AggregationFunction } from './metrics-aggregation.service';
 
 @Controller('api/eval')
 export class EvalController {
@@ -56,6 +59,9 @@ export class EvalController {
     private evalSnapshotService: EvalSnapshotService,
     private semanticCacheService: SemanticCacheService,
     private evalTemplateService: EvalTemplateService,
+    private webhookService: WebhookService,
+    private evalSchedulerService: EvalSchedulerService,
+    private metricsAggregationService: MetricsAggregationService,
   ) {}
 
   // ========== 评测指标 API ==========
@@ -1149,5 +1155,209 @@ export class EvalController {
   @Post('templates/import')
   async importTemplate(@Body() template: any) {
     return this.evalTemplateService.importTemplate(template);
+  }
+
+  // ==================== Webhook 管理 ====================
+
+  // 创建 Webhook
+  @Post('webhooks')
+  async createWebhook(@Body() body: {
+    name: string;
+    url: string;
+    events: WebhookEvent[];
+    secret?: string;
+    headers?: Record<string, string>;
+    retryCount?: number;
+    timeout?: number;
+  }) {
+    return this.webhookService.createWebhook(body);
+  }
+
+  // 获取 Webhook 列表
+  @Get('webhooks')
+  async listWebhooks() {
+    return this.webhookService.listWebhooks();
+  }
+
+  // 获取 Webhook 详情
+  @Get('webhooks/:id')
+  async getWebhook(@Param('id') id: string) {
+    return this.webhookService.getWebhook(id);
+  }
+
+  // 更新 Webhook
+  @Post('webhooks/:id')
+  async updateWebhook(@Param('id') id: string, @Body() body: any) {
+    return this.webhookService.updateWebhook(id, body);
+  }
+
+  // 删除 Webhook
+  @Post('webhooks/:id/delete')
+  async deleteWebhook(@Param('id') id: string) {
+    return this.webhookService.deleteWebhook(id);
+  }
+
+  // 触发 Webhook 事件
+  @Post('webhooks/trigger')
+  async triggerWebhook(@Body() body: { event: WebhookEvent; payload: Record<string, any> }) {
+    return this.webhookService.triggerEvent(body.event, body.payload);
+  }
+
+  // 获取投递记录
+  @Get('webhooks/deliveries')
+  async getDeliveries(
+    @Query('webhookId') webhookId?: string,
+    @Query('event') event?: WebhookEvent,
+    @Query('status') status?: string,
+    @Query('limit') limit?: number,
+  ) {
+    return this.webhookService.getDeliveries({ webhookId, event, status, limit: limit ? +limit : undefined });
+  }
+
+  // 重新投递
+  @Post('webhooks/deliveries/:id/redeliver')
+  async redeliver(@Param('id') id: string) {
+    return this.webhookService.redeliver(id);
+  }
+
+  // 获取事件类型
+  @Get('webhooks/events/types')
+  async getWebhookEventTypes() {
+    return this.webhookService.getEventTypes();
+  }
+
+  // ==================== 评测调度 ====================
+
+  // 创建调度任务
+  @Post('scheduler/tasks')
+  async createScheduleTask(@Body() body: {
+    name: string;
+    description?: string;
+    type: ScheduleType;
+    cronExpression?: string;
+    intervalMs?: number;
+    taskType: 'eval_run' | 'benchmark' | 'pipeline' | 'cleanup' | 'report';
+    taskConfig: Record<string, any>;
+    createdBy?: string;
+  }) {
+    return this.evalSchedulerService.createTask(body);
+  }
+
+  // 获取任务列表
+  @Get('scheduler/tasks')
+  async listScheduleTasks(@Query('status') status?: ScheduleStatus) {
+    return this.evalSchedulerService.listTasks(status);
+  }
+
+  // 获取任务详情
+  @Get('scheduler/tasks/:id')
+  async getScheduleTask(@Param('id') id: string) {
+    return this.evalSchedulerService.getTask(id);
+  }
+
+  // 更新任务
+  @Post('scheduler/tasks/:id')
+  async updateScheduleTask(@Param('id') id: string, @Body() body: any) {
+    return this.evalSchedulerService.updateTask(id, body);
+  }
+
+  // 暂停任务
+  @Post('scheduler/tasks/:id/pause')
+  async pauseScheduleTask(@Param('id') id: string) {
+    return this.evalSchedulerService.pauseTask(id);
+  }
+
+  // 恢复任务
+  @Post('scheduler/tasks/:id/resume')
+  async resumeScheduleTask(@Param('id') id: string) {
+    return this.evalSchedulerService.resumeTask(id);
+  }
+
+  // 取消任务
+  @Post('scheduler/tasks/:id/cancel')
+  async cancelScheduleTask(@Param('id') id: string) {
+    return this.evalSchedulerService.cancelTask(id);
+  }
+
+  // 删除任务
+  @Post('scheduler/tasks/:id/delete')
+  async deleteScheduleTask(@Param('id') id: string) {
+    return this.evalSchedulerService.deleteTask(id);
+  }
+
+  // 手动触发任务
+  @Post('scheduler/tasks/:id/trigger')
+  async triggerScheduleTask(@Param('id') id: string) {
+    return this.evalSchedulerService.triggerTask(id);
+  }
+
+  // 获取执行记录
+  @Get('scheduler/executions')
+  async getScheduleExecutions(
+    @Query('taskId') taskId?: string,
+    @Query('status') status?: string,
+    @Query('limit') limit?: number,
+  ) {
+    return this.evalSchedulerService.getExecutions({ taskId, status, limit: limit ? +limit : undefined });
+  }
+
+  // 获取调度统计
+  @Get('scheduler/stats')
+  async getSchedulerStats() {
+    return this.evalSchedulerService.getStats();
+  }
+
+  // ==================== 指标聚合 ====================
+
+  // 执行聚合查询
+  @Post('aggregation/query')
+  async aggregateMetrics(@Body() body: {
+    dimensions: AggregationDimension[];
+    metrics: string[];
+    functions: AggregationFunction[];
+    filters?: Record<string, any>;
+    timeRange?: { start: Date; end: Date };
+    groupBy?: string;
+    orderBy?: { field: string; direction: 'asc' | 'desc' };
+    limit?: number;
+  }) {
+    return this.metricsAggregationService.aggregate(body);
+  }
+
+  // 获取趋势数据
+  @Get('aggregation/trend/:metric')
+  async getMetricTrend(
+    @Param('metric') metric: string,
+    @Query('dimension') dimension: AggregationDimension,
+    @Query('value') value: string,
+    @Query('buckets') buckets?: number,
+  ) {
+    return this.metricsAggregationService.getTrend(
+      metric, dimension, value,
+      { buckets: buckets ? +buckets : undefined },
+    );
+  }
+
+  // 对比数据
+  @Post('aggregation/compare')
+  async compareMetrics(@Body() body: {
+    dimension: AggregationDimension;
+    values: string[];
+    metrics: string[];
+  }) {
+    return this.metricsAggregationService.compare(body.dimension, body.values, body.metrics);
+  }
+
+  // 获取分布数据
+  @Get('aggregation/distribution/:metric')
+  async getMetricDistribution(
+    @Param('metric') metric: string,
+    @Query('buckets') buckets?: number,
+    @Query('model') model?: string,
+  ) {
+    return this.metricsAggregationService.getDistribution(metric, {
+      buckets: buckets ? +buckets : undefined,
+      model,
+    });
   }
 }

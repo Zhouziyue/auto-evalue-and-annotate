@@ -29,6 +29,9 @@ import { EvalTemplateService, EvalTemplateCategory } from './eval-template.servi
 import { WebhookService, WebhookEvent } from './webhook.service';
 import { EvalSchedulerService, ScheduleType, ScheduleStatus } from './eval-scheduler.service';
 import { MetricsAggregationService, AggregationDimension, AggregationFunction } from './metrics-aggregation.service';
+import { OnlineEvalService, OnlineEvalStatus, SamplingStrategy } from './online-eval.service';
+import { SyntheticDataService, GenerationStrategy, DataQuality } from './synthetic-data.service';
+import { WorkflowEngineService, WorkflowNodeType } from './workflow-engine.service';
 
 @Controller('api/eval')
 export class EvalController {
@@ -62,6 +65,9 @@ export class EvalController {
     private webhookService: WebhookService,
     private evalSchedulerService: EvalSchedulerService,
     private metricsAggregationService: MetricsAggregationService,
+    private onlineEvalService: OnlineEvalService,
+    private syntheticDataService: SyntheticDataService,
+    private workflowEngineService: WorkflowEngineService,
   ) {}
 
   // ========== 评测指标 API ==========
@@ -1359,5 +1365,190 @@ export class EvalController {
       buckets: buckets ? +buckets : undefined,
       model,
     });
+  }
+
+  // ==================== 在线评测 ====================
+
+  // 创建在线评测配置
+  @Post('online/configs')
+  async createOnlineConfig(@Body() body: any) {
+    return this.onlineEvalService.createConfig(body);
+  }
+
+  // 获取配置列表
+  @Get('online/configs')
+  async listOnlineConfigs(@Query('status') status?: OnlineEvalStatus) {
+    return this.onlineEvalService.listConfigs(status);
+  }
+
+  // 获取配置详情
+  @Get('online/configs/:id')
+  async getOnlineConfig(@Param('id') id: string) {
+    return this.onlineEvalService.getConfig(id);
+  }
+
+  // 更新配置
+  @Post('online/configs/:id')
+  async updateOnlineConfig(@Param('id') id: string, @Body() body: any) {
+    return this.onlineEvalService.updateConfig(id, body);
+  }
+
+  // 删除配置
+  @Post('online/configs/:id/delete')
+  async deleteOnlineConfig(@Param('id') id: string) {
+    return this.onlineEvalService.deleteConfig(id);
+  }
+
+  // 接收在线数据
+  @Post('online/:id/ingest')
+  async ingestOnlineData(@Param('id') id: string, @Body() body: any) {
+    return this.onlineEvalService.ingest(id, body);
+  }
+
+  // 获取评测结果
+  @Get('online/:id/results')
+  async getOnlineResults(
+    @Param('id') id: string,
+    @Query('limit') limit?: number,
+    @Query('flagged') flagged?: string,
+  ) {
+    return this.onlineEvalService.getResults(id, {
+      limit: limit ? +limit : undefined,
+      flagged: flagged !== undefined ? flagged === 'true' : undefined,
+    });
+  }
+
+  // 获取实时指标
+  @Get('online/:id/metrics/realtime')
+  async getOnlineRealtimeMetrics(
+    @Param('id') id: string,
+    @Query('window') window?: '1m' | '5m' | '15m' | '1h' | '24h',
+  ) {
+    return this.onlineEvalService.getRealtimeMetrics(id, window || '5m');
+  }
+
+  // ==================== 合成数据生成 ====================
+
+  // 创建生成任务
+  @Post('synthetic/tasks')
+  async createSyntheticTask(@Body() body: any) {
+    return this.syntheticDataService.createTask(body);
+  }
+
+  // 启动生成
+  @Post('synthetic/tasks/:id/start')
+  async startSyntheticGeneration(@Param('id') id: string) {
+    return this.syntheticDataService.startGeneration(id);
+  }
+
+  // 获取任务列表
+  @Get('synthetic/tasks')
+  async listSyntheticTasks() {
+    return this.syntheticDataService.listTasks();
+  }
+
+  // 获取任务详情
+  @Get('synthetic/tasks/:id')
+  async getSyntheticTask(@Param('id') id: string) {
+    return this.syntheticDataService.getTask(id);
+  }
+
+  // 获取生成结果
+  @Get('synthetic/tasks/:id/results')
+  async getSyntheticResults(
+    @Param('id') id: string,
+    @Query('strategy') strategy?: GenerationStrategy,
+    @Query('quality') quality?: DataQuality,
+    @Query('limit') limit?: number,
+  ) {
+    return this.syntheticDataService.getResults(id, {
+      strategy, quality, limit: limit ? +limit : undefined,
+    });
+  }
+
+  // 导出 JSON
+  @Get('synthetic/tasks/:id/export/json')
+  async exportSyntheticJSON(@Param('id') id: string) {
+    return this.syntheticDataService.exportAsJSON(id);
+  }
+
+  // 导出 CSV
+  @Get('synthetic/tasks/:id/export/csv')
+  async exportSyntheticCSV(@Param('id') id: string) {
+    return this.syntheticDataService.exportAsCSV(id);
+  }
+
+  // 质量报告
+  @Get('synthetic/tasks/:id/quality')
+  async getSyntheticQualityReport(@Param('id') id: string) {
+    return this.syntheticDataService.getQualityReport(id);
+  }
+
+  // 删除任务
+  @Post('synthetic/tasks/:id/delete')
+  async deleteSyntheticTask(@Param('id') id: string) {
+    return this.syntheticDataService.deleteTask(id);
+  }
+
+  // ==================== 工作流引擎 ====================
+
+  // 创建工作流
+  @Post('workflows')
+  async createWorkflow(@Body() body: any) {
+    return this.workflowEngineService.createWorkflow(body);
+  }
+
+  // 获取工作流列表
+  @Get('workflows')
+  async listWorkflows() {
+    return this.workflowEngineService.listWorkflows();
+  }
+
+  // 获取工作流详情
+  @Get('workflows/:id')
+  async getWorkflow(@Param('id') id: string) {
+    return this.workflowEngineService.getWorkflow(id);
+  }
+
+  // 更新工作流
+  @Post('workflows/:id')
+  async updateWorkflow(@Param('id') id: string, @Body() body: any) {
+    return this.workflowEngineService.updateWorkflow(id, body);
+  }
+
+  // 删除工作流
+  @Post('workflows/:id/delete')
+  async deleteWorkflow(@Param('id') id: string) {
+    return this.workflowEngineService.deleteWorkflow(id);
+  }
+
+  // 执行工作流
+  @Post('workflows/:id/execute')
+  async executeWorkflow(@Param('id') id: string, @Body() body?: any) {
+    return this.workflowEngineService.execute(id, body);
+  }
+
+  // 获取执行列表
+  @Get('workflows/executions')
+  async listWorkflowExecutions(@Query('workflowId') workflowId?: string) {
+    return this.workflowEngineService.listExecutions(workflowId);
+  }
+
+  // 获取执行详情
+  @Get('workflows/executions/:id')
+  async getWorkflowExecution(@Param('id') id: string) {
+    return this.workflowEngineService.getExecution(id);
+  }
+
+  // 取消执行
+  @Post('workflows/executions/:id/cancel')
+  async cancelWorkflowExecution(@Param('id') id: string) {
+    return this.workflowEngineService.cancelExecution(id);
+  }
+
+  // 获取内置模板
+  @Get('workflows/templates')
+  async getWorkflowTemplates() {
+    return this.workflowEngineService.getBuiltinTemplates();
   }
 }

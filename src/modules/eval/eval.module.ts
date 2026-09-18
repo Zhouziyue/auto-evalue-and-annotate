@@ -29,6 +29,9 @@ import { EvalTemplateService } from './eval-template.service';
 import { WebhookService } from './webhook.service';
 import { EvalSchedulerService } from './eval-scheduler.service';
 import { MetricsAggregationService } from './metrics-aggregation.service';
+import { OnlineEvalService } from './online-eval.service';
+import { SyntheticDataService } from './synthetic-data.service';
+import { WorkflowEngineService } from './workflow-engine.service';
 import { EvalController } from './eval.controller';
 
 @Module({
@@ -64,6 +67,9 @@ import { EvalController } from './eval.controller';
     WebhookService,
     EvalSchedulerService,
     MetricsAggregationService,
+    OnlineEvalService,
+    SyntheticDataService,
+    WorkflowEngineService,
   ],
   exports: [
     EvalService,
@@ -96,6 +102,9 @@ import { EvalController } from './eval.controller';
     WebhookService,
     EvalSchedulerService,
     MetricsAggregationService,
+    OnlineEvalService,
+    SyntheticDataService,
+    WorkflowEngineService,
   ],
 })
 export class EvalModule {}

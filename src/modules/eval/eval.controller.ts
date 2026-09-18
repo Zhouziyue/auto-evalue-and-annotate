@@ -68,7 +68,7 @@ import { KnowledgeBaseEvalService } from './knowledge-base-eval.service';
 import { CustomMetricService } from './custom-metric.service';
 import { ResultAggregationService } from './result-aggregation.service';
 import { TaskTemplateService } from './task-template.service';
-import { ModelVersionService, DataPipelineService, ResultSubscriptionService } from './v1.26-services';
+import { ModelVersionService, DataPipelineService, ResultSubscriptionService } from './model-pipeline-services';
 import {
   MetricRegressionService, DataValidationService, ResultShardingService,
   PerformanceAnalysisService, TaskDependencyService, ResultIndexService,
@@ -85,63 +85,63 @@ import {
   AdvancedCacheService, AdvancedRetryService, AdvancedRegistryService,
   AdvancedIndexService, AdvancedValidationService, AdvancedTemplateService,
   AdvancedPipelineService, AdvancedDependencyService, AdvancedArchiveService
-} from './batch-services';
+} from './core-extended-services';
 import {
   StreamingEvalService, SecurityScanService, EvalGatewayService,
   EvalPluginService, VisualizationEngineService, StressTestService,
   CanaryDeploymentService, DisasterRecoveryService, TenantIsolationService,
   AuditLogService, TraceAnalysisService, DataProfilingService,
   DataMigrationEvalService, ReplayEvalService, SmartDiagnosisService
-} from './batch-v2';
+} from './streaming-security-services';
 import {
   StressReportService, CanaryStrategyService, DisasterDrillService,
   TenantQuotaService, AuditReportService, LinkAnalysisService,
   ProfileAnalysisService, MigrationToolService, ReplayEngineService,
   DiagnosisAdviceService, StressMonitorService, CanaryMonitorService,
   DisasterReportService, TenantBillingService, AuditTrailService
-} from './batch-v3';
+} from './report-strategy-services';
 import {
   LinkDiagnosisService, ProfileReportService, MigrationMonitorService,
   ReplayAnalysisService, DiagnosisReportService, StressAlertService,
   CanaryReportService, DisasterStrategyService, TenantManagementService,
   AuditAnalysisService, LinkReportService, ProfileMonitorService,
   MigrationVerifyService, ReplayDiagnosisService, StressAnalysisService
-} from './batch-v4';
+} from './diagnosis-analysis-services';
 import {
   CanaryAnalysisService, DisasterMonitorService, TenantReportService,
   AuditMonitorService, LinkMonitorService, ProfileAlertService,
   MigrationReportService, ReplayReportService, DiagnosisAlertService,
   StressReportAdvService, CanaryAlertService, DisasterReportAdvService,
   TenantAlertService, AuditAlertService, LinkAlertService
-} from './batch-v5';
+} from './monitor-alert-services';
 import {
   ModelVersionCompareService, DatasetCleaningService, EvalCacheStrategyService,
   TaskSchedulingStrategyService, ResultSearchOptimizationService, ModelPerformanceBenchmarkService,
   DatasetVersionCompareService, TaskDependencyAnalysisService, ResultVisualizationConfigService,
   ModelDeploymentMonitorService, DataQualityReportService, EvalTaskPriorityService,
   ResultSubscriptionNotifyService, ModelComparisonReportService, DatasetTransformService
-} from './batch-v6';
+} from './compare-clean-services';
 import {
   ModelRoutingStrategyService, DataAnnotationQualityService, EvalReplayConfigService,
   TaskTrackingReportService, ResultExportConfigService, ModelEvalReportService,
   DataSyncStrategyService, EvalSnapshotCompareService, TaskOrchestrationConfigService,
   ResultAggregationStrategyService, ModelDeploymentConfigService, DatasetAnalysisService,
   TaskDistributionStrategyService, ResultCacheConfigService, ModelEvalConfigService
-} from './batch-v7';
+} from './strategy-config-services';
 import {
   ModelDeploymentReportService, DatasetQualityMonitorService, EvalTaskReportService,
   ResultAggregationReportService, ModelEvalCompareService, DatasetReportService,
   TaskDistributionReportService, ResultCacheMonitorService, ModelDeploymentAlertService,
   DatasetQualityAlertService, EvalTaskAlertService, ResultAggregationAlertService,
   ModelEvalAlertService, DatasetSyncAlertService, EvalSnapshotAlertService
-} from './batch-v8';
+} from './report-monitor-services';
 import {
   TaskOrchestrationAlertService, ResultExportAlertService, ModelRoutingAlertService,
   DataAnnotationAlertService, EvalReplayAlertService, TaskTrackingAlertService,
   ResultSearchAlertService, ModelPerformanceAlertService, DatasetCleaningAlertService,
   EvalCacheAlertService, TaskSchedulingAlertService, ResultVisualizationAlertService,
   ModelVersionAlertService, DatasetVersionAlertService, EvalSnapshotAlertAdvService
-} from './batch-v9';
+} from './alert-extended-services';
 import {
   SmartRoutingOptimizeService, DataAugmentationStrategyService, EvalTemplateManagementService,
   TaskDistributionOptimizeService, ResultCacheOptimizeService, ModelEvalOptimizeService,

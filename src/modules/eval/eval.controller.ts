@@ -53,6 +53,9 @@ import { ReportGeneratorService, ReportType, ReportFormat } from './report-gener
 import { DataVersioningService } from './data-versioning.service';
 import { MetricAttributionService, AttributionType } from './metric-attribution.service';
 import { ScenarioManagementService, ScenarioType } from './scenario-management.service';
+import { DataQualityService, QualityDimension, QualityCheckType } from './data-quality.service';
+import { TaskOrchestrationService, TaskStatus, TaskType } from './task-orchestration.service';
+import { ResultExplanationService, ExplanationType } from './result-explanation.service';
 
 @Controller('api/eval')
 export class EvalController {
@@ -110,6 +113,9 @@ export class EvalController {
     private dataVersioningService: DataVersioningService,
     private metricAttributionService: MetricAttributionService,
     private scenarioManagementService: ScenarioManagementService,
+    private dataQualityService: DataQualityService,
+    private taskOrchestrationService: TaskOrchestrationService,
+    private resultExplanationService: ResultExplanationService,
   ) {}
 
   // ========== 评测指标 API ==========
@@ -2703,5 +2709,149 @@ export class EvalController {
   @Get('scenarios/stats')
   async getScenarioStats() {
     return this.scenarioManagementService.getScenarioStats();
+  }
+
+  // ==================== 数据质量评估 API ====================
+
+  @Post('data-quality/check')
+  async checkDataQuality(@Body() body: {
+    datasetId: string;
+    datasetName: string;
+    data: any[];
+  }) {
+    return this.dataQualityService.checkQuality(body.datasetId, body.datasetName, body.data);
+  }
+
+  @Get('data-quality/results')
+  async getDataQualityResults(
+    @Query('datasetId') datasetId?: string,
+    @Query('limit') limit?: number,
+  ) {
+    return this.dataQualityService.getResults(datasetId, limit ? +limit : 20);
+  }
+
+  @Get('data-quality/results/:id')
+  async getDataQualityResult(@Param('id') id: string) {
+    return this.dataQualityService.getResult(id);
+  }
+
+  @Post('data-quality/results/:id/delete')
+  async deleteDataQualityResult(@Param('id') id: string) {
+    return this.dataQualityService.deleteResult(id);
+  }
+
+  @Get('data-quality/rules')
+  async getDataQualityRules(@Query('type') type?: QualityCheckType) {
+    return this.dataQualityService.getRules(type);
+  }
+
+  @Post('data-quality/rules')
+  async addDataQualityRule(@Body() body: any) {
+    return this.dataQualityService.addRule(body);
+  }
+
+  @Post('data-quality/rules/:id/update')
+  async updateDataQualityRule(@Param('id') id: string, @Body() body: any) {
+    return this.dataQualityService.updateRule(id, body);
+  }
+
+  @Post('data-quality/rules/:id/delete')
+  async deleteDataQualityRule(@Param('id') id: string) {
+    return this.dataQualityService.deleteRule(id);
+  }
+
+  @Get('data-quality/dimensions')
+  async getDataQualityDimensions() {
+    return this.dataQualityService.getDimensions();
+  }
+
+  @Get('data-quality/check-types')
+  async getDataQualityCheckTypes() {
+    return this.dataQualityService.getCheckTypes();
+  }
+
+  // ==================== 任务编排 API ====================
+
+  @Post('task-orchestration/orchestrations')
+  async createOrchestration(@Body() body: any) {
+    return this.taskOrchestrationService.createOrchestration(body);
+  }
+
+  @Get('task-orchestration/orchestrations')
+  async listOrchestrations(@Query('status') status?: TaskStatus) {
+    return this.taskOrchestrationService.listOrchestrations(status);
+  }
+
+  @Get('task-orchestration/orchestrations/:id')
+  async getOrchestration(@Param('id') id: string) {
+    return this.taskOrchestrationService.getOrchestration(id);
+  }
+
+  @Post('task-orchestration/orchestrations/:id/execute')
+  async executeOrchestration(@Param('id') id: string) {
+    return this.taskOrchestrationService.execute(id);
+  }
+
+  @Post('task-orchestration/orchestrations/:id/cancel')
+  async cancelOrchestration(@Param('id') id: string) {
+    return this.taskOrchestrationService.cancelOrchestration(id);
+  }
+
+  @Post('task-orchestration/orchestrations/:id/retry')
+  async retryFailedNodes(@Param('id') id: string) {
+    return this.taskOrchestrationService.retryFailedNodes(id);
+  }
+
+  @Get('task-orchestration/orchestrations/:id/logs')
+  async getOrchestrationLogs(
+    @Param('id') id: string,
+    @Query('nodeId') nodeId?: string,
+  ) {
+    return this.taskOrchestrationService.getLogs(id, nodeId);
+  }
+
+  @Get('task-orchestration/task-types')
+  async getTaskTypes() {
+    return this.taskOrchestrationService.getTaskTypes();
+  }
+
+  @Get('task-orchestration/stats')
+  async getOrchestrationStats() {
+    return this.taskOrchestrationService.getOrchestrationStats();
+  }
+
+  // ==================== 结果可解释性 API ====================
+
+  @Post('result-explanation/explain')
+  async generateExplanation(@Body() body: any) {
+    return this.resultExplanationService.generateExplanation(body);
+  }
+
+  @Get('result-explanation/explanations')
+  async getExplanations(
+    @Query('resultId') resultId?: string,
+    @Query('type') type?: ExplanationType,
+  ) {
+    return this.resultExplanationService.getExplanations(resultId, type);
+  }
+
+  @Get('result-explanation/explanations/:id')
+  async getExplanation(@Param('id') id: string) {
+    return this.resultExplanationService.getExplanation(id);
+  }
+
+  @Post('result-explanation/explanations/:id/delete')
+  async deleteExplanation(@Param('id') id: string) {
+    return this.resultExplanationService.deleteExplanation(id);
+  }
+
+  @Get('result-explanation/types')
+  async getExplanationTypes() {
+    return this.resultExplanationService.getExplanationTypes();
+  }
+
+  @Post('result-explanation/compare')
+  async compareExplanations(@Body() body: { explanationIds: string[] }) {
+    return this.resultExplanationService.compareExplanations(body.explanationIds);
   }
 }

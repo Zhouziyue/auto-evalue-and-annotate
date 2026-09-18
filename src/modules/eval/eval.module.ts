@@ -53,6 +53,9 @@ import { ReportGeneratorService } from './report-generator.service';
 import { DataVersioningService } from './data-versioning.service';
 import { MetricAttributionService } from './metric-attribution.service';
 import { ScenarioManagementService } from './scenario-management.service';
+import { DataQualityService } from './data-quality.service';
+import { TaskOrchestrationService } from './task-orchestration.service';
+import { ResultExplanationService } from './result-explanation.service';
 import { EvalController } from './eval.controller';
 
 @Module({
@@ -112,6 +115,9 @@ import { EvalController } from './eval.controller';
     DataVersioningService,
     MetricAttributionService,
     ScenarioManagementService,
+    DataQualityService,
+    TaskOrchestrationService,
+    ResultExplanationService,
   ],
   exports: [
     EvalService,
@@ -168,6 +174,9 @@ import { EvalController } from './eval.controller';
     DataVersioningService,
     MetricAttributionService,
     ScenarioManagementService,
+    DataQualityService,
+    TaskOrchestrationService,
+    ResultExplanationService,
   ],
 })
 export class EvalModule {}

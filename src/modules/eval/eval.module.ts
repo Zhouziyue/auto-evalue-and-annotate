@@ -148,26 +148,26 @@ import {
   DatasetQualityOptimizeService, EvalSnapshotOptimizeService, TaskOrchestrationOptimizeService,
   ResultAggregationOptimizeService, ModelDeploymentOptimizeService, DatasetAnalysisOptimizeService,
   SmartRoutingReportService, DataAugmentationReportService, EvalTemplateReportService
-} from './batch-v10';
+} from './optimize-services';
 import {
   TaskDistributionReportAdvService, ResultCacheReportService, ModelEvalReportAdvService,
   DatasetQualityReportAdvService, EvalSnapshotReportService, TaskOrchestrationReportService,
   SmartRoutingMonitorService, DataAugmentationMonitorService, EvalTemplateMonitorService,
   TaskDistributionMonitorAdvService, ResultCacheMonitorAdvService, ModelEvalMonitorAdvService,
   DatasetQualityMonitorAdvService, EvalSnapshotMonitorAdvService, TaskOrchestrationMonitorAdvService
-} from './batch-v11';
+} from './report-advanced-services';
 import {
   ResultAggregationMonitorAdvService, ModelDeploymentMonitorAdvService, DatasetAnalysisMonitorAdvService,
   SmartRoutingAlertAdvService, DataAugmentationAlertAdvService, EvalTemplateAlertAdvService,
   TaskDistributionAlertAdvService, ResultCacheAlertAdvService, ModelEvalAlertAdvService,
   DatasetQualityAlertAdvService, EvalSnapshotAlertAdvAdvService, TaskOrchestrationAlertAdvService,
   ResultAggregationAlertAdvService, ModelDeploymentAlertAdvAdvService, DatasetAnalysisAlertAdvService
-} from './batch-v12';
+} from './monitor-advanced-services';
 import {
   SmartRoutingReportAdvAdvService, DataAugmentationReportAdvService, EvalTemplateReportAdvService,
   TaskDistributionReportAdvAdvService, ResultCacheReportAdvService, ModelEvalReportAdvAdvService,
   DatasetQualityReportAdvAdvService, EvalSnapshotReportAdvService, TaskOrchestrationReportAdvService
-} from './batch-v13';
+} from './alert-advanced-services';
 import { EvalController } from './eval.controller';
 
 @Module({

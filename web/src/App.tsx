@@ -28,6 +28,7 @@ function App() {
         <Route path="leaderboard" element={<Leaderboard />} />
         <Route path="observability" element={<Observability />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
     </Routes>
   );

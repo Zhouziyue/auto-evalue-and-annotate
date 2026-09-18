@@ -53,7 +53,7 @@ export default function Pipelines() {
   const fetchExecutions = async () => {
     setLoading(true)
     try {
-      const res = await axios.get('/api/eval/pipelines/executions')
+      const res = await axios.get('/api/pipeline/executions')
       setExecutions(res.data)
     } catch (e) {
       console.error(e)
@@ -112,17 +112,29 @@ export default function Pipelines() {
     { label: '每天 0 点', value: '0 0 * * *' },
   ]
 
+  const handleRunPipeline = async (pipelineId: string, pipelineName: string) => {
+    setRunningIds(prev => new Set(prev).add(pipelineId))
+    try {
+      await axios.post(`/api/pipeline/${pipelineId}/run`)
+      await fetchExecutions()
+      toastSuccess(`${pipelineName} 执行完成`)
+    } catch (e) {
+      toastError(`${pipelineName} 执行失败`)
+    }
+    setRunningIds(prev => {
+      const next = new Set(prev)
+      next.delete(pipelineId)
+      return next
+    })
+  }
+
   const handleRunPreset = async (presetId: string) => {
     const preset = presets.find(p => p.id === presetId)
     if (!preset) return
 
     setRunningIds(prev => new Set(prev).add(presetId))
     try {
-      await axios.post('/api/eval/pipelines/run', {
-        type: 'preset',
-        presetId: preset.id,
-        name: preset.name,
-      })
+      await axios.post(`/api/pipeline/${preset.id}/run`)
       await fetchExecutions()
       toastSuccess(`${preset.name}执行完成`)
     } catch (e) {
@@ -138,10 +150,10 @@ export default function Pipelines() {
   const handleCreateCustom = async () => {
     if (!customPipeline.name) return
     try {
-      await axios.post('/api/eval/pipelines/create', {
+      await axios.post('/api/pipeline', {
         name: customPipeline.name,
         description: customPipeline.description,
-        nodes: customPipeline.nodes.split(',').map(n => n.trim()).filter(Boolean),
+        steps: customPipeline.nodes.split(',').map(n => n.trim()).filter(Boolean).map((nodeType: string) => ({ type: nodeType, config: {} })),
       })
       setCreateOpen(false)
       setCustomPipeline({ name: '', description: '', nodes: '' })
@@ -177,20 +189,27 @@ export default function Pipelines() {
           </Button>
         </CardHeader>
         <CardContent>
+          {pipelines.length === 0 ? (
+            <div className="py-12 text-center">
+              <GitBranch className="mx-auto h-12 w-12 text-muted-foreground/40" />
+              <p className="mt-4 text-muted-foreground">暂无流水线</p>
+              <p className="mt-1 text-xs text-muted-foreground">点击“自定义流水线”创建</p>
+            </div>
+          ) : (
           <div className="grid gap-4 md:grid-cols-3">
-            {presets.map((p) => (
+            {pipelines.map((p) => (
               <div key={p.id} className="rounded-lg border p-4 hover:border-primary/50 hover:shadow-sm transition-all duration-200">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold flex items-center gap-2">
-                    <span>{p.icon}</span> {p.name}
+                    <span>🔧</span> {p.name}
                   </h3>
-                  <Badge variant="secondary">{p.nodes} 节点</Badge>
+                  {p.cronExpression && <Badge variant="outline"><Timer className="mr-1 h-3 w-3" />{p.cronExpression}</Badge>}
                 </div>
-                <p className="mt-2 text-sm text-muted-foreground">{p.desc}</p>
+                <p className="mt-2 text-sm text-muted-foreground">{p.description || '暂无描述'}</p>
                 <Button
                   className="mt-4 w-full"
                   size="sm"
-                  onClick={() => handleRunPreset(p.id)}
+                  onClick={() => handleRunPipeline(p.id, p.name)}
                   disabled={runningIds.has(p.id)}
                 >
                   {runningIds.has(p.id) ? (
@@ -203,13 +222,14 @@ export default function Pipelines() {
                   className="mt-2 w-full"
                   size="sm"
                   variant="outline"
-                  onClick={() => handleOpenSchedule(p.id, p.name)}
+                  onClick={() => handleOpenSchedule(p.id, p.name, p.cronExpression)}
                 >
                   <Timer className="mr-2 h-3.5 w-3.5" /> 定时计划
                 </Button>
               </div>
             ))}
           </div>
+          )}
         </CardContent>
       </Card>
 

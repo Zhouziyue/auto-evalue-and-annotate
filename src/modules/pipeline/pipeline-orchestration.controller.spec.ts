@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PipelineOrchestrationController } from './pipeline-orchestration.controller';
 import { PipelineOrchestrationService, PipelineStepType } from './pipeline-orchestration.service';
 import { SchedulerService } from './scheduler.service';
+import { PrismaService } from '../../common/prisma/prisma.service';
 
 describe('PipelineOrchestrationController', () => {
   let controller: PipelineOrchestrationController;
@@ -24,11 +25,18 @@ describe('PipelineOrchestrationController', () => {
       updateSchedule: jest.fn(),
     };
 
+    const prismaService = {
+      pipelineInstance: {
+        findMany: jest.fn(),
+      },
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [PipelineOrchestrationController],
       providers: [
         { provide: PipelineOrchestrationService, useValue: service },
         { provide: SchedulerService, useValue: schedulerService },
+        { provide: PrismaService, useValue: prismaService },
       ],
     }).compile();
 

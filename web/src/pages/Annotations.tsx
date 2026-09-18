@@ -49,7 +49,7 @@ export default function Annotations() {
   const fetchTasks = async () => {
     setLoading(true)
     try {
-      const res = await axios.get('/api/eval/annotations/tasks')
+      const res = await axios.get('/api/eval/annotation/tasks')
       setTasks(res.data)
     } catch (e) {
       console.error(e)
@@ -60,7 +60,7 @@ export default function Annotations() {
 
   const fetchItems = async (taskId: string) => {
     try {
-      const res = await axios.get(`/api/eval/annotations/tasks/${taskId}/items`)
+      const res = await axios.get(`/api/eval/annotation/tasks/${taskId}/pending`)
       setItems(res.data)
     } catch (e) {
       console.error(e)
@@ -79,9 +79,11 @@ export default function Annotations() {
   }
 
   const handleApprove = async (itemId: string) => {
+    if (!selectedTask) return
     try {
-      await axios.post(`/api/eval/annotations/items/${itemId}/approve`, {
-        comment: '审核通过',
+      await axios.post(`/api/eval/annotation/tasks/${selectedTask.id}/review`, {
+        itemId: itemId,
+        approved: true,
       })
       if (selectedTask) await fetchItems(selectedTask.id)
       setWorkbenchOpen(false)
@@ -92,9 +94,11 @@ export default function Annotations() {
   }
 
   const handleReject = async (itemId: string) => {
+    if (!selectedTask) return
     try {
-      await axios.post(`/api/eval/annotations/items/${itemId}/reject`, {
-        comment: '需要修正',
+      await axios.post(`/api/eval/annotation/tasks/${selectedTask.id}/review`, {
+        itemId: itemId,
+        approved: false,
       })
       if (selectedTask) await fetchItems(selectedTask.id)
       setWorkbenchOpen(false)

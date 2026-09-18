@@ -174,12 +174,13 @@ export default function Skills() {
 
   const openEdit = (skill: Skill) => {
     setCurrentSkill(skill as SkillDetail)
+    const tagsValue = (skill as any).tags
     setFormData({
       name: skill.name,
       description: skill.description || '',
       version: skill.version,
       category: (skill as any).category || '',
-      tags: (skill as any).tags?.join(', ') || '',
+      tags: Array.isArray(tagsValue) ? tagsValue.join(', ') : (tagsValue || ''),
     })
     setEditOpen(true)
   }

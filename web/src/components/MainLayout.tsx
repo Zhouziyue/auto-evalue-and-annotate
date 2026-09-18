@@ -66,6 +66,13 @@ function MainLayout() {
 
   const currentPage = menuItems.find((item) => item.key === location.pathname)
 
+  // 处理不在 menuItems 中的页面标题
+  const getPageTitle = () => {
+    if (currentPage) return t(currentPage.labelKey)
+    if (location.pathname === '/settings') return t('common.settings')
+    return t('nav.dashboard')
+  }
+
   const filteredMenuItems = menuItems.filter(item =>
     t(item.labelKey).toLowerCase().includes(searchQuery.toLowerCase())
   )
@@ -185,7 +192,7 @@ function MainLayout() {
               </button>
             )}
             <h1 className="text-lg sm:text-xl font-semibold text-foreground">
-              {currentPage ? t(currentPage.labelKey) : t('nav.dashboard')}
+              {getPageTitle()}
             </h1>
           </div>
 
@@ -198,7 +205,10 @@ function MainLayout() {
             {/* Global Search */}
             <div className="relative">
               <button
-                onClick={() => setSearchOpen(!searchOpen)}
+                onClick={() => {
+                  setSearchOpen(!searchOpen)
+                  if (searchOpen) setSearchQuery('') // 关闭搜索框时清空搜索内容
+                }}
                 className={cn(
                   'flex h-9 items-center gap-2 rounded-md border border-border',
                   'bg-background px-3 text-sm text-muted-foreground',

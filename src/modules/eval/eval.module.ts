@@ -114,6 +114,34 @@ import {
   StressReportAdvService, CanaryAlertService, DisasterReportAdvService,
   TenantAlertService, AuditAlertService, LinkAlertService
 } from './batch-v5';
+import {
+  ModelVersionCompareService, DatasetCleaningService, EvalCacheStrategyService,
+  TaskSchedulingStrategyService, ResultSearchOptimizationService, ModelPerformanceBenchmarkService,
+  DatasetVersionCompareService, TaskDependencyAnalysisService, ResultVisualizationConfigService,
+  ModelDeploymentMonitorService, DataQualityReportService, EvalTaskPriorityService,
+  ResultSubscriptionNotifyService, ModelComparisonReportService, DatasetTransformService
+} from './batch-v6';
+import {
+  ModelRoutingStrategyService, DataAnnotationQualityService, EvalReplayConfigService,
+  TaskTrackingReportService, ResultExportConfigService, ModelEvalReportService,
+  DataSyncStrategyService, EvalSnapshotCompareService, TaskOrchestrationConfigService,
+  ResultAggregationStrategyService, ModelDeploymentConfigService, DatasetAnalysisService,
+  TaskDistributionStrategyService, ResultCacheConfigService, ModelEvalConfigService
+} from './batch-v7';
+import {
+  ModelDeploymentReportService, DatasetQualityMonitorService, EvalTaskReportService,
+  ResultAggregationReportService, ModelEvalCompareService, DatasetReportService,
+  TaskDistributionReportService, ResultCacheMonitorService, ModelDeploymentAlertService,
+  DatasetQualityAlertService, EvalTaskAlertService, ResultAggregationAlertService,
+  ModelEvalAlertService, DatasetSyncAlertService, EvalSnapshotAlertService
+} from './batch-v8';
+import {
+  TaskOrchestrationAlertService, ResultExportAlertService, ModelRoutingAlertService,
+  DataAnnotationAlertService, EvalReplayAlertService, TaskTrackingAlertService,
+  ResultSearchAlertService, ModelPerformanceAlertService, DatasetCleaningAlertService,
+  EvalCacheAlertService, TaskSchedulingAlertService, ResultVisualizationAlertService,
+  ModelVersionAlertService, DatasetVersionAlertService, EvalSnapshotAlertAdvService
+} from './batch-v9';
 import { EvalController } from './eval.controller';
 
 @Module({
@@ -260,6 +288,30 @@ import { EvalController } from './eval.controller';
     MigrationReportService, ReplayReportService, DiagnosisAlertService,
     StressReportAdvService, CanaryAlertService, DisasterReportAdvService,
     TenantAlertService, AuditAlertService, LinkAlertService,
+    // v1.63-v1.67
+    ModelVersionCompareService, DatasetCleaningService, EvalCacheStrategyService,
+    TaskSchedulingStrategyService, ResultSearchOptimizationService, ModelPerformanceBenchmarkService,
+    DatasetVersionCompareService, TaskDependencyAnalysisService, ResultVisualizationConfigService,
+    ModelDeploymentMonitorService, DataQualityReportService, EvalTaskPriorityService,
+    ResultSubscriptionNotifyService, ModelComparisonReportService, DatasetTransformService,
+    // v1.68-v1.72
+    ModelRoutingStrategyService, DataAnnotationQualityService, EvalReplayConfigService,
+    TaskTrackingReportService, ResultExportConfigService, ModelEvalReportService,
+    DataSyncStrategyService, EvalSnapshotCompareService, TaskOrchestrationConfigService,
+    ResultAggregationStrategyService, ModelDeploymentConfigService, DatasetAnalysisService,
+    TaskDistributionStrategyService, ResultCacheConfigService, ModelEvalConfigService,
+    // v1.73-v1.77
+    ModelDeploymentReportService, DatasetQualityMonitorService, EvalTaskReportService,
+    ResultAggregationReportService, ModelEvalCompareService, DatasetReportService,
+    TaskDistributionReportService, ResultCacheMonitorService, ModelDeploymentAlertService,
+    DatasetQualityAlertService, EvalTaskAlertService, ResultAggregationAlertService,
+    ModelEvalAlertService, DatasetSyncAlertService, EvalSnapshotAlertService,
+    // v1.78-v1.82
+    TaskOrchestrationAlertService, ResultExportAlertService, ModelRoutingAlertService,
+    DataAnnotationAlertService, EvalReplayAlertService, TaskTrackingAlertService,
+    ResultSearchAlertService, ModelPerformanceAlertService, DatasetCleaningAlertService,
+    EvalCacheAlertService, TaskSchedulingAlertService, ResultVisualizationAlertService,
+    ModelVersionAlertService, DatasetVersionAlertService, EvalSnapshotAlertAdvService,
   ],
   exports: [
     EvalService,
@@ -403,6 +455,30 @@ import { EvalController } from './eval.controller';
     MigrationReportService, ReplayReportService, DiagnosisAlertService,
     StressReportAdvService, CanaryAlertService, DisasterReportAdvService,
     TenantAlertService, AuditAlertService, LinkAlertService,
+    // v1.63-v1.67
+    ModelVersionCompareService, DatasetCleaningService, EvalCacheStrategyService,
+    TaskSchedulingStrategyService, ResultSearchOptimizationService, ModelPerformanceBenchmarkService,
+    DatasetVersionCompareService, TaskDependencyAnalysisService, ResultVisualizationConfigService,
+    ModelDeploymentMonitorService, DataQualityReportService, EvalTaskPriorityService,
+    ResultSubscriptionNotifyService, ModelComparisonReportService, DatasetTransformService,
+    // v1.68-v1.72
+    ModelRoutingStrategyService, DataAnnotationQualityService, EvalReplayConfigService,
+    TaskTrackingReportService, ResultExportConfigService, ModelEvalReportService,
+    DataSyncStrategyService, EvalSnapshotCompareService, TaskOrchestrationConfigService,
+    ResultAggregationStrategyService, ModelDeploymentConfigService, DatasetAnalysisService,
+    TaskDistributionStrategyService, ResultCacheConfigService, ModelEvalConfigService,
+    // v1.73-v1.77
+    ModelDeploymentReportService, DatasetQualityMonitorService, EvalTaskReportService,
+    ResultAggregationReportService, ModelEvalCompareService, DatasetReportService,
+    TaskDistributionReportService, ResultCacheMonitorService, ModelDeploymentAlertService,
+    DatasetQualityAlertService, EvalTaskAlertService, ResultAggregationAlertService,
+    ModelEvalAlertService, DatasetSyncAlertService, EvalSnapshotAlertService,
+    // v1.78-v1.82
+    TaskOrchestrationAlertService, ResultExportAlertService, ModelRoutingAlertService,
+    DataAnnotationAlertService, EvalReplayAlertService, TaskTrackingAlertService,
+    ResultSearchAlertService, ModelPerformanceAlertService, DatasetCleaningAlertService,
+    EvalCacheAlertService, TaskSchedulingAlertService, ResultVisualizationAlertService,
+    ModelVersionAlertService, DatasetVersionAlertService, EvalSnapshotAlertAdvService,
   ],
 })
 export class EvalModule {}

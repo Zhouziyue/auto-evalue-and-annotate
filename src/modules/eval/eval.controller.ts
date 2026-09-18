@@ -114,6 +114,34 @@ import {
   StressReportAdvService, CanaryAlertService, DisasterReportAdvService,
   TenantAlertService, AuditAlertService, LinkAlertService
 } from './batch-v5';
+import {
+  ModelVersionCompareService, DatasetCleaningService, EvalCacheStrategyService,
+  TaskSchedulingStrategyService, ResultSearchOptimizationService, ModelPerformanceBenchmarkService,
+  DatasetVersionCompareService, TaskDependencyAnalysisService, ResultVisualizationConfigService,
+  ModelDeploymentMonitorService, DataQualityReportService, EvalTaskPriorityService,
+  ResultSubscriptionNotifyService, ModelComparisonReportService, DatasetTransformService
+} from './batch-v6';
+import {
+  ModelRoutingStrategyService, DataAnnotationQualityService, EvalReplayConfigService,
+  TaskTrackingReportService, ResultExportConfigService, ModelEvalReportService,
+  DataSyncStrategyService, EvalSnapshotCompareService, TaskOrchestrationConfigService,
+  ResultAggregationStrategyService, ModelDeploymentConfigService, DatasetAnalysisService,
+  TaskDistributionStrategyService, ResultCacheConfigService, ModelEvalConfigService
+} from './batch-v7';
+import {
+  ModelDeploymentReportService, DatasetQualityMonitorService, EvalTaskReportService,
+  ResultAggregationReportService, ModelEvalCompareService, DatasetReportService,
+  TaskDistributionReportService, ResultCacheMonitorService, ModelDeploymentAlertService,
+  DatasetQualityAlertService, EvalTaskAlertService, ResultAggregationAlertService,
+  ModelEvalAlertService, DatasetSyncAlertService, EvalSnapshotAlertService
+} from './batch-v8';
+import {
+  TaskOrchestrationAlertService, ResultExportAlertService, ModelRoutingAlertService,
+  DataAnnotationAlertService, EvalReplayAlertService, TaskTrackingAlertService,
+  ResultSearchAlertService, ModelPerformanceAlertService, DatasetCleaningAlertService,
+  EvalCacheAlertService, TaskSchedulingAlertService, ResultVisualizationAlertService,
+  ModelVersionAlertService, DatasetVersionAlertService, EvalSnapshotAlertAdvService
+} from './batch-v9';
 
 @Controller('api/eval')
 export class EvalController {
@@ -298,6 +326,70 @@ export class EvalController {
     private tenantAlertService: TenantAlertService,
     private auditAlertService: AuditAlertService,
     private linkAlertService: LinkAlertService,
+    // v1.63-v1.67
+    private modelVersionCompareService: ModelVersionCompareService,
+    private datasetCleaningService: DatasetCleaningService,
+    private evalCacheStrategyService: EvalCacheStrategyService,
+    private taskSchedulingStrategyService: TaskSchedulingStrategyService,
+    private resultSearchOptimizationService: ResultSearchOptimizationService,
+    private modelPerformanceBenchmarkService: ModelPerformanceBenchmarkService,
+    private datasetVersionCompareService: DatasetVersionCompareService,
+    private taskDependencyAnalysisService: TaskDependencyAnalysisService,
+    private resultVisualizationConfigService: ResultVisualizationConfigService,
+    private modelDeploymentMonitorService: ModelDeploymentMonitorService,
+    private dataQualityReportService: DataQualityReportService,
+    private evalTaskPriorityService: EvalTaskPriorityService,
+    private resultSubscriptionNotifyService: ResultSubscriptionNotifyService,
+    private modelComparisonReportService: ModelComparisonReportService,
+    private datasetTransformService: DatasetTransformService,
+    // v1.68-v1.72
+    private modelRoutingStrategyService: ModelRoutingStrategyService,
+    private dataAnnotationQualityService: DataAnnotationQualityService,
+    private evalReplayConfigService: EvalReplayConfigService,
+    private taskTrackingReportService: TaskTrackingReportService,
+    private resultExportConfigService: ResultExportConfigService,
+    private modelEvalReportService: ModelEvalReportService,
+    private dataSyncStrategyService: DataSyncStrategyService,
+    private evalSnapshotCompareService: EvalSnapshotCompareService,
+    private taskOrchestrationConfigService: TaskOrchestrationConfigService,
+    private resultAggregationStrategyService: ResultAggregationStrategyService,
+    private modelDeploymentConfigService: ModelDeploymentConfigService,
+    private datasetAnalysisService: DatasetAnalysisService,
+    private taskDistributionStrategyService: TaskDistributionStrategyService,
+    private resultCacheConfigService: ResultCacheConfigService,
+    private modelEvalConfigService: ModelEvalConfigService,
+    // v1.73-v1.77
+    private modelDeploymentReportService: ModelDeploymentReportService,
+    private datasetQualityMonitorService: DatasetQualityMonitorService,
+    private evalTaskReportService: EvalTaskReportService,
+    private resultAggregationReportService: ResultAggregationReportService,
+    private modelEvalCompareService: ModelEvalCompareService,
+    private datasetReportService: DatasetReportService,
+    private taskDistributionReportService: TaskDistributionReportService,
+    private resultCacheMonitorService: ResultCacheMonitorService,
+    private modelDeploymentAlertService: ModelDeploymentAlertService,
+    private datasetQualityAlertService: DatasetQualityAlertService,
+    private evalTaskAlertService: EvalTaskAlertService,
+    private resultAggregationAlertService: ResultAggregationAlertService,
+    private modelEvalAlertService: ModelEvalAlertService,
+    private datasetSyncAlertService: DatasetSyncAlertService,
+    private evalSnapshotAlertService: EvalSnapshotAlertService,
+    // v1.78-v1.82
+    private taskOrchestrationAlertService: TaskOrchestrationAlertService,
+    private resultExportAlertService: ResultExportAlertService,
+    private modelRoutingAlertService: ModelRoutingAlertService,
+    private dataAnnotationAlertService: DataAnnotationAlertService,
+    private evalReplayAlertService: EvalReplayAlertService,
+    private taskTrackingAlertService: TaskTrackingAlertService,
+    private resultSearchAlertService: ResultSearchAlertService,
+    private modelPerformanceAlertService: ModelPerformanceAlertService,
+    private datasetCleaningAlertService: DatasetCleaningAlertService,
+    private evalCacheAlertService: EvalCacheAlertService,
+    private taskSchedulingAlertService: TaskSchedulingAlertService,
+    private resultVisualizationAlertService: ResultVisualizationAlertService,
+    private modelVersionAlertService: ModelVersionAlertService,
+    private datasetVersionAlertService: DatasetVersionAlertService,
+    private evalSnapshotAlertAdvService: EvalSnapshotAlertAdvService,
   ) {}
 
   // ========== 评测指标 API ==========
@@ -3501,4 +3593,99 @@ export class EvalController {
   @Post('audit-alert/check') async checkAuditAlert(@Body() body: any) { return this.auditAlertService.check(body.eventType, body.count); }
   @Post('link-alert/create') async createLinkAlert(@Body() body: any) { return this.linkAlertService.create(body); }
   @Post('link-alert/check') async checkLinkAlert(@Body() body: any) { return this.linkAlertService.check(body.traceId, body.latency); }
+
+  // ========== v1.63-v1.67 API ==========
+  @Post('model-ver-compare/compare') async compareModelVersions(@Body() body: any) { return this.modelVersionCompareService.compare(body.versionA, body.versionB); }
+  @Post('dataset-cleaning/create') async createDatasetCleaning(@Body() body: any) { return this.datasetCleaningService.create(body); }
+  @Post('dataset-cleaning/execute') async executeDatasetCleaning(@Body() body: any) { return this.datasetCleaningService.execute(body.id); }
+  @Post('eval-cache-strategy/create') async createEvalCacheStrategy(@Body() body: any) { return this.evalCacheStrategyService.create(body); }
+  @Post('task-sched-strategy/create') async createTaskSchedulingStrategy(@Body() body: any) { return this.taskSchedulingStrategyService.create(body); }
+  @Post('result-search-opt/create') async createResultSearchOpt(@Body() body: any) { return this.resultSearchOptimizationService.create(body); }
+  @Post('model-perf-bench/create') async createModelPerfBenchmark(@Body() body: any) { return this.modelPerformanceBenchmarkService.create(body); }
+  @Post('model-perf-bench/run') async runModelPerfBenchmark(@Body() body: any) { return this.modelPerformanceBenchmarkService.run(body.id); }
+  @Post('dataset-ver-compare/compare') async compareDatasetVersions(@Body() body: any) { return this.datasetVersionCompareService.compare(body.versionA, body.versionB); }
+  @Post('task-dep-analysis/analyze') async analyzeTaskDependency(@Body() body: any) { return this.taskDependencyAnalysisService.analyze(body.taskId); }
+  @Post('result-viz-config/create') async createResultVizConfig(@Body() body: any) { return this.resultVisualizationConfigService.create(body); }
+  @Post('model-deploy-monitor/start') async startModelDeployMonitor(@Body() body: any) { return this.modelDeploymentMonitorService.start(body.deploymentId); }
+  @Post('data-quality-report/generate') async generateDataQualityReport(@Body() body: any) { return this.dataQualityReportService.generate(body.datasetId); }
+  @Post('eval-task-priority/set') async setEvalTaskPriority(@Body() body: any) { return this.evalTaskPriorityService.set(body.taskId, body.priority); }
+  @Post('result-sub-notify/notify') async notifyResultSubscription(@Body() body: any) { return this.resultSubscriptionNotifyService.notify(body.subscriptionId, body.result); }
+  @Post('model-compare-report/generate') async generateModelComparisonReport(@Body() body: any) { return this.modelComparisonReportService.generate(body.modelIds); }
+  @Post('dataset-transform/create') async createDatasetTransform(@Body() body: any) { return this.datasetTransformService.create(body); }
+  @Post('dataset-transform/execute') async executeDatasetTransform(@Body() body: any) { return this.datasetTransformService.execute(body.id); }
+
+  // ========== v1.68-v1.72 API ==========
+  @Post('model-routing-strategy/create') async createModelRoutingStrategy(@Body() body: any) { return this.modelRoutingStrategyService.create(body); }
+  @Post('data-annotation-quality/measure') async measureDataAnnotationQuality(@Body() body: any) { return this.dataAnnotationQualityService.measure(body.annotationId); }
+  @Post('eval-replay-config/create') async createEvalReplayConfig(@Body() body: any) { return this.evalReplayConfigService.create(body); }
+  @Post('task-tracking-report/generate') async generateTaskTrackingReport(@Body() body: any) { return this.taskTrackingReportService.generate(body.taskId); }
+  @Post('result-export-config/create') async createResultExportConfig(@Body() body: any) { return this.resultExportConfigService.create(body); }
+  @Post('model-eval-report/generate') async generateModelEvalReport(@Body() body: any) { return this.modelEvalReportService.generate(body.modelId); }
+  @Post('data-sync-strategy/create') async createDataSyncStrategy(@Body() body: any) { return this.dataSyncStrategyService.create(body); }
+  @Post('eval-snapshot-compare/compare') async compareEvalSnapshots(@Body() body: any) { return this.evalSnapshotCompareService.compare(body.snapshotA, body.snapshotB); }
+  @Post('task-orchestration-config/create') async createTaskOrchestrationConfig(@Body() body: any) { return this.taskOrchestrationConfigService.create(body); }
+  @Post('result-agg-strategy/create') async createResultAggregationStrategy(@Body() body: any) { return this.resultAggregationStrategyService.create(body); }
+  @Post('model-deploy-config/create') async createModelDeploymentConfig(@Body() body: any) { return this.modelDeploymentConfigService.create(body); }
+  @Post('dataset-analysis/analyze') async analyzeDataset(@Body() body: any) { return this.datasetAnalysisService.analyze(body.datasetId); }
+  @Post('task-dist-strategy/create') async createTaskDistributionStrategy(@Body() body: any) { return this.taskDistributionStrategyService.create(body); }
+  @Post('result-cache-config/create') async createResultCacheConfig(@Body() body: any) { return this.resultCacheConfigService.create(body); }
+  @Post('model-eval-config/create') async createModelEvalConfig(@Body() body: any) { return this.modelEvalConfigService.create(body); }
+
+  // ========== v1.73-v1.77 API ==========
+  @Post('model-deploy-report/generate') async generateModelDeploymentReport(@Body() body: any) { return this.modelDeploymentReportService.generate(body.deploymentId); }
+  @Post('dataset-quality-monitor/start') async startDatasetQualityMonitor(@Body() body: any) { return this.datasetQualityMonitorService.start(body.datasetId); }
+  @Post('dataset-quality-monitor/check') async checkDatasetQualityMonitor(@Body() body: any) { return this.datasetQualityMonitorService.check(body.datasetId); }
+  @Post('eval-task-report/generate') async generateEvalTaskReport(@Body() body: any) { return this.evalTaskReportService.generate(body.taskId); }
+  @Post('result-agg-report/generate') async generateResultAggregationReport(@Body() body: any) { return this.resultAggregationReportService.generate(body.aggId); }
+  @Post('model-eval-compare/compare') async compareModelEvals(@Body() body: any) { return this.modelEvalCompareService.compare(body.modelA, body.modelB); }
+  @Post('dataset-report/generate') async generateDatasetReport(@Body() body: any) { return this.datasetReportService.generate(body.datasetId); }
+  @Post('task-dist-report/generate') async generateTaskDistributionReport(@Body() body: any) { return this.taskDistributionReportService.generate(body.strategyId); }
+  @Post('result-cache-monitor/start') async startResultCacheMonitor(@Body() body: any) { return this.resultCacheMonitorService.start(body.configId); }
+  @Post('result-cache-monitor/check') async checkResultCacheMonitor(@Body() body: any) { return this.resultCacheMonitorService.check(body.configId); }
+  @Post('model-deploy-alert/create') async createModelDeploymentAlert(@Body() body: any) { return this.modelDeploymentAlertService.create(body); }
+  @Post('model-deploy-alert/check') async checkModelDeploymentAlert(@Body() body: any) { return this.modelDeploymentAlertService.check(body.deploymentId, body.metric, body.value); }
+  @Post('dataset-quality-alert/create') async createDatasetQualityAlert(@Body() body: any) { return this.datasetQualityAlertService.create(body); }
+  @Post('dataset-quality-alert/check') async checkDatasetQualityAlert(@Body() body: any) { return this.datasetQualityAlertService.check(body.datasetId, body.quality); }
+  @Post('eval-task-alert/create') async createEvalTaskAlert(@Body() body: any) { return this.evalTaskAlertService.create(body); }
+  @Post('eval-task-alert/check') async checkEvalTaskAlert(@Body() body: any) { return this.evalTaskAlertService.check(body.taskId, body.status); }
+  @Post('result-agg-alert/create') async createResultAggregationAlert(@Body() body: any) { return this.resultAggregationAlertService.create(body); }
+  @Post('result-agg-alert/check') async checkResultAggregationAlert(@Body() body: any) { return this.resultAggregationAlertService.check(body.aggId, body.count); }
+  @Post('model-eval-alert/create') async createModelEvalAlert(@Body() body: any) { return this.modelEvalAlertService.create(body); }
+  @Post('model-eval-alert/check') async checkModelEvalAlert(@Body() body: any) { return this.modelEvalAlertService.check(body.modelId, body.metric, body.value); }
+  @Post('dataset-sync-alert/create') async createDatasetSyncAlert(@Body() body: any) { return this.datasetSyncAlertService.create(body); }
+  @Post('dataset-sync-alert/check') async checkDatasetSyncAlert(@Body() body: any) { return this.datasetSyncAlertService.check(body.datasetId, body.syncStatus); }
+  @Post('eval-snapshot-alert/create') async createEvalSnapshotAlert(@Body() body: any) { return this.evalSnapshotAlertService.create(body); }
+  @Post('eval-snapshot-alert/check') async checkEvalSnapshotAlert(@Body() body: any) { return this.evalSnapshotAlertService.check(body.snapshotId, body.consistency); }
+
+  // ========== v1.78-v1.82 API ==========
+  @Post('task-orchestration-alert/create') async createTaskOrchestrationAlert(@Body() body: any) { return this.taskOrchestrationAlertService.create(body); }
+  @Post('task-orchestration-alert/check') async checkTaskOrchestrationAlert(@Body() body: any) { return this.taskOrchestrationAlertService.check(body.workflowId, body.status); }
+  @Post('result-export-alert/create') async createResultExportAlert(@Body() body: any) { return this.resultExportAlertService.create(body); }
+  @Post('result-export-alert/check') async checkResultExportAlert(@Body() body: any) { return this.resultExportAlertService.check(body.exportId, body.status); }
+  @Post('model-routing-alert/create') async createModelRoutingAlert(@Body() body: any) { return this.modelRoutingAlertService.create(body); }
+  @Post('model-routing-alert/check') async checkModelRoutingAlert(@Body() body: any) { return this.modelRoutingAlertService.check(body.routeId, body.errorRate); }
+  @Post('data-annotation-alert/create') async createDataAnnotationAlert(@Body() body: any) { return this.dataAnnotationAlertService.create(body); }
+  @Post('data-annotation-alert/check') async checkDataAnnotationAlert(@Body() body: any) { return this.dataAnnotationAlertService.check(body.annotationId, body.quality); }
+  @Post('eval-replay-alert/create') async createEvalReplayAlert(@Body() body: any) { return this.evalReplayAlertService.create(body); }
+  @Post('eval-replay-alert/check') async checkEvalReplayAlert(@Body() body: any) { return this.evalReplayAlertService.check(body.replayId, body.consistency); }
+  @Post('task-tracking-alert/create') async createTaskTrackingAlert(@Body() body: any) { return this.taskTrackingAlertService.create(body); }
+  @Post('task-tracking-alert/check') async checkTaskTrackingAlert(@Body() body: any) { return this.taskTrackingAlertService.check(body.taskId, body.duration); }
+  @Post('result-search-alert/create') async createResultSearchAlert(@Body() body: any) { return this.resultSearchAlertService.create(body); }
+  @Post('result-search-alert/check') async checkResultSearchAlert(@Body() body: any) { return this.resultSearchAlertService.check(body.queryId, body.latency); }
+  @Post('model-perf-alert/create') async createModelPerformanceAlert(@Body() body: any) { return this.modelPerformanceAlertService.create(body); }
+  @Post('model-perf-alert/check') async checkModelPerformanceAlert(@Body() body: any) { return this.modelPerformanceAlertService.check(body.modelId, body.latency); }
+  @Post('dataset-cleaning-alert/create') async createDatasetCleaningAlert(@Body() body: any) { return this.datasetCleaningAlertService.create(body); }
+  @Post('dataset-cleaning-alert/check') async checkDatasetCleaningAlert(@Body() body: any) { return this.datasetCleaningAlertService.check(body.cleaningId, body.removedRatio); }
+  @Post('eval-cache-alert/create') async createEvalCacheAlert(@Body() body: any) { return this.evalCacheAlertService.create(body); }
+  @Post('eval-cache-alert/check') async checkEvalCacheAlert(@Body() body: any) { return this.evalCacheAlertService.check(body.cacheId, body.hitRate); }
+  @Post('task-scheduling-alert/create') async createTaskSchedulingAlert(@Body() body: any) { return this.taskSchedulingAlertService.create(body); }
+  @Post('task-scheduling-alert/check') async checkTaskSchedulingAlert(@Body() body: any) { return this.taskSchedulingAlertService.check(body.scheduleId, body.missedCount); }
+  @Post('result-viz-alert/create') async createResultVisualizationAlert(@Body() body: any) { return this.resultVisualizationAlertService.create(body); }
+  @Post('result-viz-alert/check') async checkResultVisualizationAlert(@Body() body: any) { return this.resultVisualizationAlertService.check(body.chartId, body.renderTime); }
+  @Post('model-ver-alert/create') async createModelVersionAlert(@Body() body: any) { return this.modelVersionAlertService.create(body); }
+  @Post('model-ver-alert/check') async checkModelVersionAlert(@Body() body: any) { return this.modelVersionAlertService.check(body.versionId, body.metric, body.value); }
+  @Post('dataset-ver-alert/create') async createDatasetVersionAlert(@Body() body: any) { return this.datasetVersionAlertService.create(body); }
+  @Post('dataset-ver-alert/check') async checkDatasetVersionAlert(@Body() body: any) { return this.datasetVersionAlertService.check(body.versionId, body.size); }
+  @Post('eval-snapshot-alert-adv/create') async createEvalSnapshotAlertAdv(@Body() body: any) { return this.evalSnapshotAlertAdvService.create(body); }
+  @Post('eval-snapshot-alert-adv/check') async checkEvalSnapshotAlertAdv(@Body() body: any) { return this.evalSnapshotAlertAdvService.check(body.snapshotId, body.diff); }
 }

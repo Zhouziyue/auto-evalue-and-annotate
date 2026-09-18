@@ -86,6 +86,34 @@ import {
   AdvancedIndexService, AdvancedValidationService, AdvancedTemplateService,
   AdvancedPipelineService, AdvancedDependencyService, AdvancedArchiveService
 } from './batch-services';
+import {
+  StreamingEvalService, SecurityScanService, EvalGatewayService,
+  EvalPluginService, VisualizationEngineService, StressTestService,
+  CanaryDeploymentService, DisasterRecoveryService, TenantIsolationService,
+  AuditLogService, TraceAnalysisService, DataProfilingService,
+  DataMigrationEvalService, ReplayEvalService, SmartDiagnosisService
+} from './batch-v2';
+import {
+  StressReportService, CanaryStrategyService, DisasterDrillService,
+  TenantQuotaService, AuditReportService, LinkAnalysisService,
+  ProfileAnalysisService, MigrationToolService, ReplayEngineService,
+  DiagnosisAdviceService, StressMonitorService, CanaryMonitorService,
+  DisasterReportService, TenantBillingService, AuditTrailService
+} from './batch-v3';
+import {
+  LinkDiagnosisService, ProfileReportService, MigrationMonitorService,
+  ReplayAnalysisService, DiagnosisReportService, StressAlertService,
+  CanaryReportService, DisasterStrategyService, TenantManagementService,
+  AuditAnalysisService, LinkReportService, ProfileMonitorService,
+  MigrationVerifyService, ReplayDiagnosisService, StressAnalysisService
+} from './batch-v4';
+import {
+  CanaryAnalysisService, DisasterMonitorService, TenantReportService,
+  AuditMonitorService, LinkMonitorService, ProfileAlertService,
+  MigrationReportService, ReplayReportService, DiagnosisAlertService,
+  StressReportAdvService, CanaryAlertService, DisasterReportAdvService,
+  TenantAlertService, AuditAlertService, LinkAlertService
+} from './batch-v5';
 
 @Controller('api/eval')
 export class EvalController {
@@ -206,6 +234,70 @@ export class EvalController {
     private advancedPipelineService: AdvancedPipelineService,
     private advancedDependencyService: AdvancedDependencyService,
     private advancedArchiveService: AdvancedArchiveService,
+    // v1.43-v1.47
+    private streamingEvalService: StreamingEvalService,
+    private securityScanService: SecurityScanService,
+    private evalGatewayService: EvalGatewayService,
+    private evalPluginService: EvalPluginService,
+    private visualizationEngineService: VisualizationEngineService,
+    private stressTestService: StressTestService,
+    private canaryDeploymentService: CanaryDeploymentService,
+    private disasterRecoveryService: DisasterRecoveryService,
+    private tenantIsolationService: TenantIsolationService,
+    private auditLogService: AuditLogService,
+    private traceAnalysisService: TraceAnalysisService,
+    private dataProfilingService: DataProfilingService,
+    private dataMigrationEvalService: DataMigrationEvalService,
+    private replayEvalService: ReplayEvalService,
+    private smartDiagnosisService: SmartDiagnosisService,
+    // v1.48-v1.52
+    private stressReportService: StressReportService,
+    private canaryStrategyService: CanaryStrategyService,
+    private disasterDrillService: DisasterDrillService,
+    private tenantQuotaService: TenantQuotaService,
+    private auditReportService: AuditReportService,
+    private linkAnalysisService: LinkAnalysisService,
+    private profileAnalysisService: ProfileAnalysisService,
+    private migrationToolService: MigrationToolService,
+    private replayEngineService: ReplayEngineService,
+    private diagnosisAdviceService: DiagnosisAdviceService,
+    private stressMonitorService: StressMonitorService,
+    private canaryMonitorService: CanaryMonitorService,
+    private disasterReportService: DisasterReportService,
+    private tenantBillingService: TenantBillingService,
+    private auditTrailService: AuditTrailService,
+    // v1.53-v1.57
+    private linkDiagnosisService: LinkDiagnosisService,
+    private profileReportService: ProfileReportService,
+    private migrationMonitorService: MigrationMonitorService,
+    private replayAnalysisService: ReplayAnalysisService,
+    private diagnosisReportService: DiagnosisReportService,
+    private stressAlertService: StressAlertService,
+    private canaryReportService: CanaryReportService,
+    private disasterStrategyService: DisasterStrategyService,
+    private tenantManagementService: TenantManagementService,
+    private auditAnalysisService: AuditAnalysisService,
+    private linkReportService: LinkReportService,
+    private profileMonitorService: ProfileMonitorService,
+    private migrationVerifyService: MigrationVerifyService,
+    private replayDiagnosisService: ReplayDiagnosisService,
+    private stressAnalysisService: StressAnalysisService,
+    // v1.58-v1.62
+    private canaryAnalysisService: CanaryAnalysisService,
+    private disasterMonitorService: DisasterMonitorService,
+    private tenantReportService: TenantReportService,
+    private auditMonitorService: AuditMonitorService,
+    private linkMonitorService: LinkMonitorService,
+    private profileAlertService: ProfileAlertService,
+    private migrationReportService: MigrationReportService,
+    private replayReportService: ReplayReportService,
+    private diagnosisAlertService: DiagnosisAlertService,
+    private stressReportAdvService: StressReportAdvService,
+    private canaryAlertService: CanaryAlertService,
+    private disasterReportAdvService: DisasterReportAdvService,
+    private tenantAlertService: TenantAlertService,
+    private auditAlertService: AuditAlertService,
+    private linkAlertService: LinkAlertService,
   ) {}
 
   // ========== 评测指标 API ==========
@@ -3315,4 +3407,98 @@ export class EvalController {
   @Post('advanced-pipeline/create') async advancedCreatePipeline(@Body() body: any) { return this.advancedPipelineService.create(body); }
   @Post('advanced-dependency/add') async advancedAddDependency(@Body() body: any) { return this.advancedDependencyService.add(body.taskId, body.deps); }
   @Post('advanced-archive/archive') async advancedArchive(@Body() body: any) { return this.advancedArchiveService.archive(body); }
+
+  // ========== v1.43-v1.47 API ==========
+  @Post('streaming/create') async createStreamSession(@Body() body: any) { return this.streamingEvalService.createSession(body); }
+  @Post('streaming/push') async pushStreamChunk(@Body() body: any) { return this.streamingEvalService.pushChunk(body.sessionId, body.chunk); }
+  @Get('streaming/list') async listStreamSessions() { return this.streamingEvalService.listSessions(); }
+  @Post('security-scan/scan') async runSecurityScan(@Body() body: any) { return this.securityScanService.scan(body); }
+  @Get('security-scan/list') async listSecurityScans() { return this.securityScanService.list(); }
+  @Post('eval-gateway/route') async addGatewayRoute(@Body() body: any) { return this.evalGatewayService.addRoute(body.path, body.config); }
+  @Get('eval-gateway/routes') async listGatewayRoutes() { return this.evalGatewayService.listRoutes(); }
+  @Post('eval-plugin/register') async registerPlugin(@Body() body: any) { return this.evalPluginService.register(body); }
+  @Get('eval-plugin/list') async listPlugins() { return this.evalPluginService.list(); }
+  @Post('viz-engine/chart') async generateVizChart(@Body() body: any) { return this.visualizationEngineService.generateChart(body.data, body.type); }
+  @Post('viz-engine/dashboard') async generateVizDashboard(@Body() body: any) { return this.visualizationEngineService.generateDashboard(body); }
+  @Post('stress-test/create') async createStressTest(@Body() body: any) { return this.stressTestService.create(body); }
+  @Post('stress-test/run') async runStressTest(@Body() body: any) { return this.stressTestService.run(body.id); }
+  @Post('canary-deploy/deploy') async deployCanary(@Body() body: any) { return this.canaryDeploymentService.deploy(body); }
+  @Post('canary-deploy/adjust') async adjustCanaryTraffic(@Body() body: any) { return this.canaryDeploymentService.adjustTraffic(body.id, body.percent); }
+  @Post('disaster-recovery/create') async createDRPlan(@Body() body: any) { return this.disasterRecoveryService.createPlan(body); }
+  @Post('disaster-recovery/test') async testDRPlan(@Body() body: any) { return this.disasterRecoveryService.testPlan(body.id); }
+  @Post('tenant-isolation/configure') async configureTenantIsolation(@Body() body: any) { return this.tenantIsolationService.configure(body.tenantId, body.config); }
+  @Post('audit-log/log') async logAuditEvent(@Body() body: any) { return this.auditLogService.log(body); }
+  @Get('audit-log/list') async listAuditLogs() { return this.auditLogService.list(); }
+  @Post('trace-analysis/record') async recordTrace(@Body() body: any) { return this.traceAnalysisService.record(body); }
+  @Post('trace-analysis/analyze') async analyzeTrace(@Body() body: any) { return this.traceAnalysisService.analyze(body.traceId); }
+  @Post('data-profiling/profile') async profileData(@Body() body: any) { return this.dataProfilingService.profile(body.datasetId, body.data); }
+  @Post('data-migration-eval/validate') async validateMigration(@Body() body: any) { return this.dataMigrationEvalService.validate(body.source, body.target); }
+  @Post('data-migration-eval/migrate') async executeMigration(@Body() body: any) { return this.dataMigrationEvalService.migrate(body.source, body.target); }
+  @Post('replay-eval/create') async createReplayEval(@Body() body: any) { return this.replayEvalService.create(body); }
+  @Post('replay-eval/execute') async executeReplayEval(@Body() body: any) { return this.replayEvalService.execute(body.id); }
+  @Post('smart-diagnosis/diagnose') async smartDiagnose(@Body() body: any) { return this.smartDiagnosisService.diagnose(body); }
+
+  // ========== v1.48-v1.52 API ==========
+  @Post('stress-report/create') async createStressReport(@Body() body: any) { return this.stressReportService.create(body.testId); }
+  @Post('canary-strategy/create') async createCanaryStrategy(@Body() body: any) { return this.canaryStrategyService.create(body); }
+  @Post('disaster-drill/create') async createDisasterDrill(@Body() body: any) { return this.disasterDrillService.create(body); }
+  @Post('disaster-drill/run') async runDisasterDrill(@Body() body: any) { return this.disasterDrillService.run(body.id); }
+  @Post('tenant-quota/set') async setTenantQuota(@Body() body: any) { return this.tenantQuotaService.setQuota(body.tenantId, body.config); }
+  @Post('audit-report/generate') async generateAuditReport(@Body() body: any) { return this.auditReportService.generate(body); }
+  @Post('link-analysis/analyze') async analyzeLinks(@Body() body: any) { return this.linkAnalysisService.analyze(body); }
+  @Post('profile-analysis/analyze') async analyzeProfile(@Body() body: any) { return this.profileAnalysisService.analyze(body.datasetId); }
+  @Post('migration-tool/create') async createMigrationPlan(@Body() body: any) { return this.migrationToolService.createPlan(body.source, body.target); }
+  @Post('replay-engine/record') async recordReplay(@Body() body: any) { return this.replayEngineService.record(body.sessionId, body.data); }
+  @Post('replay-engine/replay') async executeReplay(@Body() body: any) { return this.replayEngineService.replay(body.sessionId); }
+  @Post('diagnosis-advice/generate') async generateDiagnosisAdvice(@Body() body: any) { return this.diagnosisAdviceService.generate(body); }
+  @Post('stress-monitor/start') async startStressMonitor(@Body() body: any) { return this.stressMonitorService.start(body); }
+  @Get('stress-monitor/metrics/:id') async getStressMetrics(@Param('id') id: string) { return this.stressMonitorService.getMetrics(id); }
+  @Post('canary-monitor/start') async startCanaryMonitor(@Body() body: any) { return this.canaryMonitorService.start(body.deploymentId); }
+  @Post('disaster-report/generate') async generateDisasterReport(@Body() body: any) { return this.disasterReportService.generate(body.planId); }
+  @Post('tenant-billing/generate') async generateTenantBill(@Body() body: any) { return this.tenantBillingService.generate(body.tenantId, body.period); }
+  @Post('audit-trail/record') async recordAuditTrail(@Body() body: any) { return this.auditTrailService.record(body); }
+
+  // ========== v1.53-v1.57 API ==========
+  @Post('link-diagnosis/diagnose') async diagnoseLink(@Body() body: any) { return this.linkDiagnosisService.diagnose(body.linkId); }
+  @Post('profile-report/generate') async generateProfileReport(@Body() body: any) { return this.profileReportService.generate(body.datasetId); }
+  @Post('migration-monitor/start') async startMigrationMonitor(@Body() body: any) { return this.migrationMonitorService.start(body.migrationId); }
+  @Post('replay-analysis/analyze') async analyzeReplay(@Body() body: any) { return this.replayAnalysisService.analyze(body.replayId); }
+  @Post('diagnosis-report/generate') async generateDiagnosisReport(@Body() body: any) { return this.diagnosisReportService.generate(body.diagnosisId); }
+  @Post('stress-alert/create') async createStressAlert(@Body() body: any) { return this.stressAlertService.create(body); }
+  @Post('stress-alert/check') async checkStressAlert(@Body() body: any) { return this.stressAlertService.check(body.metric, body.value); }
+  @Post('canary-report/generate') async generateCanaryReport(@Body() body: any) { return this.canaryReportService.generate(body.deploymentId); }
+  @Post('disaster-strategy/create') async createDisasterStrategy(@Body() body: any) { return this.disasterStrategyService.create(body); }
+  @Post('tenant-mgmt/create') async createTenant(@Body() body: any) { return this.tenantManagementService.create(body); }
+  @Post('tenant-mgmt/deactivate') async deactivateTenant(@Body() body: any) { return this.tenantManagementService.deactivate(body.id); }
+  @Post('audit-analysis/analyze') async analyzeAudit(@Body() body: any) { return this.auditAnalysisService.analyze(body.period); }
+  @Post('link-report/generate') async generateLinkReport(@Body() body: any) { return this.linkReportService.generate(body.traceId); }
+  @Post('profile-monitor/start') async startProfileMonitor(@Body() body: any) { return this.profileMonitorService.start(body.datasetId); }
+  @Post('migration-verify/verify') async verifyMigration(@Body() body: any) { return this.migrationVerifyService.verify(body.migrationId); }
+  @Post('replay-diagnosis/diagnose') async diagnoseReplay(@Body() body: any) { return this.replayDiagnosisService.diagnose(body.replayId); }
+  @Post('stress-analysis/analyze') async analyzeStress(@Body() body: any) { return this.stressAnalysisService.analyze(body.testId); }
+
+  // ========== v1.58-v1.62 API ==========
+  @Post('canary-analysis/analyze') async analyzeCanary(@Body() body: any) { return this.canaryAnalysisService.analyze(body.deploymentId); }
+  @Post('disaster-monitor/start') async startDisasterMonitor(@Body() body: any) { return this.disasterMonitorService.start(body.planId); }
+  @Post('disaster-monitor/check') async checkDisasterMonitor(@Body() body: any) { return this.disasterMonitorService.check(body.planId); }
+  @Post('tenant-report/generate') async generateTenantReport(@Body() body: any) { return this.tenantReportService.generate(body.tenantId, body.period); }
+  @Post('audit-monitor/start') async startAuditMonitor(@Body() body: any) { return this.auditMonitorService.start(body); }
+  @Post('link-monitor/start') async startLinkMonitor(@Body() body: any) { return this.linkMonitorService.start(body.traceId); }
+  @Post('link-monitor/check') async checkLinkMonitor(@Body() body: any) { return this.linkMonitorService.check(body.traceId); }
+  @Post('profile-alert/create') async createProfileAlert(@Body() body: any) { return this.profileAlertService.create(body); }
+  @Post('profile-alert/check') async checkProfileAlert(@Body() body: any) { return this.profileAlertService.check(body.datasetId, body.metric, body.value); }
+  @Post('migration-report/generate') async generateMigrationReport(@Body() body: any) { return this.migrationReportService.generate(body.migrationId); }
+  @Post('replay-report/generate') async generateReplayReport(@Body() body: any) { return this.replayReportService.generate(body.replayId); }
+  @Post('diagnosis-alert/create') async createDiagnosisAlert(@Body() body: any) { return this.diagnosisAlertService.create(body); }
+  @Post('diagnosis-alert/check') async checkDiagnosisAlert(@Body() body: any) { return this.diagnosisAlertService.check(body.issueId, body.severity); }
+  @Post('stress-report-adv/generate') async generateStressReportAdv(@Body() body: any) { return this.stressReportAdvService.generate(body.testId); }
+  @Post('canary-alert/create') async createCanaryAlert(@Body() body: any) { return this.canaryAlertService.create(body); }
+  @Post('canary-alert/check') async checkCanaryAlert(@Body() body: any) { return this.canaryAlertService.check(body.deploymentId, body.errorRate); }
+  @Post('disaster-report-adv/generate') async generateDisasterReportAdv(@Body() body: any) { return this.disasterReportAdvService.generate(body.planId); }
+  @Post('tenant-alert/create') async createTenantAlert(@Body() body: any) { return this.tenantAlertService.create(body); }
+  @Post('tenant-alert/check') async checkTenantAlert(@Body() body: any) { return this.tenantAlertService.check(body.tenantId, body.usage, body.limit); }
+  @Post('audit-alert/create') async createAuditAlert(@Body() body: any) { return this.auditAlertService.create(body); }
+  @Post('audit-alert/check') async checkAuditAlert(@Body() body: any) { return this.auditAlertService.check(body.eventType, body.count); }
+  @Post('link-alert/create') async createLinkAlert(@Body() body: any) { return this.linkAlertService.create(body); }
+  @Post('link-alert/check') async checkLinkAlert(@Body() body: any) { return this.linkAlertService.check(body.traceId, body.latency); }
 }

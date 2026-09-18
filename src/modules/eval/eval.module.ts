@@ -86,6 +86,34 @@ import {
   AdvancedIndexService, AdvancedValidationService, AdvancedTemplateService,
   AdvancedPipelineService, AdvancedDependencyService, AdvancedArchiveService
 } from './batch-services';
+import {
+  StreamingEvalService, SecurityScanService, EvalGatewayService,
+  EvalPluginService, VisualizationEngineService, StressTestService,
+  CanaryDeploymentService, DisasterRecoveryService, TenantIsolationService,
+  AuditLogService, TraceAnalysisService, DataProfilingService,
+  DataMigrationEvalService, ReplayEvalService, SmartDiagnosisService
+} from './batch-v2';
+import {
+  StressReportService, CanaryStrategyService, DisasterDrillService,
+  TenantQuotaService, AuditReportService, LinkAnalysisService,
+  ProfileAnalysisService, MigrationToolService, ReplayEngineService,
+  DiagnosisAdviceService, StressMonitorService, CanaryMonitorService,
+  DisasterReportService, TenantBillingService, AuditTrailService
+} from './batch-v3';
+import {
+  LinkDiagnosisService, ProfileReportService, MigrationMonitorService,
+  ReplayAnalysisService, DiagnosisReportService, StressAlertService,
+  CanaryReportService, DisasterStrategyService, TenantManagementService,
+  AuditAnalysisService, LinkReportService, ProfileMonitorService,
+  MigrationVerifyService, ReplayDiagnosisService, StressAnalysisService
+} from './batch-v4';
+import {
+  CanaryAnalysisService, DisasterMonitorService, TenantReportService,
+  AuditMonitorService, LinkMonitorService, ProfileAlertService,
+  MigrationReportService, ReplayReportService, DiagnosisAlertService,
+  StressReportAdvService, CanaryAlertService, DisasterReportAdvService,
+  TenantAlertService, AuditAlertService, LinkAlertService
+} from './batch-v5';
 import { EvalController } from './eval.controller';
 
 @Module({
@@ -208,6 +236,30 @@ import { EvalController } from './eval.controller';
     AdvancedPipelineService,
     AdvancedDependencyService,
     AdvancedArchiveService,
+    // v1.43-v1.47
+    StreamingEvalService, SecurityScanService, EvalGatewayService,
+    EvalPluginService, VisualizationEngineService, StressTestService,
+    CanaryDeploymentService, DisasterRecoveryService, TenantIsolationService,
+    AuditLogService, TraceAnalysisService, DataProfilingService,
+    DataMigrationEvalService, ReplayEvalService, SmartDiagnosisService,
+    // v1.48-v1.52
+    StressReportService, CanaryStrategyService, DisasterDrillService,
+    TenantQuotaService, AuditReportService, LinkAnalysisService,
+    ProfileAnalysisService, MigrationToolService, ReplayEngineService,
+    DiagnosisAdviceService, StressMonitorService, CanaryMonitorService,
+    DisasterReportService, TenantBillingService, AuditTrailService,
+    // v1.53-v1.57
+    LinkDiagnosisService, ProfileReportService, MigrationMonitorService,
+    ReplayAnalysisService, DiagnosisReportService, StressAlertService,
+    CanaryReportService, DisasterStrategyService, TenantManagementService,
+    AuditAnalysisService, LinkReportService, ProfileMonitorService,
+    MigrationVerifyService, ReplayDiagnosisService, StressAnalysisService,
+    // v1.58-v1.62
+    CanaryAnalysisService, DisasterMonitorService, TenantReportService,
+    AuditMonitorService, LinkMonitorService, ProfileAlertService,
+    MigrationReportService, ReplayReportService, DiagnosisAlertService,
+    StressReportAdvService, CanaryAlertService, DisasterReportAdvService,
+    TenantAlertService, AuditAlertService, LinkAlertService,
   ],
   exports: [
     EvalService,
@@ -327,6 +379,30 @@ import { EvalController } from './eval.controller';
     AdvancedPipelineService,
     AdvancedDependencyService,
     AdvancedArchiveService,
+    // v1.43-v1.47
+    StreamingEvalService, SecurityScanService, EvalGatewayService,
+    EvalPluginService, VisualizationEngineService, StressTestService,
+    CanaryDeploymentService, DisasterRecoveryService, TenantIsolationService,
+    AuditLogService, TraceAnalysisService, DataProfilingService,
+    DataMigrationEvalService, ReplayEvalService, SmartDiagnosisService,
+    // v1.48-v1.52
+    StressReportService, CanaryStrategyService, DisasterDrillService,
+    TenantQuotaService, AuditReportService, LinkAnalysisService,
+    ProfileAnalysisService, MigrationToolService, ReplayEngineService,
+    DiagnosisAdviceService, StressMonitorService, CanaryMonitorService,
+    DisasterReportService, TenantBillingService, AuditTrailService,
+    // v1.53-v1.57
+    LinkDiagnosisService, ProfileReportService, MigrationMonitorService,
+    ReplayAnalysisService, DiagnosisReportService, StressAlertService,
+    CanaryReportService, DisasterStrategyService, TenantManagementService,
+    AuditAnalysisService, LinkReportService, ProfileMonitorService,
+    MigrationVerifyService, ReplayDiagnosisService, StressAnalysisService,
+    // v1.58-v1.62
+    CanaryAnalysisService, DisasterMonitorService, TenantReportService,
+    AuditMonitorService, LinkMonitorService, ProfileAlertService,
+    MigrationReportService, ReplayReportService, DiagnosisAlertService,
+    StressReportAdvService, CanaryAlertService, DisasterReportAdvService,
+    TenantAlertService, AuditAlertService, LinkAlertService,
   ],
 })
 export class EvalModule {}

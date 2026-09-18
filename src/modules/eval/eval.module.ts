@@ -41,6 +41,9 @@ import { VisualizationService } from './visualization.service';
 import { EvalConfigService } from './config.service';
 import { ResultSearchService } from './result-search.service';
 import { MultiTenantService } from './multi-tenant.service';
+import { EvalCacheService } from './eval-cache.service';
+import { PromptVersionService } from './prompt-version.service';
+import { EvalReplayService } from './eval-replay.service';
 import { EvalController } from './eval.controller';
 
 @Module({
@@ -88,6 +91,9 @@ import { EvalController } from './eval.controller';
     EvalConfigService,
     ResultSearchService,
     MultiTenantService,
+    EvalCacheService,
+    PromptVersionService,
+    EvalReplayService,
   ],
   exports: [
     EvalService,
@@ -132,6 +138,9 @@ import { EvalController } from './eval.controller';
     EvalConfigService,
     ResultSearchService,
     MultiTenantService,
+    EvalCacheService,
+    PromptVersionService,
+    EvalReplayService,
   ],
 })
 export class EvalModule {}

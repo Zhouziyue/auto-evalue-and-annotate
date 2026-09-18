@@ -41,6 +41,9 @@ import { VisualizationService, ChartType } from './visualization.service';
 import { EvalConfigService, ConfigType } from './config.service';
 import { ResultSearchService } from './result-search.service';
 import { MultiTenantService, TenantPlan, TenantStatus } from './multi-tenant.service';
+import { EvalCacheService } from './eval-cache.service';
+import { PromptVersionService } from './prompt-version.service';
+import { EvalReplayService } from './eval-replay.service';
 
 @Controller('api/eval')
 export class EvalController {
@@ -86,6 +89,9 @@ export class EvalController {
     private evalConfigService: EvalConfigService,
     private resultSearchService: ResultSearchService,
     private multiTenantService: MultiTenantService,
+    private evalCacheService: EvalCacheService,
+    private promptVersionService: PromptVersionService,
+    private evalReplayService: EvalReplayService,
   ) {}
 
   // ========== 评测指标 API ==========
@@ -2036,5 +2042,151 @@ export class EvalController {
   @Get('tenants/plans/list')
   async getPlans() {
     return this.multiTenantService.getPlans();
+  }
+
+  // ==================== 评测缓存 ====================
+
+  @Get('eval-cache/:key')
+  async getCacheEntry(@Param('key') key: string) {
+    return this.evalCacheService.get(key);
+  }
+
+  @Post('eval-cache')
+  async setCacheEntry(@Body() body: any) {
+    return this.evalCacheService.set(body.key, body);
+  }
+
+  @Get('eval-cache/stats')
+  async getCacheStats() {
+    return this.evalCacheService.getStats();
+  }
+
+  @Post('eval-cache/clear')
+  async clearCache() {
+    return this.evalCacheService.clearAll();
+  }
+
+  @Post('eval-cache/clear-expired')
+  async clearExpiredCache() {
+    return this.evalCacheService.clearExpired();
+  }
+
+  @Post('eval-cache/warmup')
+  async warmupCache(@Body() body: any[]) {
+    return this.evalCacheService.warmup(body);
+  }
+
+  @Get('eval-cache/config')
+  async getCacheConfig() {
+    return this.evalCacheService.getConfig();
+  }
+
+  @Post('eval-cache/config')
+  async updateCacheConfig(@Body() body: any) {
+    return this.evalCacheService.updateConfig(body);
+  }
+
+  // ==================== Prompt 版本 ====================
+
+  @Post('prompts')
+  async createPrompt(@Body() body: any) {
+    return this.promptVersionService.createPrompt(body);
+  }
+
+  @Get('prompts')
+  async listPrompts(@Query('category') category?: string) {
+    return this.promptVersionService.listPrompts(category);
+  }
+
+  @Get('prompts/:id')
+  async getPrompt(@Param('id') id: string) {
+    return this.promptVersionService.getPrompt(id);
+  }
+
+  @Post('prompts/:id/versions')
+  async createPromptVersion(@Param('id') id: string, @Body() body: any) {
+    return this.promptVersionService.createVersion(id, body);
+  }
+
+  @Get('prompts/:id/versions')
+  async getPromptVersions(@Param('id') id: string) {
+    return this.promptVersionService.getVersionHistory(id);
+  }
+
+  @Post('prompts/:id/versions/:versionId/activate')
+  async activatePromptVersion(@Param('id') id: string, @Param('versionId') versionId: string) {
+    return this.promptVersionService.activateVersion(id, versionId);
+  }
+
+  @Post('prompts/:id/rollback')
+  async rollbackPrompt(@Param('id') id: string) {
+    return this.promptVersionService.rollbackVersion(id);
+  }
+
+  @Post('prompts/:id/render')
+  async renderPrompt(@Param('id') id: string, @Body() body: Record<string, any>) {
+    return this.promptVersionService.renderPrompt(id, body);
+  }
+
+  @Post('prompts/:id/versions/:versionId/test')
+  async testPromptVersion(@Param('id') id: string, @Param('versionId') versionId: string) {
+    return this.promptVersionService.runTests(id, versionId);
+  }
+
+  @Post('prompts/:id/test-cases')
+  async addTestCase(@Param('id') id: string, @Body() body: any) {
+    return this.promptVersionService.addTestCase(id, body);
+  }
+
+  @Post('prompts/:id/delete')
+  async deletePrompt(@Param('id') id: string) {
+    return this.promptVersionService.deletePrompt(id);
+  }
+
+  // ==================== 评测回放 ====================
+
+  @Post('replay')
+  async createReplay(@Body() body: any) {
+    return this.evalReplayService.createTask(body);
+  }
+
+  @Post('replay/:id/execute')
+  async executeReplay(@Param('id') id: string) {
+    return this.evalReplayService.execute(id);
+  }
+
+  @Get('replay')
+  async listReplays(@Query('sourceEvalRunId') sourceEvalRunId?: string) {
+    return this.evalReplayService.listTasks(sourceEvalRunId);
+  }
+
+  @Get('replay/:id')
+  async getReplay(@Param('id') id: string) {
+    return this.evalReplayService.getTask(id);
+  }
+
+  @Get('replay/:id/results')
+  async getReplayResults(@Param('id') id: string) {
+    return this.evalReplayService.getResults(id);
+  }
+
+  @Get('replay/:id/comparison')
+  async getReplayComparison(@Param('id') id: string) {
+    return this.evalReplayService.getComparisonSummary(id);
+  }
+
+  @Get('replay/:id/report')
+  async getReplayReport(@Param('id') id: string) {
+    return this.evalReplayService.exportReport(id);
+  }
+
+  @Post('replay/:id/cancel')
+  async cancelReplay(@Param('id') id: string) {
+    return this.evalReplayService.cancelTask(id);
+  }
+
+  @Post('replay/:id/delete')
+  async deleteReplay(@Param('id') id: string) {
+    return this.evalReplayService.deleteTask(id);
   }
 }

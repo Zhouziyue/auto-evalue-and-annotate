@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
-import { Plus, Edit, Trash2, Eye } from 'lucide-react'
+import { Plus, Edit, Trash2, Eye, Search } from 'lucide-react'
 import axios from 'axios'
 
 interface Skill {
@@ -36,6 +36,8 @@ export default function Skills() {
   const [detailOpen, setDetailOpen] = useState(false)
   const [currentSkill, setCurrentSkill] = useState<SkillDetail | null>(null)
   const [formData, setFormData] = useState({ name: '', description: '', version: '1.0.0' })
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
 
   const fetchSkills = async () => {
     setLoading(true)
@@ -98,6 +100,37 @@ export default function Skills() {
     setEditOpen(true)
   }
 
+  const filteredSkills = skills.filter(skill =>
+    skill.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (skill.description || '').toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredSkills.length) {
+      setSelectedIds([])
+    } else {
+      setSelectedIds(filteredSkills.map(s => s.id))
+    }
+  }
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    )
+  }
+
+  const handleBatchDelete = async () => {
+    if (selectedIds.length === 0) return
+    if (!confirm(`确定删除选中的 ${selectedIds.length} 个技能吗？`)) return
+    try {
+      await Promise.all(selectedIds.map(id => axios.delete(`/api/skills/${id}`)))
+      setSelectedIds([])
+      fetchSkills()
+    } catch (e) {
+      alert('批量删除失败')
+    }
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -108,9 +141,35 @@ export default function Skills() {
           </Button>
         </CardHeader>
         <CardContent>
+          {/* Search and Batch Actions */}
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="搜索技能名称或描述..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="max-w-sm"
+              />
+            </div>
+            {selectedIds.length > 0 && (
+              <Button variant="destructive" size="sm" onClick={handleBatchDelete}>
+                <Trash2 className="mr-1 h-3 w-3" /> 删除选中 ({selectedIds.length})
+              </Button>
+            )}
+          </div>
+
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[40px]">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.length === filteredSkills.length && filteredSkills.length > 0}
+                    onChange={toggleSelectAll}
+                    className="h-4 w-4"
+                  />
+                </TableHead>
                 <TableHead>技能名称</TableHead>
                 <TableHead>描述</TableHead>
                 <TableHead>版本</TableHead>
@@ -122,12 +181,20 @@ export default function Skills() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">加载中...</TableCell></TableRow>
-              ) : skills.length === 0 ? (
-                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">暂无数据</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">加载中...</TableCell></TableRow>
+              ) : filteredSkills.length === 0 ? (
+                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">暂无数据</TableCell></TableRow>
               ) : (
-                skills.map((skill) => (
+                filteredSkills.map((skill) => (
                   <TableRow key={skill.id}>
+                    <TableCell>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(skill.id)}
+                        onChange={() => toggleSelect(skill.id)}
+                        className="h-4 w-4"
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">{skill.name}</TableCell>
                     <TableCell className="max-w-[200px] truncate text-muted-foreground">{skill.description || '-'}</TableCell>
                     <TableCell><Badge variant="secondary">{skill.version}</Badge></TableCell>

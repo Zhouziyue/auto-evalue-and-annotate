@@ -14,6 +14,7 @@ import {
   Activity,
   ChevronLeft,
   ChevronRight,
+  Search,
 } from 'lucide-react'
 
 const menuItems = [
@@ -31,8 +32,22 @@ const menuItems = [
 
 function MainLayout() {
   const [collapsed, setCollapsed] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const navigate = useNavigate()
   const location = useLocation()
+
+  const currentPage = menuItems.find((item) => item.key === location.pathname)
+
+  const filteredMenuItems = menuItems.filter(item =>
+    item.label.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const handleNavigate = (key: string) => {
+    navigate(key)
+    setSearchOpen(false)
+    setSearchQuery('')
+  }
 
   return (
     <div className="flex min-h-screen">
@@ -69,6 +84,7 @@ function MainLayout() {
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                 )}
+                title={collapsed ? item.label : undefined}
               >
                 <Icon className="h-4 w-4 shrink-0" />
                 {!collapsed && <span>{item.label}</span>}
@@ -76,15 +92,70 @@ function MainLayout() {
             )
           })}
         </nav>
+
+        {/* Version */}
+        {!collapsed && (
+          <div className="border-t p-4">
+            <div className="text-xs text-muted-foreground">v1.100</div>
+          </div>
+        )}
       </aside>
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col">
         {/* Header */}
-        <header className="flex h-14 items-center border-b bg-background px-6">
-          <h1 className="text-lg font-semibold">
-            {menuItems.find((item) => item.key === location.pathname)?.label || '看板'}
-          </h1>
+        <header className="flex h-14 items-center justify-between border-b bg-background px-6">
+          <div className="flex items-center gap-4">
+            <h1 className="text-lg font-semibold">
+              {currentPage?.label || '看板'}
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* Global Search */}
+            <div className="relative">
+              <button
+                onClick={() => setSearchOpen(!searchOpen)}
+                className="flex h-8 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm text-muted-foreground hover:bg-accent"
+              >
+                <Search className="h-4 w-4" />
+                <span className="hidden sm:inline">搜索页面...</span>
+                <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium">
+                  ⌘K
+                </kbd>
+              </button>
+
+              {searchOpen && (
+                <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-md border bg-popover p-2 shadow-lg">
+                  <div className="flex items-center gap-2 border-b pb-2">
+                    <Search className="h-4 w-4 text-muted-foreground" />
+                    <input
+                      autoFocus
+                      className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                      placeholder="搜索页面..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  <div className="mt-2 max-h-60 overflow-y-auto">
+                    {filteredMenuItems.map(item => {
+                      const Icon = item.icon
+                      return (
+                        <button
+                          key={item.key}
+                          onClick={() => handleNavigate(item.key)}
+                          className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+                        >
+                          <Icon className="h-4 w-4 text-muted-foreground" />
+                          {item.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </header>
 
         {/* Content */}

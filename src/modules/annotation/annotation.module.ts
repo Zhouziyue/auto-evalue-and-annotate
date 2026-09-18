@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common';
 import { AnnotationService } from './annotation.service';
+import { AnnotationConsistencyService } from './annotation-consistency.service';
+import { AnnotationConsistencyController } from './annotation-consistency.controller';
 
 @Module({
-  providers: [AnnotationService],
-  exports: [AnnotationService],
+  controllers: [AnnotationConsistencyController],
+  providers: [AnnotationService, AnnotationConsistencyService],
+  exports: [AnnotationService, AnnotationConsistencyService],
 })
 export class AnnotationModule {}

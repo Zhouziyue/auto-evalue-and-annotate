@@ -4,6 +4,7 @@ import { DatasetService } from './dataset.service';
 import { AiGenerationService } from './ai-generation.service';
 import { SyntheticDatasetService } from './synthetic-dataset.service';
 import { DatasetVersionService } from './dataset-version.service';
+import { DatasetCurationService } from './dataset-curation.service';
 
 @Module({
   controllers: [DatasetController],
@@ -12,12 +13,14 @@ import { DatasetVersionService } from './dataset-version.service';
     AiGenerationService,
     SyntheticDatasetService,
     DatasetVersionService,
+    DatasetCurationService,
   ],
   exports: [
     DatasetService,
     AiGenerationService,
     SyntheticDatasetService,
     DatasetVersionService,
+    DatasetCurationService,
   ],
 })
 export class DatasetModule {}

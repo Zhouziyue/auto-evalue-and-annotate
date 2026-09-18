@@ -4,6 +4,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { DatasetService } from './dataset.service';
 import { AiGenerationService } from './ai-generation.service';
 import { DatasetVersionService } from './dataset-version.service';
+import { DatasetCurationService } from './dataset-curation.service';
 import { CreateDatasetDto, UpdateDatasetDto, CreateTestCaseDto, GenerateDto, SelectAnswerDto } from './dataset.dto';
 
 @ApiTags('评测数据集')
@@ -14,6 +15,7 @@ export class DatasetController {
     private readonly datasetService: DatasetService,
     private readonly aiGenerationService: AiGenerationService,
     private readonly datasetVersionService: DatasetVersionService,
+    private readonly datasetCurationService: DatasetCurationService,
   ) {}
 
   // 数据集 CRUD
@@ -147,5 +149,37 @@ export class DatasetController {
   @ApiOperation({ summary: '回滚到指定版本' })
   rollbackVersion(@Param('id') id: string, @Param('versionId') versionId: string) {
     return this.datasetVersionService.rollbackToVersion(id, versionId);
+  }
+
+  // ========== 数据清洗 ==========
+
+  @Post(':id/clean')
+  @ApiOperation({ summary: '清洗数据集（去重/过滤/质量检查）' })
+  cleanDataset(@Param('id') id: string) {
+    return this.datasetCurationService.cleanDataset(id);
+  }
+
+  @Get(':id/quality-report')
+  @ApiOperation({ summary: '生成数据集质量报告' })
+  getQualityReport(@Param('id') id: string) {
+    return this.datasetCurationService.generateQualityReport(id);
+  }
+
+  @Get('curation/rules')
+  @ApiOperation({ summary: '获取筛选规则列表' })
+  getFilterRules() {
+    return this.datasetCurationService.getRules();
+  }
+
+  @Post('curation/rules')
+  @ApiOperation({ summary: '创建筛选规则' })
+  createFilterRule(@Body() rule: any) {
+    return this.datasetCurationService.createRule(rule);
+  }
+
+  @Post('curation/rules/:id/toggle')
+  @ApiOperation({ summary: '启用/禁用筛选规则' })
+  toggleFilterRule(@Param('id') id: string, @Body() body: { enabled: boolean }) {
+    return this.datasetCurationService.toggleRule(id, body.enabled);
   }
 }

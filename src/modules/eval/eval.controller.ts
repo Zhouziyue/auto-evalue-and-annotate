@@ -21,6 +21,9 @@ import { ABTestService, ABTestConfig, ABTestStatus } from './ab-test.service';
 import { PromptOptimizationService, OptimizationConfig, OptimizationStrategy } from './prompt-optimization.service';
 import { CostTrackingService } from './cost-tracking.service';
 import { BenchmarkService, BenchmarkType } from './benchmark.service';
+import { EloRatingService } from './elo-rating.service';
+import { RegressionDetectionService, RegressionType } from './regression-detection.service';
+import { EvalSnapshotService } from './eval-snapshot.service';
 
 @Controller('api/eval')
 export class EvalController {
@@ -46,6 +49,9 @@ export class EvalController {
     private promptOptimizationService: PromptOptimizationService,
     private costTrackingService: CostTrackingService,
     private benchmarkService: BenchmarkService,
+    private eloRatingService: EloRatingService,
+    private regressionDetectionService: RegressionDetectionService,
+    private evalSnapshotService: EvalSnapshotService,
   ) {}
 
   // ========== 评测指标 API ==========
@@ -790,5 +796,181 @@ export class EvalController {
   @Post('benchmark/custom')
   async addCustomBenchmark(@Body() body: { questions: any[] }) {
     return this.benchmarkService.addCustomBenchmark(body.questions);
+  }
+
+  // ========== Elo 评分排名 API ==========
+
+  // 记录对战
+  @Post('elo/battles')
+  async recordBattle(@Body() battle: { modelA: string; modelB: string; winner: 'A' | 'B' | 'tie'; category?: string }) {
+    return this.eloRatingService.recordBattle(battle);
+  }
+
+  // 批量记录对战
+  @Post('elo/battles/batch')
+  async recordBattles(@Body() body: { battles: Array<{ modelA: string; modelB: string; winner: 'A' | 'B' | 'tie'; category?: string }> }) {
+    return this.eloRatingService.recordBattles(body.battles);
+  }
+
+  // 生成排行榜
+  @Get('elo/leaderboard')
+  async getEloLeaderboard(@Query('category') category?: string) {
+    return this.eloRatingService.generateLeaderboard(category);
+  }
+
+  // 获取模型评分
+  @Get('elo/models/:model/rating')
+  async getModelRating(@Param('model') model: string) {
+    return { model, rating: this.eloRatingService.getModelRating(model) };
+  }
+
+  // 获取对战记录
+  @Get('elo/battles')
+  async getBattles(@Query('model') model?: string, @Query('category') category?: string) {
+    return this.eloRatingService.getBattles(model, category);
+  }
+
+  // 预期对战结果
+  @Get('elo/expected')
+  async getExpectedOutcome(@Query('modelA') modelA: string, @Query('modelB') modelB: string) {
+    return this.eloRatingService.getExpectedOutcome(modelA, modelB);
+  }
+
+  // 模拟对战
+  @Post('elo/simulate')
+  async simulateBattles(@Body() body: { models: string[]; count: number }) {
+    return this.eloRatingService.simulateBattles(body.models, body.count);
+  }
+
+  // ========== 回归检测 API ==========
+
+  // 检测回归
+  @Post('regression/detect')
+  async detectRegression(@Body() body: { metric: string; value: number; context?: Record<string, any> }) {
+    return this.regressionDetectionService.detectRegression(body.metric, body.value, body.context);
+  }
+
+  // 批量检测
+  @Post('regression/detect-batch')
+  async detectBatch(@Body() body: { metrics: Record<string, number>; context?: Record<string, any> }) {
+    return this.regressionDetectionService.detectBatch(body.metrics, body.context);
+  }
+
+  // 设置基线
+  @Post('regression/baselines')
+  async setBaseline(@Body() config: { name: string; metric: string; value: number; threshold: number; type: RegressionType }) {
+    return this.regressionDetectionService.setBaseline(config);
+  }
+
+  // 获取所有基线
+  @Get('regression/baselines')
+  async getBaselines() {
+    return this.regressionDetectionService.getBaselines();
+  }
+
+  // 获取回归检测历史
+  @Get('regression/detections')
+  async getDetections(
+    @Query('type') type?: RegressionType,
+    @Query('severity') severity?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.regressionDetectionService.getDetections({
+      type,
+      severity,
+      limit: limit ? parseInt(limit) : undefined,
+    });
+  }
+
+  // 获取指标趋势
+  @Get('regression/trend/:metric')
+  async getTrend(@Param('metric') metric: string, @Query('limit') limit?: string) {
+    return this.regressionDetectionService.getTrend(metric, limit ? parseInt(limit) : undefined);
+  }
+
+  // 获取回归统计
+  @Get('regression/stats')
+  async getRegressionStats() {
+    return this.regressionDetectionService.getStats();
+  }
+
+  // ========== 评测快照 API ==========
+
+  // 创建快照
+  @Post('snapshots')
+  async createSnapshot(@Body() data: {
+    name: string;
+    description?: string;
+    evalRunId: string;
+    modelName: string;
+    datasetId?: string;
+    metrics: Record<string, number>;
+    summary: any;
+    tags?: string[];
+  }) {
+    return this.evalSnapshotService.createSnapshot(data);
+  }
+
+  // 从评测运行创建快照
+  @Post('snapshots/from-run/:evalRunId')
+  async createFromEvalRun(
+    @Param('evalRunId') evalRunId: string,
+    @Body() body?: { name?: string; tags?: string[] },
+  ) {
+    return this.evalSnapshotService.createFromEvalRun(evalRunId, body?.name, body?.tags);
+  }
+
+  // 获取快照列表
+  @Get('snapshots')
+  async listSnapshots(
+    @Query('model') model?: string,
+    @Query('tags') tags?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.evalSnapshotService.listSnapshots({
+      modelName: model,
+      tags: tags ? tags.split(',') : undefined,
+      limit: limit ? parseInt(limit) : undefined,
+    });
+  }
+
+  // 获取快照详情
+  @Get('snapshots/:id')
+  async getSnapshot(@Param('id') id: string) {
+    return this.evalSnapshotService.getSnapshot(id);
+  }
+
+  // 删除快照
+  @Post('snapshots/:id/delete')
+  async deleteSnapshot(@Param('id') id: string) {
+    return this.evalSnapshotService.deleteSnapshot(id);
+  }
+
+  // 对比两个快照
+  @Post('snapshots/compare')
+  async compareSnapshots(@Body() body: { snapshotId1: string; snapshotId2: string }) {
+    return this.evalSnapshotService.compareSnapshots(body.snapshotId1, body.snapshotId2);
+  }
+
+  // 获取模型趋势
+  @Get('snapshots/trend/:model/:metric')
+  async getSnapshotTrend(
+    @Param('model') model: string,
+    @Param('metric') metric: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.evalSnapshotService.getTrend(model, metric, limit ? parseInt(limit) : undefined);
+  }
+
+  // 添加标签
+  @Post('snapshots/:id/tags')
+  async addTag(@Param('id') id: string, @Body() body: { tag: string }) {
+    return this.evalSnapshotService.addTag(id, body.tag);
+  }
+
+  // 获取所有标签
+  @Get('snapshots/tags')
+  async getAllTags() {
+    return this.evalSnapshotService.getAllTags();
   }
 }

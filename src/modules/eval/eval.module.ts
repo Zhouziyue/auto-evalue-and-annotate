@@ -21,6 +21,9 @@ import { ABTestService } from './ab-test.service';
 import { PromptOptimizationService } from './prompt-optimization.service';
 import { CostTrackingService } from './cost-tracking.service';
 import { BenchmarkService } from './benchmark.service';
+import { EloRatingService } from './elo-rating.service';
+import { RegressionDetectionService } from './regression-detection.service';
+import { EvalSnapshotService } from './eval-snapshot.service';
 import { EvalController } from './eval.controller';
 
 @Module({
@@ -48,6 +51,9 @@ import { EvalController } from './eval.controller';
     PromptOptimizationService,
     CostTrackingService,
     BenchmarkService,
+    EloRatingService,
+    RegressionDetectionService,
+    EvalSnapshotService,
   ],
   exports: [
     EvalService,
@@ -72,6 +78,9 @@ import { EvalController } from './eval.controller';
     PromptOptimizationService,
     CostTrackingService,
     BenchmarkService,
+    EloRatingService,
+    RegressionDetectionService,
+    EvalSnapshotService,
   ],
 })
 export class EvalModule {}

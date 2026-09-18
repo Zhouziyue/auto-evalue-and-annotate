@@ -142,6 +142,32 @@ import {
   EvalCacheAlertService, TaskSchedulingAlertService, ResultVisualizationAlertService,
   ModelVersionAlertService, DatasetVersionAlertService, EvalSnapshotAlertAdvService
 } from './batch-v9';
+import {
+  SmartRoutingOptimizeService, DataAugmentationStrategyService, EvalTemplateManagementService,
+  TaskDistributionOptimizeService, ResultCacheOptimizeService, ModelEvalOptimizeService,
+  DatasetQualityOptimizeService, EvalSnapshotOptimizeService, TaskOrchestrationOptimizeService,
+  ResultAggregationOptimizeService, ModelDeploymentOptimizeService, DatasetAnalysisOptimizeService,
+  SmartRoutingReportService, DataAugmentationReportService, EvalTemplateReportService
+} from './batch-v10';
+import {
+  TaskDistributionReportAdvService, ResultCacheReportService, ModelEvalReportAdvService,
+  DatasetQualityReportAdvService, EvalSnapshotReportService, TaskOrchestrationReportService,
+  SmartRoutingMonitorService, DataAugmentationMonitorService, EvalTemplateMonitorService,
+  TaskDistributionMonitorAdvService, ResultCacheMonitorAdvService, ModelEvalMonitorAdvService,
+  DatasetQualityMonitorAdvService, EvalSnapshotMonitorAdvService, TaskOrchestrationMonitorAdvService
+} from './batch-v11';
+import {
+  ResultAggregationMonitorAdvService, ModelDeploymentMonitorAdvService, DatasetAnalysisMonitorAdvService,
+  SmartRoutingAlertAdvService, DataAugmentationAlertAdvService, EvalTemplateAlertAdvService,
+  TaskDistributionAlertAdvService, ResultCacheAlertAdvService, ModelEvalAlertAdvService,
+  DatasetQualityAlertAdvService, EvalSnapshotAlertAdvAdvService, TaskOrchestrationAlertAdvService,
+  ResultAggregationAlertAdvService, ModelDeploymentAlertAdvAdvService, DatasetAnalysisAlertAdvService
+} from './batch-v12';
+import {
+  SmartRoutingReportAdvAdvService, DataAugmentationReportAdvService, EvalTemplateReportAdvService,
+  TaskDistributionReportAdvAdvService, ResultCacheReportAdvService, ModelEvalReportAdvAdvService,
+  DatasetQualityReportAdvAdvService, EvalSnapshotReportAdvService, TaskOrchestrationReportAdvService
+} from './batch-v13';
 import { EvalController } from './eval.controller';
 
 @Module({
@@ -312,6 +338,28 @@ import { EvalController } from './eval.controller';
     ResultSearchAlertService, ModelPerformanceAlertService, DatasetCleaningAlertService,
     EvalCacheAlertService, TaskSchedulingAlertService, ResultVisualizationAlertService,
     ModelVersionAlertService, DatasetVersionAlertService, EvalSnapshotAlertAdvService,
+    // v1.83-v1.87
+    SmartRoutingOptimizeService, DataAugmentationStrategyService, EvalTemplateManagementService,
+    TaskDistributionOptimizeService, ResultCacheOptimizeService, ModelEvalOptimizeService,
+    DatasetQualityOptimizeService, EvalSnapshotOptimizeService, TaskOrchestrationOptimizeService,
+    ResultAggregationOptimizeService, ModelDeploymentOptimizeService, DatasetAnalysisOptimizeService,
+    SmartRoutingReportService, DataAugmentationReportService, EvalTemplateReportService,
+    // v1.88-v1.92
+    TaskDistributionReportAdvService, ResultCacheReportService, ModelEvalReportAdvService,
+    DatasetQualityReportAdvService, EvalSnapshotReportService, TaskOrchestrationReportService,
+    SmartRoutingMonitorService, DataAugmentationMonitorService, EvalTemplateMonitorService,
+    TaskDistributionMonitorAdvService, ResultCacheMonitorAdvService, ModelEvalMonitorAdvService,
+    DatasetQualityMonitorAdvService, EvalSnapshotMonitorAdvService, TaskOrchestrationMonitorAdvService,
+    // v1.93-v1.97
+    ResultAggregationMonitorAdvService, ModelDeploymentMonitorAdvService, DatasetAnalysisMonitorAdvService,
+    SmartRoutingAlertAdvService, DataAugmentationAlertAdvService, EvalTemplateAlertAdvService,
+    TaskDistributionAlertAdvService, ResultCacheAlertAdvService, ModelEvalAlertAdvService,
+    DatasetQualityAlertAdvService, EvalSnapshotAlertAdvAdvService, TaskOrchestrationAlertAdvService,
+    ResultAggregationAlertAdvService, ModelDeploymentAlertAdvAdvService, DatasetAnalysisAlertAdvService,
+    // v1.98-v1.100
+    SmartRoutingReportAdvAdvService, DataAugmentationReportAdvService, EvalTemplateReportAdvService,
+    TaskDistributionReportAdvAdvService, ResultCacheReportAdvService, ModelEvalReportAdvAdvService,
+    DatasetQualityReportAdvAdvService, EvalSnapshotReportAdvService, TaskOrchestrationReportAdvService,
   ],
   exports: [
     EvalService,
@@ -479,6 +527,28 @@ import { EvalController } from './eval.controller';
     ResultSearchAlertService, ModelPerformanceAlertService, DatasetCleaningAlertService,
     EvalCacheAlertService, TaskSchedulingAlertService, ResultVisualizationAlertService,
     ModelVersionAlertService, DatasetVersionAlertService, EvalSnapshotAlertAdvService,
+    // v1.83-v1.87
+    SmartRoutingOptimizeService, DataAugmentationStrategyService, EvalTemplateManagementService,
+    TaskDistributionOptimizeService, ResultCacheOptimizeService, ModelEvalOptimizeService,
+    DatasetQualityOptimizeService, EvalSnapshotOptimizeService, TaskOrchestrationOptimizeService,
+    ResultAggregationOptimizeService, ModelDeploymentOptimizeService, DatasetAnalysisOptimizeService,
+    SmartRoutingReportService, DataAugmentationReportService, EvalTemplateReportService,
+    // v1.88-v1.92
+    TaskDistributionReportAdvService, ResultCacheReportService, ModelEvalReportAdvService,
+    DatasetQualityReportAdvService, EvalSnapshotReportService, TaskOrchestrationReportService,
+    SmartRoutingMonitorService, DataAugmentationMonitorService, EvalTemplateMonitorService,
+    TaskDistributionMonitorAdvService, ResultCacheMonitorAdvService, ModelEvalMonitorAdvService,
+    DatasetQualityMonitorAdvService, EvalSnapshotMonitorAdvService, TaskOrchestrationMonitorAdvService,
+    // v1.93-v1.97
+    ResultAggregationMonitorAdvService, ModelDeploymentMonitorAdvService, DatasetAnalysisMonitorAdvService,
+    SmartRoutingAlertAdvService, DataAugmentationAlertAdvService, EvalTemplateAlertAdvService,
+    TaskDistributionAlertAdvService, ResultCacheAlertAdvService, ModelEvalAlertAdvService,
+    DatasetQualityAlertAdvService, EvalSnapshotAlertAdvAdvService, TaskOrchestrationAlertAdvService,
+    ResultAggregationAlertAdvService, ModelDeploymentAlertAdvAdvService, DatasetAnalysisAlertAdvService,
+    // v1.98-v1.100
+    SmartRoutingReportAdvAdvService, DataAugmentationReportAdvService, EvalTemplateReportAdvService,
+    TaskDistributionReportAdvAdvService, ResultCacheReportAdvService, ModelEvalReportAdvAdvService,
+    DatasetQualityReportAdvAdvService, EvalSnapshotReportAdvService, TaskOrchestrationReportAdvService,
   ],
 })
 export class EvalModule {}

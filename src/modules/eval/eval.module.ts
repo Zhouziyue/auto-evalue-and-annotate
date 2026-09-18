@@ -32,6 +32,9 @@ import { MetricsAggregationService } from './metrics-aggregation.service';
 import { OnlineEvalService } from './online-eval.service';
 import { SyntheticDataService } from './synthetic-data.service';
 import { WorkflowEngineService } from './workflow-engine.service';
+import { DataLineageService } from './data-lineage.service';
+import { ModelComparisonService } from './model-comparison.service';
+import { AlertRuleService } from './alert-rule.service';
 import { EvalController } from './eval.controller';
 
 @Module({
@@ -70,6 +73,9 @@ import { EvalController } from './eval.controller';
     OnlineEvalService,
     SyntheticDataService,
     WorkflowEngineService,
+    DataLineageService,
+    ModelComparisonService,
+    AlertRuleService,
   ],
   exports: [
     EvalService,
@@ -105,6 +111,9 @@ import { EvalController } from './eval.controller';
     OnlineEvalService,
     SyntheticDataService,
     WorkflowEngineService,
+    DataLineageService,
+    ModelComparisonService,
+    AlertRuleService,
   ],
 })
 export class EvalModule {}

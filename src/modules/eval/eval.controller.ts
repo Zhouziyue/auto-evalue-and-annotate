@@ -32,6 +32,9 @@ import { MetricsAggregationService, AggregationDimension, AggregationFunction } 
 import { OnlineEvalService, OnlineEvalStatus, SamplingStrategy } from './online-eval.service';
 import { SyntheticDataService, GenerationStrategy, DataQuality } from './synthetic-data.service';
 import { WorkflowEngineService, WorkflowNodeType } from './workflow-engine.service';
+import { DataLineageService, LineageNodeType } from './data-lineage.service';
+import { ModelComparisonService, ComparisonMode, ComparisonDimension } from './model-comparison.service';
+import { AlertRuleService, AlertSeverity, AlertStatus, AlertOperator } from './alert-rule.service';
 
 @Controller('api/eval')
 export class EvalController {
@@ -68,6 +71,9 @@ export class EvalController {
     private onlineEvalService: OnlineEvalService,
     private syntheticDataService: SyntheticDataService,
     private workflowEngineService: WorkflowEngineService,
+    private dataLineageService: DataLineageService,
+    private modelComparisonService: ModelComparisonService,
+    private alertRuleService: AlertRuleService,
   ) {}
 
   // ========== 评测指标 API ==========
@@ -1550,5 +1556,176 @@ export class EvalController {
   @Get('workflows/templates')
   async getWorkflowTemplates() {
     return this.workflowEngineService.getBuiltinTemplates();
+  }
+
+  // ==================== 数据血缘 ====================
+
+  // 注册节点
+  @Post('lineage/nodes')
+  async registerLineageNode(@Body() body: any) {
+    return this.dataLineageService.registerNode(body);
+  }
+
+  // 获取节点列表
+  @Get('lineage/nodes')
+  async listLineageNodes(@Query('type') type?: LineageNodeType) {
+    return this.dataLineageService.listNodes(type);
+  }
+
+  // 创建边
+  @Post('lineage/edges')
+  async createLineageEdge(@Body() body: any) {
+    return this.dataLineageService.createEdge(body);
+  }
+
+  // 获取上游
+  @Get('lineage/:id/upstream')
+  async getUpstream(@Param('id') id: string, @Query('depth') depth?: number) {
+    return this.dataLineageService.getUpstream(id, depth ? +depth : 3);
+  }
+
+  // 获取下游
+  @Get('lineage/:id/downstream')
+  async getDownstream(@Param('id') id: string, @Query('depth') depth?: number) {
+    return this.dataLineageService.getDownstream(id, depth ? +depth : 3);
+  }
+
+  // 获取完整血缘图
+  @Get('lineage/:id/full')
+  async getFullLineage(
+    @Param('id') id: string,
+    @Query('upstream') upstream?: number,
+    @Query('downstream') downstream?: number,
+  ) {
+    return this.dataLineageService.getFullLineage(id, upstream ? +upstream : 2, downstream ? +downstream : 2);
+  }
+
+  // 影响分析
+  @Get('lineage/:id/impact')
+  async getImpactAnalysis(@Param('id') id: string) {
+    return this.dataLineageService.impactAnalysis(id);
+  }
+
+  // 追踪评测运行血缘
+  @Get('lineage/eval-run/:id/trace')
+  async traceEvalRun(@Param('id') id: string) {
+    return this.dataLineageService.traceEvalRun(id);
+  }
+
+  // 获取事件历史
+  @Get('lineage/events')
+  async getLineageEvents(@Query('nodeId') nodeId?: string, @Query('limit') limit?: number) {
+    return this.dataLineageService.getAllEvents({ nodeId, limit: limit ? +limit : undefined });
+  }
+
+  // ==================== 多模型对比 ====================
+
+  // 创建对比任务
+  @Post('comparison')
+  async createComparison(@Body() body: any) {
+    return this.modelComparisonService.createTask(body);
+  }
+
+  // 执行对比
+  @Post('comparison/:id/execute')
+  async executeComparison(@Param('id') id: string) {
+    return this.modelComparisonService.execute(id);
+  }
+
+  // 获取对比任务列表
+  @Get('comparison')
+  async listComparisons() {
+    return this.modelComparisonService.listTasks();
+  }
+
+  // 获取对比详情
+  @Get('comparison/:id')
+  async getComparison(@Param('id') id: string) {
+    return this.modelComparisonService.getTask(id);
+  }
+
+  // 导出对比报告
+  @Get('comparison/:id/report')
+  async exportComparisonReport(@Param('id') id: string) {
+    return this.modelComparisonService.exportReport(id);
+  }
+
+  // 删除对比任务
+  @Post('comparison/:id/delete')
+  async deleteComparison(@Param('id') id: string) {
+    return this.modelComparisonService.deleteTask(id);
+  }
+
+  // ==================== 告警规则 ====================
+
+  // 创建告警规则
+  @Post('alerts/rules')
+  async createAlertRule(@Body() body: any) {
+    return this.alertRuleService.createRule(body);
+  }
+
+  // 获取规则列表
+  @Get('alerts/rules')
+  async listAlertRules(@Query('enabled') enabled?: string) {
+    return this.alertRuleService.listRules(enabled !== undefined ? enabled === 'true' : undefined);
+  }
+
+  // 获取规则详情
+  @Get('alerts/rules/:id')
+  async getAlertRule(@Param('id') id: string) {
+    return this.alertRuleService.getRule(id);
+  }
+
+  // 更新规则
+  @Post('alerts/rules/:id')
+  async updateAlertRule(@Param('id') id: string, @Body() body: any) {
+    return this.alertRuleService.updateRule(id, body);
+  }
+
+  // 删除规则
+  @Post('alerts/rules/:id/delete')
+  async deleteAlertRule(@Param('id') id: string) {
+    return this.alertRuleService.deleteRule(id);
+  }
+
+  // 评估规则
+  @Post('alerts/evaluate/:id')
+  async evaluateAlertRule(@Param('id') id: string, @Body() body: Record<string, number>) {
+    return this.alertRuleService.evaluateRule(id, body);
+  }
+
+  // 获取告警事件
+  @Get('alerts/events')
+  async listAlertEvents(
+    @Query('ruleId') ruleId?: string,
+    @Query('severity') severity?: AlertSeverity,
+    @Query('status') status?: AlertStatus,
+    @Query('limit') limit?: number,
+  ) {
+    return this.alertRuleService.listEvents({ ruleId, severity, status, limit: limit ? +limit : undefined });
+  }
+
+  // 确认告警
+  @Post('alerts/events/:id/acknowledge')
+  async acknowledgeAlert(@Param('id') id: string, @Body() body?: { userId?: string }) {
+    return this.alertRuleService.acknowledgeEvent(id, body?.userId);
+  }
+
+  // 解决告警
+  @Post('alerts/events/:id/resolve')
+  async resolveAlert(@Param('id') id: string, @Body() body?: { userId?: string }) {
+    return this.alertRuleService.resolveEvent(id, body?.userId);
+  }
+
+  // 告警统计
+  @Get('alerts/stats')
+  async getAlertStats() {
+    return this.alertRuleService.getStats();
+  }
+
+  // 内置规则模板
+  @Get('alerts/templates')
+  async getAlertTemplates() {
+    return this.alertRuleService.getBuiltinTemplates();
   }
 }

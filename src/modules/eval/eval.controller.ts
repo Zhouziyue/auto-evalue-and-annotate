@@ -50,6 +50,9 @@ import { RateLimitingService } from './rate-limiting.service';
 import { DataAugmentationService, AugmentationStrategy } from './data-augmentation.service';
 import { MultilingualEvalService, MultilingualEvalType, Language } from './multilingual-eval.service';
 import { ReportGeneratorService, ReportType, ReportFormat } from './report-generator.service';
+import { DataVersioningService } from './data-versioning.service';
+import { MetricAttributionService, AttributionType } from './metric-attribution.service';
+import { ScenarioManagementService, ScenarioType } from './scenario-management.service';
 
 @Controller('api/eval')
 export class EvalController {
@@ -104,6 +107,9 @@ export class EvalController {
     private dataAugmentationService: DataAugmentationService,
     private multilingualEvalService: MultilingualEvalService,
     private reportGeneratorService: ReportGeneratorService,
+    private dataVersioningService: DataVersioningService,
+    private metricAttributionService: MetricAttributionService,
+    private scenarioManagementService: ScenarioManagementService,
   ) {}
 
   // ========== 评测指标 API ==========
@@ -2488,5 +2494,214 @@ export class EvalController {
   @Get('reports/formats')
   async getReportFormats() {
     return this.reportGeneratorService.getReportFormats();
+  }
+
+  // ==================== 数据版本控制 API ====================
+
+  @Post('data-versioning/versions')
+  async createDataVersion(@Body() body: {
+    datasetId: string;
+    name: string;
+    description?: string;
+    data: any[];
+    tags?: string[];
+    createdBy: string;
+  }) {
+    return this.dataVersioningService.createVersion(body);
+  }
+
+  @Get('data-versioning/versions/:datasetId')
+  async getDataVersions(
+    @Param('datasetId') datasetId: string,
+    @Query('status') status?: 'draft' | 'published' | 'archived',
+    @Query('tag') tag?: string,
+  ) {
+    return this.dataVersioningService.getVersions(datasetId, { status, tag });
+  }
+
+  @Get('data-versioning/versions/:datasetId/:version')
+  async getDataVersion(
+    @Param('datasetId') datasetId: string,
+    @Param('version') version: number,
+  ) {
+    return this.dataVersioningService.getVersion(datasetId, +version);
+  }
+
+  @Post('data-versioning/versions/:datasetId/:version/publish')
+  async publishDataVersion(
+    @Param('datasetId') datasetId: string,
+    @Param('version') version: number,
+  ) {
+    return this.dataVersioningService.publishVersion(datasetId, +version);
+  }
+
+  @Post('data-versioning/versions/:datasetId/:version/archive')
+  async archiveDataVersion(
+    @Param('datasetId') datasetId: string,
+    @Param('version') version: number,
+  ) {
+    return this.dataVersioningService.archiveVersion(datasetId, +version);
+  }
+
+  @Post('data-versioning/diff')
+  async diffDataVersions(@Body() body: {
+    datasetId: string;
+    versionA: number;
+    versionB: number;
+  }) {
+    return this.dataVersioningService.diffVersions(body.datasetId, body.versionA, body.versionB);
+  }
+
+  @Post('data-versioning/rollback/:datasetId/:version')
+  async rollbackDataVersion(
+    @Param('datasetId') datasetId: string,
+    @Param('version') version: number,
+  ) {
+    return this.dataVersioningService.rollbackVersion(datasetId, +version);
+  }
+
+  @Get('data-versioning/stats/:datasetId')
+  async getDataVersionStats(@Param('datasetId') datasetId: string) {
+    return this.dataVersioningService.getVersionStats(datasetId);
+  }
+
+  // ==================== 指标归因分析 API ====================
+
+  @Post('metric-attribution/analyze')
+  async analyzeMetricAttribution(@Body() body: any) {
+    return this.metricAttributionService.analyze(body);
+  }
+
+  @Get('metric-attribution/results')
+  async getAttributionResults(
+    @Query('type') type?: AttributionType,
+    @Query('targetId') targetId?: string,
+    @Query('limit') limit?: number,
+  ) {
+    return this.metricAttributionService.getResults({ type, targetId, limit: limit ? +limit : undefined });
+  }
+
+  @Get('metric-attribution/results/:id')
+  async getAttributionResult(@Param('id') id: string) {
+    return this.metricAttributionService.getResult(id);
+  }
+
+  @Post('metric-attribution/results/:id/delete')
+  async deleteAttributionResult(@Param('id') id: string) {
+    return this.metricAttributionService.deleteResult(id);
+  }
+
+  @Get('metric-attribution/feature-importance/:targetId')
+  async getFeatureImportance(
+    @Param('targetId') targetId: string,
+    @Query('topK') topK?: number,
+  ) {
+    return this.metricAttributionService.getFeatureImportance(targetId, topK ? +topK : 10);
+  }
+
+  @Get('metric-attribution/sample-influence/:targetId')
+  async getSampleInfluence(
+    @Param('targetId') targetId: string,
+    @Query('topK') topK?: number,
+  ) {
+    return this.metricAttributionService.getSampleInfluence(targetId, topK ? +topK : 10);
+  }
+
+  @Post('metric-attribution/compare')
+  async compareAttributions(@Body() body: { resultIds: string[] }) {
+    return this.metricAttributionService.compareAttributions(body.resultIds);
+  }
+
+  @Get('metric-attribution/types')
+  async getAttributionTypes() {
+    return this.metricAttributionService.getAttributionTypes();
+  }
+
+  // ==================== 场景管理 API ====================
+
+  @Post('scenarios')
+  async createScenario(@Body() body: {
+    name: string;
+    description?: string;
+    type: ScenarioType;
+    config: any;
+    constraints?: any;
+    tags?: string[];
+    createdBy: string;
+  }) {
+    return this.scenarioManagementService.createScenario(body);
+  }
+
+  @Post('scenarios/from-template/:templateId')
+  async createScenarioFromTemplate(@Param('templateId') templateId: string, @Body() body: {
+    name: string;
+    description?: string;
+    models: string[];
+    datasets: string[];
+    createdBy: string;
+  }) {
+    return this.scenarioManagementService.createFromTemplate(templateId, body);
+  }
+
+  @Get('scenarios')
+  async listScenarios(
+    @Query('type') type?: ScenarioType,
+    @Query('status') status?: 'draft' | 'active' | 'archived',
+    @Query('tag') tag?: string,
+  ) {
+    return this.scenarioManagementService.listScenarios({ type, status, tag });
+  }
+
+  @Get('scenarios/:id')
+  async getScenario(@Param('id') id: string) {
+    return this.scenarioManagementService.getScenario(id);
+  }
+
+  @Post('scenarios/:id/activate')
+  async activateScenario(@Param('id') id: string) {
+    return this.scenarioManagementService.activateScenario(id);
+  }
+
+  @Post('scenarios/:id/archive')
+  async archiveScenario(@Param('id') id: string) {
+    return this.scenarioManagementService.archiveScenario(id);
+  }
+
+  @Post('scenarios/:id/execute')
+  async executeScenario(@Param('id') id: string) {
+    return this.scenarioManagementService.executeScenario(id);
+  }
+
+  @Get('scenarios/executions')
+  async getScenarioExecutions(
+    @Query('scenarioId') scenarioId?: string,
+    @Query('limit') limit?: number,
+  ) {
+    return this.scenarioManagementService.getExecutions(scenarioId, limit ? +limit : 20);
+  }
+
+  @Get('scenarios/executions/:id')
+  async getScenarioExecution(@Param('id') id: string) {
+    return this.scenarioManagementService.getExecution(id);
+  }
+
+  @Get('scenarios/templates')
+  async getScenarioTemplates(@Query('type') type?: ScenarioType) {
+    return this.scenarioManagementService.getTemplates(type);
+  }
+
+  @Get('scenarios/templates/:id')
+  async getScenarioTemplate(@Param('id') id: string) {
+    return this.scenarioManagementService.getTemplate(id);
+  }
+
+  @Get('scenarios/types')
+  async getScenarioTypes() {
+    return this.scenarioManagementService.getScenarioTypes();
+  }
+
+  @Get('scenarios/stats')
+  async getScenarioStats() {
+    return this.scenarioManagementService.getScenarioStats();
   }
 }

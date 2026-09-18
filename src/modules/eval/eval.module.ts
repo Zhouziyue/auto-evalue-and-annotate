@@ -50,6 +50,9 @@ import { RateLimitingService } from './rate-limiting.service';
 import { DataAugmentationService } from './data-augmentation.service';
 import { MultilingualEvalService } from './multilingual-eval.service';
 import { ReportGeneratorService } from './report-generator.service';
+import { DataVersioningService } from './data-versioning.service';
+import { MetricAttributionService } from './metric-attribution.service';
+import { ScenarioManagementService } from './scenario-management.service';
 import { EvalController } from './eval.controller';
 
 @Module({
@@ -106,6 +109,9 @@ import { EvalController } from './eval.controller';
     DataAugmentationService,
     MultilingualEvalService,
     ReportGeneratorService,
+    DataVersioningService,
+    MetricAttributionService,
+    ScenarioManagementService,
   ],
   exports: [
     EvalService,
@@ -159,6 +165,9 @@ import { EvalController } from './eval.controller';
     DataAugmentationService,
     MultilingualEvalService,
     ReportGeneratorService,
+    DataVersioningService,
+    MetricAttributionService,
+    ScenarioManagementService,
   ],
 })
 export class EvalModule {}

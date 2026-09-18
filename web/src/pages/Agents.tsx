@@ -26,6 +26,8 @@ export default function Agents() {
   const [formData, setFormData] = useState({ name: '', url: '', authType: 'none', sseFormat: 'auto' })
   const [searchQuery, setSearchQuery] = useState('')
   const [testStatus, setTestStatus] = useState<Record<string, { success: boolean; latency: number }>>({})
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
 
   const fetchAgents = async () => {
     setLoading(true)
@@ -63,10 +65,17 @@ export default function Agents() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('确定删除该智能体吗？')) return
+  const handleDelete = (id: string) => {
+    setDeleteTargetId(id)
+    setDeleteConfirmOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteTargetId) return
     try {
-      await axios.delete(`/api/agents/${id}`)
+      await axios.delete(`/api/agents/${deleteTargetId}`)
+      setDeleteConfirmOpen(false)
+      setDeleteTargetId(null)
       fetchAgents()
     } catch (e) {
       alert('删除失败')
@@ -158,13 +167,13 @@ export default function Agents() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="sm" onClick={() => handleTest(agent.id)}>
+                        <Button variant="outline" size="sm" onClick={() => handleTest(agent.id)} aria-label="测试智能体连接">
                           <Zap className="mr-1 h-3 w-3" /> 测试
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(agent)}>
+                        <Button variant="ghost" size="sm" onClick={() => openEdit(agent)} aria-label="编辑智能体">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(agent.id)}>
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(agent.id)} aria-label="删除智能体">
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
@@ -273,6 +282,20 @@ export default function Agents() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>取消</Button>
             <Button onClick={handleEdit}>保存</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>确认删除</DialogTitle>
+            <DialogDescription>确定要删除该智能体吗？此操作不可恢复。</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>取消</Button>
+            <Button variant="destructive" onClick={confirmDelete}>确认删除</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

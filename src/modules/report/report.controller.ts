@@ -3,7 +3,7 @@ import { Controller, Get, Post, Body, Param, Query, Res } from '@nestjs/common';
 import { ReportService } from './report.service';
 import { ReportExportService, ReportFormat, ReportData } from './report-export.service';
 
-@Controller('api/report')
+@Controller('report')
 export class ReportController {
   constructor(
     private readonly reportService: ReportService,

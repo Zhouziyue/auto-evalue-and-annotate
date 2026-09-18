@@ -29,6 +29,8 @@ export default function Datasets() {
   const [categoryFilter, setCategoryFilter] = useState('')
   const [importData, setImportData] = useState('')
   const [importFormat, setImportFormat] = useState<'json' | 'csv'>('json')
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
 
   const fetchDatasets = async () => {
     setLoading(true)
@@ -64,10 +66,17 @@ export default function Datasets() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('确定删除该数据集吗？关联的测试用例也会被删除。')) return
+  const handleDelete = (id: string) => {
+    setDeleteTargetId(id)
+    setDeleteConfirmOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteTargetId) return
     try {
-      await axios.delete(`/api/datasets/${id}`)
+      await axios.delete(`/api/datasets/${deleteTargetId}`)
+      setDeleteConfirmOpen(false)
+      setDeleteTargetId(null)
       fetchDatasets()
     } catch (e) {
       alert('删除失败')
@@ -185,13 +194,13 @@ export default function Datasets() {
                     <TableCell className="text-muted-foreground">{new Date(ds.createdAt).toLocaleString()}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="sm" onClick={() => openImport(ds)}>
+                        <Button variant="outline" size="sm" onClick={() => openImport(ds)} aria-label="导入测试用例">
                           <Upload className="mr-1 h-3 w-3" /> 导入
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(ds)}>
+                        <Button variant="ghost" size="sm" onClick={() => openEdit(ds)} aria-label="编辑数据集">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(ds.id)}>
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(ds.id)} aria-label="删除数据集">
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
@@ -304,6 +313,20 @@ export default function Datasets() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setImportOpen(false)}>取消</Button>
             <Button onClick={handleImport} disabled={!importData}>导入</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>确认删除</DialogTitle>
+            <DialogDescription>确定要删除该数据集吗？关联的测试用例也会被删除。此操作不可恢复。</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>取消</Button>
+            <Button variant="destructive" onClick={confirmDelete}>确认删除</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

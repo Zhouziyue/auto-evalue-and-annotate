@@ -2,7 +2,7 @@
 import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
 import { PipelineOrchestrationService, PipelineStep, PipelineStepType } from './pipeline-orchestration.service';
 
-@Controller('api/pipeline')
+@Controller('pipeline')
 export class PipelineOrchestrationController {
   constructor(
     private readonly pipelineService: PipelineOrchestrationService,

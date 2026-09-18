@@ -169,7 +169,7 @@ import {
   DatasetQualityReportAdvAdvService, EvalSnapshotReportAdvService, TaskOrchestrationReportAdvService
 } from './alert-advanced-services';
 
-@Controller('api/eval')
+@Controller('eval')
 export class EvalController {
   constructor(
     private metricsService: MetricsService,

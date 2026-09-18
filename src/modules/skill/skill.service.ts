@@ -13,6 +13,8 @@ export class SkillService {
         name: dto.name,
         description: dto.description,
         version: dto.version || '1.0.0',
+        category: dto.category,
+        tags: dto.tags ? dto.tags.join(',') : null,
       },
     });
   }
@@ -54,7 +56,13 @@ export class SkillService {
     await this.findOne(id);
     return this.prisma.skill.update({
       where: { id },
-      data: dto,
+      data: {
+        name: dto.name,
+        description: dto.description,
+        version: dto.version,
+        category: dto.category,
+        tags: dto.tags ? dto.tags.join(',') : dto.tags === null ? null : undefined,
+      },
     });
   }
 

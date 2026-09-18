@@ -1,4 +1,4 @@
-import { IsString, IsOptional } from 'class-validator';
+import { IsString, IsOptional, IsArray } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateSkillDto {
@@ -15,6 +15,16 @@ export class CreateSkillDto {
   @IsOptional()
   @IsString()
   version?: string;
+
+  @ApiPropertyOptional({ description: '分类', enum: ['function_call', 'rag', 'agent', 'chat', 'classification', 'summarization'] })
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @ApiPropertyOptional({ description: '标签数组' })
+  @IsOptional()
+  @IsArray()
+  tags?: string[];
 }
 
 export class UpdateSkillDto {
@@ -32,4 +42,14 @@ export class UpdateSkillDto {
   @IsOptional()
   @IsString()
   version?: string;
+
+  @ApiPropertyOptional({ description: '分类' })
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @ApiPropertyOptional({ description: '标签数组' })
+  @IsOptional()
+  @IsArray()
+  tags?: string[];
 }

@@ -2,7 +2,7 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
 import { PromptVersionService, CreatePromptInput, UpdatePromptInput, PromptVersionStatus } from './prompt-version.service';
 
-@Controller('api/prompts')
+@Controller('prompts')
 export class PromptController {
   constructor(private promptVersionService: PromptVersionService) {}
 

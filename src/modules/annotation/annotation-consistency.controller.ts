@@ -2,7 +2,7 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { AnnotationConsistencyService } from './annotation-consistency.service';
 
-@Controller('api/annotation')
+@Controller('annotation')
 export class AnnotationConsistencyController {
   constructor(
     private readonly consistencyService: AnnotationConsistencyService,

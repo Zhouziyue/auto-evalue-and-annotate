@@ -34,10 +34,14 @@ export default function Skills() {
   const [createOpen, setCreateOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [detailOpen, setDetailOpen] = useState(false)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<string | string[]>([])
   const [currentSkill, setCurrentSkill] = useState<SkillDetail | null>(null)
-  const [formData, setFormData] = useState({ name: '', description: '', version: '1.0.0' })
+  const [formData, setFormData] = useState({ name: '', description: '', version: '1.0.0', category: '', tags: '' })
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+
+  const CATEGORIES = ['function_call', 'rag', 'agent', 'chat', 'classification', 'summarization']
 
   const fetchSkills = async () => {
     setLoading(true)
@@ -54,9 +58,16 @@ export default function Skills() {
 
   const handleCreate = async () => {
     try {
-      await axios.post('/api/skills', formData)
+      const payload = {
+        name: formData.name,
+        description: formData.description,
+        version: formData.version,
+        category: formData.category || undefined,
+        tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : undefined,
+      }
+      await axios.post('/api/skills', payload)
       setCreateOpen(false)
-      setFormData({ name: '', description: '', version: '1.0.0' })
+      setFormData({ name: '', description: '', version: '1.0.0', category: '', tags: '' })
       fetchSkills()
     } catch (e: any) {
       alert(e?.response?.data?.message || '创建失败')
@@ -66,7 +77,14 @@ export default function Skills() {
   const handleEdit = async () => {
     if (!currentSkill) return
     try {
-      await axios.put(`/api/skills/${currentSkill.id}`, formData)
+      const payload = {
+        name: formData.name,
+        description: formData.description,
+        version: formData.version,
+        category: formData.category || undefined,
+        tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : undefined,
+      }
+      await axios.put(`/api/skills/${currentSkill.id}`, payload)
       setEditOpen(false)
       fetchSkills()
     } catch (e: any) {
@@ -75,9 +93,23 @@ export default function Skills() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('确定删除吗？')) return
+    setDeleteTarget([id])
+    setDeleteConfirmOpen(true)
+  }
+
+  const handleBatchDelete = () => {
+    if (selectedIds.length === 0) return
+    setDeleteTarget(selectedIds)
+    setDeleteConfirmOpen(true)
+  }
+
+  const confirmDelete = async () => {
     try {
-      await axios.delete(`/api/skills/${id}`)
+      const ids = Array.isArray(deleteTarget) ? deleteTarget : [deleteTarget]
+      await Promise.all(ids.map(id => axios.delete(`/api/skills/${id}`)))
+      setSelectedIds([])
+      setDeleteConfirmOpen(false)
+      setDeleteTarget([])
       fetchSkills()
     } catch (e) {
       alert('删除失败')
@@ -96,7 +128,13 @@ export default function Skills() {
 
   const openEdit = (skill: Skill) => {
     setCurrentSkill(skill as SkillDetail)
-    setFormData({ name: skill.name, description: skill.description || '', version: skill.version })
+    setFormData({
+      name: skill.name,
+      description: skill.description || '',
+      version: skill.version,
+      category: (skill as any).category || '',
+      tags: (skill as any).tags?.join(', ') || '',
+    })
     setEditOpen(true)
   }
 
@@ -117,18 +155,6 @@ export default function Skills() {
     setSelectedIds(prev =>
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     )
-  }
-
-  const handleBatchDelete = async () => {
-    if (selectedIds.length === 0) return
-    if (!confirm(`确定删除选中的 ${selectedIds.length} 个技能吗？`)) return
-    try {
-      await Promise.all(selectedIds.map(id => axios.delete(`/api/skills/${id}`)))
-      setSelectedIds([])
-      fetchSkills()
-    } catch (e) {
-      alert('批量删除失败')
-    }
   }
 
   return (
@@ -153,7 +179,7 @@ export default function Skills() {
               />
             </div>
             {selectedIds.length > 0 && (
-              <Button variant="destructive" size="sm" onClick={handleBatchDelete}>
+              <Button variant="destructive" size="sm" onClick={handleBatchDelete} aria-label="批量删除选中技能">
                 <Trash2 className="mr-1 h-3 w-3" /> 删除选中 ({selectedIds.length})
               </Button>
             )}
@@ -203,13 +229,13 @@ export default function Skills() {
                     <TableCell className="text-muted-foreground">{new Date(skill.updatedAt).toLocaleString()}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleViewDetail(skill.id)}>
+                        <Button variant="ghost" size="sm" onClick={() => handleViewDetail(skill.id)} aria-label="查看技能详情">
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(skill)}>
+                        <Button variant="ghost" size="sm" onClick={() => openEdit(skill)} aria-label="编辑技能">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(skill.id)}>
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(skill.id)} aria-label="删除技能">
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
@@ -232,11 +258,28 @@ export default function Skills() {
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">技能名称</label>
-              <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="如: 客服问答技能" />
+              <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="如：客服问答技能" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">描述</label>
               <Input value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="技能描述" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">分类</label>
+              <select
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="">请选择分类</option>
+                {CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">标签 (逗号分隔)</label>
+              <Input value={formData.tags} onChange={(e) => setFormData({ ...formData, tags: e.target.value })} placeholder="如：ui-test, automated" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">版本号</label>
@@ -265,6 +308,23 @@ export default function Skills() {
             <div className="space-y-2">
               <label className="text-sm font-medium">描述</label>
               <Input value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">分类</label>
+              <select
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="">请选择分类</option>
+                {CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">标签 (逗号分隔)</label>
+              <Input value={formData.tags} onChange={(e) => setFormData({ ...formData, tags: e.target.value })} />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">版本号</label>
@@ -309,6 +369,22 @@ export default function Skills() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>确认删除</DialogTitle>
+            <DialogDescription>
+              确定要删除 {Array.isArray(deleteTarget) ? deleteTarget.length : 1} 个技能吗？此操作不可恢复。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>取消</Button>
+            <Button variant="destructive" onClick={confirmDelete}>确认删除</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

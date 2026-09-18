@@ -18,6 +18,8 @@ model Skill {
   name        String
   description String?
   version     String   @default("1.0.0")
+  category    String?  // 分类：function_call, rag, agent, chat, classification, summarization
+  tags        String?  // 标签，逗号分隔
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

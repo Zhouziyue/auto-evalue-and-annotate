@@ -49,6 +49,8 @@ describe('SkillService', () => {
           name: dto.name,
           description: dto.description,
           version: dto.version,
+          category: undefined,
+          tags: null,
         },
       });
     });
@@ -64,6 +66,8 @@ describe('SkillService', () => {
           name: dto.name,
           description: dto.description,
           version: '1.0.0',
+          category: undefined,
+          tags: null,
         },
       });
     });

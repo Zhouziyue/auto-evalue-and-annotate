@@ -36,6 +36,7 @@
     "eventsource-parser": "^1.1.1",
     "ioredis-mock": "^8.13.1",
     "js-yaml": "^5.4.2",
+    "openai": "^7.18.0",
     "reflect-metadata": "^0.2.1",
     "rxjs": "^7.8.1"
   },

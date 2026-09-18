@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ReportController } from './report.controller';
 import { ReportService } from './report.service';
 import { ReportExportService, ReportFormat } from './report-export.service';
+import { PrismaService } from '../../common/prisma/prisma.service';
 
 describe('ReportController', () => {
   let controller: ReportController;
@@ -19,11 +20,22 @@ describe('ReportController', () => {
       exportReport: jest.fn(),
     };
 
+    const prismaService = {
+      report: {
+        findMany: jest.fn(),
+        findUnique: jest.fn(),
+      },
+      evalResult: {
+        findMany: jest.fn(),
+      },
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ReportController],
       providers: [
         { provide: ReportService, useValue: reportService },
         { provide: ReportExportService, useValue: exportService },
+        { provide: PrismaService, useValue: prismaService },
       ],
     }).compile();
 

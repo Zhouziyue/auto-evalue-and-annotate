@@ -1,11 +1,13 @@
 // @ts-nocheck
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Query } from '@nestjs/common';
 import { PipelineOrchestrationService, PipelineStep, PipelineStepType } from './pipeline-orchestration.service';
+import { SchedulerService } from './scheduler.service';
 
 @Controller('pipeline')
 export class PipelineOrchestrationController {
   constructor(
     private readonly pipelineService: PipelineOrchestrationService,
+    private readonly schedulerService: SchedulerService,
   ) {}
 
   // 创建流水线
@@ -60,6 +62,12 @@ export class PipelineOrchestrationController {
   @Post(':id/toggle')
   async togglePipeline(@Param('id') id: string, @Body() body: { enabled: boolean }) {
     return this.pipelineService.togglePipeline(id, body.enabled);
+  }
+
+  // 设置定时执行
+  @Put(':id/schedule')
+  async setSchedule(@Param('id') id: string, @Body() body: { cronExpression: string | null }) {
+    return this.schedulerService.updateSchedule(id, body.cronExpression);
   }
 
   // 获取可用步骤类型

@@ -250,3 +250,19 @@ model PipelineInstance {
 
   @@map("pipeline_instances")
 }
+
+// ============================================
+// 告警配置
+// ============================================
+
+model AlertConfig {
+  id                String   @id @default(uuid())
+  channel           String   @default("wechat") // wechat
+  webhookKey        String
+  passRateThreshold Float    @default(80.0) // 通过率阈值(%)
+  enabled           Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("alert_configs")
+}

@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { useToastActions } from '@/components/ui/toast'
-import { BarChart3, FileText, Download, TrendingUp, TrendingDown, Minus, Plus } from 'lucide-react'
+import { BarChart3, FileText, Download, TrendingUp, TrendingDown, Minus, Plus, FileSpreadsheet } from 'lucide-react'
 import axios from 'axios'
 
 interface Report {
@@ -132,6 +132,42 @@ export default function Reports() {
       toastSuccess('报告下载成功')
     } catch (e) {
       toastError('下载失败')
+    }
+  }
+
+  const handleExportCsv = async (reportId: string) => {
+    try {
+      const res = await axios.get(`/api/report/${reportId}/export/csv`, {
+        responseType: 'blob',
+      })
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `report-${reportId}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      toastSuccess('CSV 导出成功')
+    } catch (e) {
+      toastError('CSV 导出失败')
+    }
+  }
+
+  const handleExportExcel = async (reportId: string) => {
+    try {
+      const res = await axios.get(`/api/report/${reportId}/export/excel`, {
+        responseType: 'blob',
+      })
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `report-${reportId}.xlsx`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      toastSuccess('Excel 导出成功')
+    } catch (e) {
+      toastError('Excel 导出失败')
     }
   }
 
@@ -364,9 +400,15 @@ export default function Reports() {
               )}
 
               {/* 下载报告按钮 */}
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => handleExportCsv(selectedReport.id)}>
+                  <FileText className="mr-2 h-4 w-4" /> CSV
+                </Button>
+                <Button variant="outline" onClick={() => handleExportExcel(selectedReport.id)}>
+                  <FileSpreadsheet className="mr-2 h-4 w-4" /> Excel
+                </Button>
                 <Button onClick={() => handleDownload(selectedReport.id)}>
-                  <Download className="mr-2 h-4 w-4" /> 下载报告
+                  <Download className="mr-2 h-4 w-4" /> JSON
                 </Button>
               </div>
             </div>

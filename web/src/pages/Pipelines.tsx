@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { useToastActions } from '@/components/ui/toast'
-import { GitBranch, Play, Plus, Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react'
+import { GitBranch, Play, Plus, Clock, CheckCircle, XCircle, Loader2, Timer, Trash2 } from 'lucide-react'
 import axios from 'axios'
 
 const presets = [
@@ -23,16 +24,30 @@ interface PipelineExecution {
   duration: number | null
 }
 
+interface PipelineRecord {
+  id: string
+  name: string
+  description: string | null
+  cronExpression: string | null
+  isPreset: boolean
+}
+
 export default function Pipelines() {
   const [executions, setExecutions] = useState<PipelineExecution[]>([])
   const [loading, setLoading] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
   const [customPipeline, setCustomPipeline] = useState({ name: '', description: '', nodes: '' })
   const [runningIds, setRunningIds] = useState<Set<string>>(new Set())
+  const [scheduleOpen, setScheduleOpen] = useState(false)
+  const [scheduleTarget, setScheduleTarget] = useState<{ id: string; name: string } | null>(null)
+  const [cronExpr, setCronExpr] = useState('')
+  const [pipelines, setPipelines] = useState<PipelineRecord[]>([])
+  const [savingSchedule, setSavingSchedule] = useState(false)
   const { toastSuccess, toastError } = useToastActions()
 
   useEffect(() => {
     fetchExecutions()
+    fetchPipelines()
   }, [])
 
   const fetchExecutions = async () => {
@@ -46,6 +61,56 @@ export default function Pipelines() {
     }
     setLoading(false)
   }
+
+  const fetchPipelines = async () => {
+    try {
+      const res = await axios.get('/api/pipeline')
+      setPipelines(res.data)
+    } catch (e) {
+      // 静默
+    }
+  }
+
+  const handleOpenSchedule = (id: string, name: string, currentCron?: string | null) => {
+    setScheduleTarget({ id, name })
+    setCronExpr(currentCron || '')
+    setScheduleOpen(true)
+  }
+
+  const handleSaveSchedule = async () => {
+    if (!scheduleTarget) return
+    setSavingSchedule(true)
+    try {
+      await axios.put(`/api/pipeline/${scheduleTarget.id}/schedule`, {
+        cronExpression: cronExpr || null,
+      })
+      toastSuccess(`已${cronExpr ? '设置' : '取消'}定时计划`)
+      setScheduleOpen(false)
+      await fetchPipelines()
+    } catch (e) {
+      toastError('设置定时失败')
+    }
+    setSavingSchedule(false)
+  }
+
+  const handleClearSchedule = async (id: string) => {
+    try {
+      await axios.put(`/api/pipeline/${id}/schedule`, { cronExpression: null })
+      toastSuccess('已取消定时计划')
+      await fetchPipelines()
+    } catch (e) {
+      toastError('取消定时失败')
+    }
+  }
+
+  const cronPresets = [
+    { label: '每 5 分钟', value: '*/5 * * * *' },
+    { label: '每 15 分钟', value: '*/15 * * * *' },
+    { label: '每 30 分钟', value: '*/30 * * * *' },
+    { label: '每 1 小时', value: '0 * * * *' },
+    { label: '每 6 小时', value: '0 */6 * * *' },
+    { label: '每天 0 点', value: '0 0 * * *' },
+  ]
 
   const handleRunPreset = async (presetId: string) => {
     const preset = presets.find(p => p.id === presetId)
@@ -134,11 +199,63 @@ export default function Pipelines() {
                     <><Play className="mr-2 h-4 w-4" /> 立即执行</>
                   )}
                 </Button>
+                <Button
+                  className="mt-2 w-full"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleOpenSchedule(p.id, p.name)}
+                >
+                  <Timer className="mr-2 h-3.5 w-3.5" /> 定时计划
+                </Button>
               </div>
             ))}
           </div>
         </CardContent>
       </Card>
+
+      {/* 定时计划 */}
+      {pipelines.filter(p => p.cronExpression).length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Timer className="h-5 w-5" /> 定时计划
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>流水线</TableHead>
+                  <TableHead>Cron 表达式</TableHead>
+                  <TableHead>说明</TableHead>
+                  <TableHead className="text-right">操作</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pipelines.filter(p => p.cronExpression).map(p => (
+                  <TableRow key={p.id} className="hover:bg-muted/50 transition-colors duration-150">
+                    <TableCell className="font-medium">{p.name}</TableCell>
+                    <TableCell><code className="rounded bg-muted px-1.5 py-0.5 text-xs">{p.cronExpression}</code></TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {cronPresets.find(c => c.value === p.cronExpression)?.label || '自定义'}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" size="sm" onClick={() => handleOpenSchedule(p.id, p.name, p.cronExpression)}>
+                          编辑
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleClearSchedule(p.id)}>
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
 
       {/* 执行历史 */}
       <Card>
@@ -199,6 +316,66 @@ export default function Pipelines() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* 定时计划弹窗 */}
+      <Dialog open={scheduleOpen} onOpenChange={setScheduleOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Timer className="h-5 w-5" /> 定时计划
+            </DialogTitle>
+            <DialogDescription>
+              为「{scheduleTarget?.name}」设置定时执行
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Cron 表达式</label>
+              <Input
+                value={cronExpr}
+                onChange={(e) => setCronExpr(e.target.value)}
+                placeholder="如: */15 * * * *"
+              />
+              <p className="text-xs text-muted-foreground">
+                格式: 分 时 日 月 周，如 <code className="rounded bg-muted px-1">*/15 * * * *</code> 表示每 15 分钟执行
+              </p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">快捷选择</label>
+              <div className="flex flex-wrap gap-2">
+                {cronPresets.map(p => (
+                  <Button
+                    key={p.value}
+                    variant={cronExpr === p.value ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCronExpr(p.value)}
+                  >
+                    {p.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            {cronExpr && (
+              <div className="rounded-md bg-muted p-3">
+                <p className="text-xs text-muted-foreground">
+                  当前设置: <code className="font-mono">{cronExpr}</code>
+                  {cronPresets.find(c => c.value === cronExpr) && (
+                    <span className="ml-2 text-foreground">({cronPresets.find(c => c.value === cronExpr)?.label})</span>
+                  )}
+                </p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setCronExpr(''); handleSaveSchedule() }}>
+              取消定时
+            </Button>
+            <Button onClick={handleSaveSchedule} disabled={savingSchedule}>
+              {savingSchedule ? '保存中...' : '保存'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* 自定义流水线弹窗 */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>

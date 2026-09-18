@@ -1,0 +1,37 @@
+{
+  "app": {
+    "title": "技能评测系统",
+    "version": "v1.100"
+  },
+  "nav": {
+    "dashboard": "看板",
+    "skills": "技能管理",
+    "agents": "智能体管理",
+    "datasets": "评测数据集",
+    "evalRuns": "评测执行",
+    "annotations": "标注管理",
+    "reports": "评测报告",
+    "pipelines": "流水线",
+    "leaderboard": "排行榜",
+    "observability": "可观测性"
+  },
+  "common": {
+    "search": "搜索页面...",
+    "settings": "系统设置",
+    "collapse": "折叠侧边栏",
+    "expand": "展开侧边栏",
+    "noData": "暂无数据",
+    "loading": "加载中...",
+    "confirm": "确认",
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "create": "新建"
+  },
+  "theme": {
+    "light": "亮色",
+    "dark": "暗色",
+    "system": "跟随系统"
+  }
+}

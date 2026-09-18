@@ -2,6 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PipelineOrchestrationController } from './pipeline-orchestration.controller';
 import { PipelineOrchestrationService, PipelineStepType } from './pipeline-orchestration.service';
+import { SchedulerService } from './scheduler.service';
 
 describe('PipelineOrchestrationController', () => {
   let controller: PipelineOrchestrationController;
@@ -19,9 +20,16 @@ describe('PipelineOrchestrationController', () => {
       togglePipeline: jest.fn(),
     };
 
+    const schedulerService = {
+      updateSchedule: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [PipelineOrchestrationController],
-      providers: [{ provide: PipelineOrchestrationService, useValue: service }],
+      providers: [
+        { provide: PipelineOrchestrationService, useValue: service },
+        { provide: SchedulerService, useValue: schedulerService },
+      ],
     }).compile();
 
     controller = module.get<PipelineOrchestrationController>(PipelineOrchestrationController);

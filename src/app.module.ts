@@ -16,6 +16,7 @@ import { ReportModule } from './modules/report/report.module';
 import { RegressionModule } from './modules/regression/regression.module';
 import { PipelineModule } from './modules/pipeline/pipeline.module';
 import { PromptModule } from './modules/prompt/prompt.module';
+import { AlertModule } from './modules/alert/alert.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { PromptModule } from './modules/prompt/prompt.module';
     RegressionModule,
     PipelineModule,
     PromptModule,  // Prompt 版本管理
+    AlertModule,   // 告警通知
   ],
 })
 export class AppModule {}

@@ -47,6 +47,9 @@ import { EvalReplayService } from './eval-replay.service';
 import { ExperimentTrackingService } from './experiment-tracking.service';
 import { DataAnonymizationService } from './data-anonymization.service';
 import { RateLimitingService } from './rate-limiting.service';
+import { DataAugmentationService, AugmentationStrategy } from './data-augmentation.service';
+import { MultilingualEvalService, MultilingualEvalType, Language } from './multilingual-eval.service';
+import { ReportGeneratorService, ReportType, ReportFormat } from './report-generator.service';
 
 @Controller('api/eval')
 export class EvalController {
@@ -98,6 +101,9 @@ export class EvalController {
     private experimentTrackingService: ExperimentTrackingService,
     private dataAnonymizationService: DataAnonymizationService,
     private rateLimitingService: RateLimitingService,
+    private dataAugmentationService: DataAugmentationService,
+    private multilingualEvalService: MultilingualEvalService,
+    private reportGeneratorService: ReportGeneratorService,
   ) {}
 
   // ========== 评测指标 API ==========
@@ -2345,5 +2351,142 @@ export class EvalController {
   @Post('rate-limiting/reset')
   async resetRateLimitCounters(@Body() body: { configId?: string }) {
     return this.rateLimitingService.resetCounters(body.configId);
+  }
+
+  // ==================== 数据增强 API ====================
+
+  @Post('data-augmentation/tasks')
+  async createAugmentationTask(@Body() body: {
+    name: string;
+    description?: string;
+    sourceData: any[];
+    strategies: AugmentationStrategy[];
+    config?: any;
+  }) {
+    return this.dataAugmentationService.createTask(body);
+  }
+
+  @Get('data-augmentation/tasks')
+  async listAugmentationTasks() {
+    return this.dataAugmentationService.listTasks();
+  }
+
+  @Get('data-augmentation/tasks/:id')
+  async getAugmentationTask(@Param('id') id: string) {
+    return this.dataAugmentationService.getTask(id);
+  }
+
+  @Post('data-augmentation/tasks/:id/execute')
+  async executeAugmentationTask(@Param('id') id: string) {
+    return this.dataAugmentationService.execute(id);
+  }
+
+  @Get('data-augmentation/tasks/:id/results')
+  async getAugmentationResults(
+    @Param('id') id: string,
+    @Query('strategy') strategy?: AugmentationStrategy,
+    @Query('limit') limit?: number,
+  ) {
+    return this.dataAugmentationService.getResults(id, { strategy, limit: limit ? +limit : undefined });
+  }
+
+  @Get('data-augmentation/tasks/:id/export')
+  async exportAugmentationResults(@Param('id') id: string) {
+    return this.dataAugmentationService.exportAsJSON(id);
+  }
+
+  @Post('data-augmentation/tasks/:id/delete')
+  async deleteAugmentationTask(@Param('id') id: string) {
+    return this.dataAugmentationService.deleteTask(id);
+  }
+
+  @Get('data-augmentation/strategies')
+  async getAugmentationStrategies() {
+    return this.dataAugmentationService.getStrategies();
+  }
+
+  // ==================== 多语言评测 API ====================
+
+  @Post('multilingual/evaluate')
+  async evaluateMultilingual(@Body() body: any) {
+    return this.multilingualEvalService.evaluate(body);
+  }
+
+  @Get('multilingual/results')
+  async getMultilingualResults(
+    @Query('type') type?: MultilingualEvalType,
+    @Query('language') language?: Language,
+    @Query('limit') limit?: number,
+  ) {
+    return this.multilingualEvalService.getResults({ type, language, limit: limit ? +limit : undefined });
+  }
+
+  @Get('multilingual/languages')
+  async getMultilingualLanguages(@Query('language') language?: Language) {
+    return this.multilingualEvalService.getLanguageConfig(language);
+  }
+
+  @Get('multilingual/eval-types')
+  async getMultilingualEvalTypes() {
+    return this.multilingualEvalService.getEvalTypes();
+  }
+
+  // ==================== 报告生成 API ====================
+
+  @Post('reports/configs')
+  async createReportConfig(@Body() body: {
+    name: string;
+    type: ReportType;
+    format: ReportFormat;
+    config: any;
+    schedule?: any;
+    createdBy: string;
+  }) {
+    return this.reportGeneratorService.createConfig(body);
+  }
+
+  @Get('reports/configs')
+  async listReportConfigs() {
+    return this.reportGeneratorService.listConfigs();
+  }
+
+  @Get('reports/configs/:id')
+  async getReportConfig(@Param('id') id: string) {
+    return this.reportGeneratorService.getConfig(id);
+  }
+
+  @Post('reports/configs/:id/delete')
+  async deleteReportConfig(@Param('id') id: string) {
+    return this.reportGeneratorService.deleteConfig(id);
+  }
+
+  @Post('reports/generate/:configId')
+  async generateReport(@Param('configId') configId: string) {
+    return this.reportGeneratorService.generate(configId);
+  }
+
+  @Get('reports/results')
+  async listReportResults(@Query('configId') configId?: string) {
+    return this.reportGeneratorService.listResults(configId);
+  }
+
+  @Get('reports/results/:id')
+  async getReportResult(@Param('id') id: string) {
+    return this.reportGeneratorService.getResult(id);
+  }
+
+  @Post('reports/results/:id/delete')
+  async deleteReportResult(@Param('id') id: string) {
+    return this.reportGeneratorService.deleteResult(id);
+  }
+
+  @Get('reports/types')
+  async getReportTypes() {
+    return this.reportGeneratorService.getReportTypes();
+  }
+
+  @Get('reports/formats')
+  async getReportFormats() {
+    return this.reportGeneratorService.getReportFormats();
   }
 }

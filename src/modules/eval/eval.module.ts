@@ -47,6 +47,9 @@ import { EvalReplayService } from './eval-replay.service';
 import { ExperimentTrackingService } from './experiment-tracking.service';
 import { DataAnonymizationService } from './data-anonymization.service';
 import { RateLimitingService } from './rate-limiting.service';
+import { DataAugmentationService } from './data-augmentation.service';
+import { MultilingualEvalService } from './multilingual-eval.service';
+import { ReportGeneratorService } from './report-generator.service';
 import { EvalController } from './eval.controller';
 
 @Module({
@@ -100,6 +103,9 @@ import { EvalController } from './eval.controller';
     ExperimentTrackingService,
     DataAnonymizationService,
     RateLimitingService,
+    DataAugmentationService,
+    MultilingualEvalService,
+    ReportGeneratorService,
   ],
   exports: [
     EvalService,
@@ -150,6 +156,9 @@ import { EvalController } from './eval.controller';
     ExperimentTrackingService,
     DataAnonymizationService,
     RateLimitingService,
+    DataAugmentationService,
+    MultilingualEvalService,
+    ReportGeneratorService,
   ],
 })
 export class EvalModule {}

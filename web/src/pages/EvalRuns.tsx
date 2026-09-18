@@ -46,7 +46,7 @@ export default function EvalRuns() {
   const fetchRuns = async () => {
     setLoading(true)
     try {
-      const res = await axios.get('/api/eval-runs')
+      const res = await axios.get('/api/report/eval-runs')
       setRuns(res.data)
     } catch (e) {
       console.error(e)

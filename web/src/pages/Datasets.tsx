@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { useToastActions } from '@/components/ui/toast'
-import { Plus, Database, Edit, Trash2, Search, Upload, FileText } from 'lucide-react'
+import { Plus, Database, Edit, Trash2, Search, Upload, FileText, Download } from 'lucide-react'
 import axios from 'axios'
 
 interface Dataset {
@@ -69,6 +69,25 @@ export default function Datasets() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
   const { toastSuccess, toastError } = useToastActions()
+
+  const handleExport = async (datasetId: string, datasetName: string) => {
+    try {
+      const res = await axios.get(`/api/datasets/${datasetId}/export`)
+      const data = res.data
+      // 转换为 JSON 文件下载
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `${datasetName}.json`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      toastSuccess('导出成功')
+    } catch (e) {
+      toastError('导出失败')
+    }
+  }
 
   const fetchDatasets = async () => {
     setLoading(true)
@@ -244,6 +263,9 @@ export default function Datasets() {
                       <TableCell className="text-muted-foreground">{new Date(ds.createdAt).toLocaleString()}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
+                          <Button variant="outline" size="sm" onClick={() => handleExport(ds.id, ds.name)} aria-label="导出数据集">
+                            <Download className="mr-1 h-3 w-3" /> 导出
+                          </Button>
                           <Button variant="outline" size="sm" onClick={() => openImport(ds)} aria-label="导入测试用例">
                             <Upload className="mr-1 h-3 w-3" /> 导入
                           </Button>

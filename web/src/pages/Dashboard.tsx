@@ -71,7 +71,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get('/api/reports/dashboard')
+        const res = await axios.get('/api/report/dashboard')
         setData(res.data)
       } catch (e) {
         console.error(e)

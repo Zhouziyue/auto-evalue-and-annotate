@@ -13,6 +13,78 @@ export class ReportController {
     private readonly prisma: PrismaService,
   ) {}
 
+  // 获取评测运行列表（供报告和看板使用）
+  @Get('eval-runs')
+  async getEvalRuns() {
+    const evalRuns = await this.prisma.evalRun.findMany({
+      include: {
+        skill: { select: { name: true } },
+        endpoint: { select: { name: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return evalRuns.map(run => ({
+      id: run.id,
+      skillId: run.skillId,
+      skillName: run.skill?.name || '未知技能',
+      endpointName: run.endpoint?.name || '未知接入点',
+      status: run.status,
+      totalCases: run.totalCases,
+      passedCases: run.passedCases,
+      failedCases: run.failedCases,
+      passRate: run.totalCases > 0 ? run.passedCases / run.totalCases : 0,
+      avgScore: 0, // 可以从 results 计算
+      duration: run.startTime && run.endTime ? new Date(run.endTime).getTime() - new Date(run.startTime).getTime() : 0,
+      createdAt: run.createdAt,
+      updatedAt: run.updatedAt,
+    }));
+  }
+
+  // 获取单个评测运行详情
+  @Get('eval-runs/:id')
+  async getEvalRun(@Param('id') id: string) {
+    const evalRun = await this.prisma.evalRun.findUnique({
+      where: { id },
+      include: {
+        skill: { select: { name: true } },
+        endpoint: { select: { name: true } },
+        results: {
+          include: {
+            testCase: true,
+          },
+        },
+      },
+    });
+    if (!evalRun) {
+      return { error: 'Not found' };
+    }
+    return {
+      id: evalRun.id,
+      skillId: evalRun.skillId,
+      skillName: evalRun.skill?.name || '未知技能',
+      endpointName: evalRun.endpoint?.name || '未知接入点',
+      status: evalRun.status,
+      totalCases: evalRun.totalCases,
+      passedCases: evalRun.passedCases,
+      failedCases: evalRun.failedCases,
+      passRate: evalRun.totalCases > 0 ? evalRun.passedCases / evalRun.totalCases : 0,
+      avgScore: 0,
+      duration: evalRun.startTime && evalRun.endTime ? new Date(evalRun.endTime).getTime() - new Date(evalRun.startTime).getTime() : 0,
+      createdAt: evalRun.createdAt,
+      updatedAt: evalRun.updatedAt,
+      results: evalRun.results.map(r => ({
+        id: r.id,
+        testCaseId: r.testCaseId,
+        input: r.testCase?.input || '',
+        expectedOutput: r.testCase?.expectedOutput || '',
+        actualOutput: r.actualOutput || '',
+        status: r.status,
+        scores: r.scores ? JSON.parse(r.scores) : {},
+        metrics: r.metrics ? JSON.parse(r.metrics) : {},
+      })),
+    };
+  }
+
   // 生成评测报告
   @Post('generate/:evalRunId')
   async generateReport(@Param('evalRunId') evalRunId: string) {

@@ -84,8 +84,27 @@ export default function Reports() {
   const fetchReports = async () => {
     setLoading(true)
     try {
-      const res = await axios.get('/api/eval/reports')
-      setReports(res.data)
+      // 从 eval-runs 获取已完成的评测运行作为报告
+      const res = await axios.get('/api/report/eval-runs')
+      // 将 evalRuns 转换为报告格式
+      const reports = (res.data || []).map((run: any) => ({
+        id: run.id,
+        name: `评测报告 - ${run.skillName || '未命名'}`,
+        evalRunId: run.id,
+        status: run.status === 'completed' ? 'completed' : run.status === 'running' ? 'generating' : 'failed',
+        summary: {
+          totalCases: run.totalCases || 0,
+          passedCases: run.passedCases || 0,
+          failedCases: run.failedCases || 0,
+          passRate: run.totalCases ? (run.passedCases || 0) / run.totalCases : 0,
+          avgScore: run.avgScore || 0,
+          duration: run.duration || 0,
+        },
+        metrics: [],
+        createdAt: run.createdAt,
+        updatedAt: run.updatedAt || run.createdAt,
+      }))
+      setReports(reports)
     } catch (e) {
       console.error(e)
       toastError('加载报告列表失败')
@@ -95,8 +114,20 @@ export default function Reports() {
 
   const handleViewDetail = async (report: Report) => {
     try {
-      const res = await axios.get(`/api/eval/reports/${report.id}`)
-      setSelectedReport(res.data)
+      // 使用 evalRunId 获取详情
+      const res = await axios.get(`/api/report/eval-runs/${report.evalRunId}`)
+      const run = res.data
+      setSelectedReport({
+        ...report,
+        summary: {
+          totalCases: run.totalCases || 0,
+          passedCases: run.passedCases || 0,
+          failedCases: run.failedCases || 0,
+          passRate: run.totalCases ? (run.passedCases || 0) / run.totalCases : 0,
+          avgScore: run.avgScore || 0,
+          duration: run.duration || 0,
+        },
+      })
       setDetailOpen(true)
     } catch (e) {
       toastError('获取报告详情失败')
@@ -106,9 +137,16 @@ export default function Reports() {
   const handleGenerate = async () => {
     setGenerating(true)
     try {
-      await axios.post('/api/eval/reports/generate', {
-        name: `评测报告 ${new Date().toLocaleDateString()}`,
-      })
+      // 获取最新的评测运行来生成报告
+      const runsRes = await axios.get('/api/report/eval-runs')
+      const completedRuns = runsRes.data.filter((r: any) => r.status === 'completed')
+      if (completedRuns.length === 0) {
+        toastError('没有已完成的评测运行，无法生成报告')
+        return
+      }
+      // 使用最新的评测运行生成报告
+      const latestRun = completedRuns[0]
+      await axios.post(`/api/report/generate/${latestRun.id}`)
       await fetchReports()
       toastSuccess('报告生成成功')
     } catch (e) {

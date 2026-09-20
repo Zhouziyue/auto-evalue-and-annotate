@@ -97,7 +97,7 @@ export default function Leaderboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* 摘要卡片 */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card className="hover:shadow-sm transition-shadow duration-200">

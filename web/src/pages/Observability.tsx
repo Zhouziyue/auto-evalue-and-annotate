@@ -103,7 +103,7 @@ export default function Observability() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* 时间范围选择 */}
       <div className="flex gap-2">
         {[1, 6, 24, 72].map(h => (

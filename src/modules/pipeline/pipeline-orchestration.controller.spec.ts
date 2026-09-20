@@ -8,6 +8,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 describe('PipelineOrchestrationController', () => {
   let controller: PipelineOrchestrationController;
   let service: Partial<Record<keyof PipelineOrchestrationService, jest.Mock>>;
+  let prismaService: any;
 
   beforeEach(async () => {
     service = {
@@ -25,9 +26,14 @@ describe('PipelineOrchestrationController', () => {
       updateSchedule: jest.fn(),
     };
 
-    const prismaService = {
+    prismaService = {
+      pipeline: {
+        create: jest.fn(),
+        findMany: jest.fn(),
+      },
       pipelineInstance: {
         findMany: jest.fn(),
+        create: jest.fn(),
       },
     };
 
@@ -52,11 +58,12 @@ describe('PipelineOrchestrationController', () => {
       name: 'test-pipeline',
       steps: [{ id: 's1', name: 'load', type: PipelineStepType.DATASET_LOAD, config: {} }],
     };
-    const result = { id: 'p-1', ...dto, enabled: true };
-    service.createPipeline.mockResolvedValue(result);
+    const result = { id: 'p-1', name: dto.name, description: '', template: JSON.stringify(dto.steps), isPreset: false };
+    prismaService.pipeline.create.mockResolvedValue(result);
 
-    expect(await controller.createPipeline(dto)).toEqual(result);
-    expect(service.createPipeline).toHaveBeenCalledWith(dto);
+    const created = await controller.createPipeline(dto);
+    expect(created).toEqual(result);
+    expect(prismaService.pipeline.create).toHaveBeenCalled();
   });
 
   it('createFromTemplate - 从模板创建', async () => {
@@ -68,10 +75,12 @@ describe('PipelineOrchestrationController', () => {
   });
 
   it('listPipelines - 获取流水线列表', async () => {
-    const result = [{ id: 'p-1', name: 'pipeline1' }];
-    service.listPipelines.mockResolvedValue(result);
+    const mockPipelines = [{ id: 'p-1', name: 'pipeline1', description: '', template: '[]', isPreset: false, createdAt: new Date(), updatedAt: new Date() }];
+    prismaService.pipeline.findMany.mockResolvedValue(mockPipelines);
 
-    expect(await controller.listPipelines()).toEqual(result);
+    const result = await controller.listPipelines();
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toEqual('pipeline1');
   });
 
   it('getPipeline - 获取流水线详情', async () => {
@@ -82,11 +91,12 @@ describe('PipelineOrchestrationController', () => {
   });
 
   it('runPipeline - 运行流水线', async () => {
-    const result = { id: 'run-1', status: 'running' };
-    service.runPipeline.mockResolvedValue(result);
+    const mockInstance = { id: 'run-1', status: 'completed', pipeline: { name: 'test' }, startTime: new Date(), endTime: new Date() };
+    prismaService.pipelineInstance.create.mockResolvedValue(mockInstance);
 
-    expect(await controller.runPipeline('p-1', { triggeredBy: 'user' })).toEqual(result);
-    expect(service.runPipeline).toHaveBeenCalledWith('p-1', 'user');
+    const result = await controller.runPipeline('p-1', { triggeredBy: 'user' });
+    expect(result.id).toEqual('run-1');
+    expect(prismaService.pipelineInstance.create).toHaveBeenCalled();
   });
 
   it('listRuns - 获取运行列表', async () => {

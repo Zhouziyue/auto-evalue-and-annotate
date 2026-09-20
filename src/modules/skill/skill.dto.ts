@@ -25,6 +25,36 @@ export class CreateSkillDto {
   @IsOptional()
   @IsArray()
   tags?: string[];
+
+  @ApiPropertyOptional({ description: '技能指令（SKILL.md 风格的 Markdown）' })
+  @IsOptional()
+  @IsString()
+  instructions?: string;
+
+  @ApiPropertyOptional({ description: '允许使用的工具列表' })
+  @IsOptional()
+  @IsArray()
+  allowedTools?: string[];
+
+  @ApiPropertyOptional({ description: '需要的上下文信息' })
+  @IsOptional()
+  @IsArray()
+  requiredContext?: string[];
+
+  @ApiPropertyOptional({ description: '技能作者' })
+  @IsOptional()
+  @IsString()
+  author?: string;
+
+  @ApiPropertyOptional({ description: '许可协议' })
+  @IsOptional()
+  @IsString()
+  license?: string;
+
+  @ApiPropertyOptional({ description: '状态', enum: ['active', 'deprecated', 'draft'] })
+  @IsOptional()
+  @IsString()
+  status?: string;
 }
 
 export class UpdateSkillDto {
@@ -52,4 +82,34 @@ export class UpdateSkillDto {
   @IsOptional()
   @IsArray()
   tags?: string[];
+
+  @ApiPropertyOptional({ description: '技能指令' })
+  @IsOptional()
+  @IsString()
+  instructions?: string;
+
+  @ApiPropertyOptional({ description: '允许使用的工具列表' })
+  @IsOptional()
+  @IsArray()
+  allowedTools?: string[];
+
+  @ApiPropertyOptional({ description: '需要的上下文信息' })
+  @IsOptional()
+  @IsArray()
+  requiredContext?: string[];
+
+  @ApiPropertyOptional({ description: '技能作者' })
+  @IsOptional()
+  @IsString()
+  author?: string;
+
+  @ApiPropertyOptional({ description: '许可协议' })
+  @IsOptional()
+  @IsString()
+  license?: string;
+
+  @ApiPropertyOptional({ description: '状态' })
+  @IsOptional()
+  @IsString()
+  status?: string;
 }

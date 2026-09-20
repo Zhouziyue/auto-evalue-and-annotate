@@ -20,6 +20,12 @@ model Skill {
   version     String   @default("1.0.0")
   category    String?  // 分类：function_call, rag, agent, chat, classification, summarization
   tags        String?  // 标签，逗号分隔
+  instructions String? // 技能指令内容（SKILL.md 风格的 Markdown）
+  allowedTools String? // 允许使用的工具列表，逗号分隔
+  requiredContext String? // 需要的上下文信息，逗号分隔
+  author      String?  // 技能作者
+  license     String?  // 许可协议
+  status      String   @default("active") // active, deprecated, draft
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -34,7 +40,11 @@ model AgentEndpoint {
   id             String   @id @default(uuid())
   skillId        String
   name           String
+  description    String?  // 智能体描述
   url            String
+  model          String?  // 底层模型，如 gpt-4, claude-3, qwen-max
+  systemPrompt   String?  // 系统提示词
+  status         String   @default("active") // active, inactive, error
   authType       String   @default("none") // none, api_key, oauth, token
   authConfig     String?  // 认证配置（JSON字符串，加密存储）
   sseFormat      String   @default("auto") // auto, content, delta, custom

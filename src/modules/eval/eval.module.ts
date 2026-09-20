@@ -72,6 +72,7 @@ import { KnowledgeBaseEvalService } from './knowledge-base-eval.service';
 import { CustomMetricService } from './custom-metric.service';
 import { ResultAggregationService } from './result-aggregation.service';
 import { TaskTemplateService } from './task-template.service';
+import { MockSeedService } from './mock-seed.service';
 
 // ========== 批量服务数组导入 ==========
 import { MODEL_PIPELINE_SERVICES } from './model-pipeline-services';
@@ -106,6 +107,7 @@ const CORE_SERVICES = [
   AnnotationAssistanceService, ModelDistillationService, FederatedEvalService, ModelRegistryService,
   ComparisonAnalysisService, DataTransformService, EvalSandboxService, FinetuneEvalService,
   KnowledgeBaseEvalService, CustomMetricService, ResultAggregationService, TaskTemplateService,
+  MockSeedService,
 ];
 
 // ========== 所有批量服务 ==========

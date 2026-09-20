@@ -15,6 +15,12 @@ export class SkillService {
         version: dto.version || '1.0.0',
         category: dto.category,
         tags: dto.tags ? dto.tags.join(',') : null,
+        instructions: dto.instructions,
+        allowedTools: dto.allowedTools ? dto.allowedTools.join(',') : null,
+        requiredContext: dto.requiredContext ? dto.requiredContext.join(',') : null,
+        author: dto.author,
+        license: dto.license,
+        status: dto.status || 'active',
       },
     });
   }
@@ -62,6 +68,12 @@ export class SkillService {
         version: dto.version,
         category: dto.category,
         tags: dto.tags ? dto.tags.join(',') : dto.tags === null ? null : undefined,
+        instructions: dto.instructions,
+        allowedTools: dto.allowedTools ? dto.allowedTools.join(',') : dto.allowedTools === null ? null : undefined,
+        requiredContext: dto.requiredContext ? dto.requiredContext.join(',') : dto.requiredContext === null ? null : undefined,
+        author: dto.author,
+        license: dto.license,
+        status: dto.status,
       },
     });
   }

@@ -51,6 +51,12 @@ describe('SkillService', () => {
           version: dto.version,
           category: undefined,
           tags: null,
+          instructions: undefined,
+          allowedTools: null,
+          requiredContext: null,
+          author: undefined,
+          license: undefined,
+          status: 'active',
         },
       });
     });
@@ -68,6 +74,12 @@ describe('SkillService', () => {
           version: '1.0.0',
           category: undefined,
           tags: null,
+          instructions: undefined,
+          allowedTools: null,
+          requiredContext: null,
+          author: undefined,
+          license: undefined,
+          status: 'active',
         },
       });
     });
@@ -161,7 +173,19 @@ describe('SkillService', () => {
       expect(result).toEqual(mockUpdated);
       expect(mockPrisma.skill.update).toHaveBeenCalledWith({
         where: { id: 'test-id' },
-        data: dto,
+        data: {
+          name: dto.name,
+          description: undefined,
+          version: undefined,
+          category: undefined,
+          tags: undefined,
+          instructions: undefined,
+          allowedTools: undefined,
+          requiredContext: undefined,
+          author: undefined,
+          license: undefined,
+          status: undefined,
+        },
       });
     });
 

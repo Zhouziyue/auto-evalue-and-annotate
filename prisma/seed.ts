@@ -28,50 +28,145 @@ async function main() {
   const skill1 = await prisma.skill.create({
     data: {
       name: '客服问答技能',
-      description: '基于 RAG 的智能客服问答系统，支持多轮对话和上下文理解',
+      description: '基于 RAG 的智能客服问答系统，支持多轮对话和上下文理解，能够自动检索知识库并生成准确回答',
       version: '2.1.0',
       category: 'rag',
       tags: 'customer-service,rag,nlp',
+      author: 'AI平台团队',
+      license: 'MIT',
+      status: 'active',
+      allowedTools: 'knowledge_base_search,context_retrieval,response_generation',
+      requiredContext: 'knowledge_base_id,conversation_history',
+      instructions: `# 客服问答技能
+
+## 概述
+基于 RAG（检索增强生成）的智能客服问答系统。当用户提问时，系统会先从知识库中检索相关文档片段，再结合上下文生成准确回答。
+
+## 工作流程
+1. **意图理解**：分析用户问题，提取关键实体和意图
+2. **知识检索**：从知识库中检索 Top-K 相关文档片段
+3. **答案生成**：结合检索结果和对话历史生成回答
+4. **质量检查**：验证回答的准确性和完整性
+
+## 最佳实践
+- 始终引用知识库来源，避免凭空编造
+- 面对投诉类问题，先表达同理心再解决问题
+- 不确定时明确告知用户并提供转人工选项
+
+## 注意事项
+⚠️ 不要回答超出知识库范围的问题
+⚠️ 涉及金额、政策类问题需引用具体条款`,
     },
   });
 
   const skill2 = await prisma.skill.create({
     data: {
       name: '文档摘要技能',
-      description: '自动提取长文档的核心内容，支持多种格式输入',
+      description: '自动提取长文档的核心内容，支持多种格式输入，可配置摘要长度和关注维度',
       version: '1.5.2',
       category: 'summarization',
       tags: 'summarization,document',
+      author: '文档处理团队',
+      license: 'MIT',
+      status: 'active',
+      allowedTools: 'document_parser,text_compressor',
+      requiredContext: 'target_language,output_length',
+      instructions: `# 文档摘要技能
+
+## 概述
+将长文档自动压缩为核心摘要，保留关键信息。
+
+## 工作流程
+1. 解析输入文档结构
+2. 提取段落主题句
+3. 按重要性排序并压缩
+4. 生成结构化摘要
+
+## 最佳实践
+- 摘要长度默认为原文的 20%
+- 保留数字、日期、人名等关键实体`,
     },
   });
 
   const skill3 = await prisma.skill.create({
     data: {
       name: '意图识别技能',
-      description: '精准识别用户意图，支持多分类和置信度输出',
+      description: '精准识别用户意图，支持 20+ 意图类别和置信度输出，适用于任务型对话场景',
       version: '3.0.1',
       category: 'classification',
       tags: 'classification,intent',
+      author: 'NLP团队',
+      license: 'Apache-2.0',
+      status: 'active',
+      allowedTools: 'intent_classifier,entity_extractor',
+      requiredContext: 'intent_schema,entity_types',
+      instructions: `# 意图识别技能
+
+## 概述
+基于深度学习的意图分类器，支持 20+ 预定义意图类别。
+
+## 支持的意图类别
+- 查询类：flight_query, weather_query, order_status
+- 操作类：booking, cancellation, modification
+- 投诉类：complaint, feedback
+
+## 输出格式
+\`\`\`json
+{"intent": "flight_query", "confidence": 0.95, "entities": [...]}
+\`\`\``,
     },
   });
 
   const skill4 = await prisma.skill.create({
     data: {
       name: '代码生成助手',
-      description: '根据自然语言描述生成代码片段，支持多种编程语言',
+      description: '根据自然语言描述生成代码片段，支持 Python/JS/Go 等多种编程语言',
       version: '1.2.0',
       category: 'function_call',
       tags: 'code-generation,assistant',
+      author: '开发工具团队',
+      license: 'MIT',
+      status: 'active',
+      allowedTools: 'code_executor,syntax_validator',
+      requiredContext: 'target_language,code_style',
+      instructions: `# 代码生成助手
+
+## 工作流程
+1. 解析自然语言需求
+2. 确定目标语言和设计模式
+3. 生成代码并添加注释
+4. 运行语法检查确保正确性`,
     },
   });
 
   const skill5 = await prisma.skill.create({
     data: {
       name: '对话管理 Agent',
-      description: '多轮对话状态管理，支持槽位填充和任务型对话',
+      description: '多轮对话状态管理，支持槽位填充和任务型对话，可编排多个子技能完成复杂任务',
       version: '2.0.0',
       category: 'agent',
       tags: 'agent,dialogue,slot-filling',
+      author: 'Agent架构团队',
+      license: 'MIT',
+      status: 'active',
+      allowedTools: 'slot_tracker,dialogue_manager,skill_orchestrator',
+      requiredContext: 'dialogue_state,active_skills',
+      instructions: `# 对话管理 Agent
+
+## 概述
+作为对话的主控中枢，负责管理对话状态、填充槽位、编排子技能。
+
+## 核心能力
+- **槽位填充**：跟踪对话中需要收集的信息
+- **技能编排**：根据意图调用合适的子技能
+- **状态管理**：维护多轮对话的上下文
+
+## 工作流程
+1. 接收用户输入
+2. 调用意图识别技能
+3. 更新对话状态和槽位
+4. 选择并调用对应子技能
+5. 生成回复并更新状态`,
     },
   });
 
@@ -79,8 +174,12 @@ async function main() {
   const endpoint1 = await prisma.agentEndpoint.create({
     data: {
       skillId: skill1.id,
-      name: '客服问答接口',
+      name: '客服问答 Agent',
+      description: '面向 C 端用户的智能客服，接入知识库后可回答产品、订单、物流等问题',
       url: 'https://api.example.com/v1/chat',
+      model: 'gpt-4o',
+      systemPrompt: '你是一个专业的客服助手。请基于知识库内容回答用户问题，保持友善和专业。面对投诉时先表达同理心。',
+      status: 'active',
       authType: 'api_key',
       sseFormat: 'openai',
     },
@@ -89,8 +188,12 @@ async function main() {
   const endpoint2 = await prisma.agentEndpoint.create({
     data: {
       skillId: skill2.id,
-      name: '摘要生成接口',
+      name: '摘要生成 Agent',
+      description: '自动处理上传的文档，生成结构化摘要，支持中英文',
       url: 'https://api.example.com/v1/summarize',
+      model: 'claude-3-sonnet',
+      systemPrompt: '你是一个文档摘要专家。请提取输入文档的核心内容，生成简洁准确的摘要。',
+      status: 'active',
       authType: 'token',
       sseFormat: 'content',
     },
@@ -99,8 +202,12 @@ async function main() {
   const endpoint3 = await prisma.agentEndpoint.create({
     data: {
       skillId: skill3.id,
-      name: '意图识别接口',
+      name: '意图识别 Agent',
+      description: '实时分析用户输入，输出意图分类和置信度，供下游路由使用',
       url: 'https://api.example.com/v1/intent',
+      model: 'qwen-max',
+      systemPrompt: '你是一个意图分类器。根据用户输入判断其意图类别，输出 JSON 格式结果。',
+      status: 'active',
       authType: 'none',
       sseFormat: 'auto',
     },
@@ -109,8 +216,12 @@ async function main() {
   await prisma.agentEndpoint.create({
     data: {
       skillId: skill4.id,
-      name: '代码生成接口',
+      name: '代码生成 Agent',
+      description: '根据自然语言描述生成可运行代码，支持多语言和多框架',
       url: 'https://api.example.com/v1/codegen',
+      model: 'gpt-4-turbo',
+      systemPrompt: '你是一个代码生成专家。根据用户的自然语言描述生成高质量代码，添加必要注释。',
+      status: 'active',
       authType: 'api_key',
       sseFormat: 'delta',
     },
@@ -119,8 +230,12 @@ async function main() {
   await prisma.agentEndpoint.create({
     data: {
       skillId: skill5.id,
-      name: '对话管理接口',
+      name: '对话管理 Agent',
+      description: '任务型对话主控 Agent，编排意图识别、问答等子技能完成复杂任务',
       url: 'https://api.example.com/v1/dialogue',
+      model: 'gpt-4o',
+      systemPrompt: '你是一个对话管理 Agent。负责跟踪对话状态、管理槽位、编排子技能来完成用户的任务需求。',
+      status: 'active',
       authType: 'token',
       sseFormat: 'openai',
     },

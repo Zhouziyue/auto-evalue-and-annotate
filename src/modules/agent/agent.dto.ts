@@ -10,9 +10,29 @@ export class CreateAgentDto {
   @IsString()
   name: string;
 
+  @ApiPropertyOptional({ description: '智能体描述' })
+  @IsOptional()
+  @IsString()
+  description?: string;
+
   @ApiProperty({ description: '接入地址' })
   @IsUrl()
   url: string;
+
+  @ApiPropertyOptional({ description: '底层模型', example: 'gpt-4o' })
+  @IsOptional()
+  @IsString()
+  model?: string;
+
+  @ApiPropertyOptional({ description: '系统提示词' })
+  @IsOptional()
+  @IsString()
+  systemPrompt?: string;
+
+  @ApiPropertyOptional({ description: '状态', enum: ['active', 'inactive', 'error'] })
+  @IsOptional()
+  @IsEnum(['active', 'inactive', 'error'])
+  status?: string;
 
   @ApiPropertyOptional({ description: '认证方式', enum: ['none', 'api_key', 'oauth', 'token'] })
   @IsOptional()
@@ -58,8 +78,28 @@ export class UpdateAgentDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsString()
+  description?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsUrl()
   url?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  model?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  systemPrompt?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsEnum(['active', 'inactive', 'error'])
+  status?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

@@ -17,12 +17,16 @@ export class AgentService {
       data: {
         skillId: dto.skillId,
         name: dto.name,
+        description: dto.description,
         url: dto.url,
+        model: dto.model,
+        systemPrompt: dto.systemPrompt,
+        status: dto.status || 'active',
         authType: dto.authType || 'none',
-        authConfig: dto.authConfig,
+        authConfig: dto.authConfig ? JSON.stringify(dto.authConfig) : null,
         sseFormat: dto.sseFormat || 'auto',
-        sseTemplate: dto.sseTemplate,
-        requestTemplate: dto.requestTemplate,
+        sseTemplate: dto.sseTemplate ? JSON.stringify(dto.sseTemplate) : null,
+        requestTemplate: dto.requestTemplate ? JSON.stringify(dto.requestTemplate) : null,
         timeout: dto.timeout || 30000,
         maxRetries: dto.maxRetries || 3,
       },
@@ -42,9 +46,20 @@ export class AgentService {
 
   async update(id: string, dto: UpdateAgentDto) {
     await this.findOne(id);
+    const data: any = { ...dto };
+    // Serialize JSON fields to string for database storage
+    if (dto.authConfig !== undefined) {
+      data.authConfig = dto.authConfig ? JSON.stringify(dto.authConfig) : null;
+    }
+    if (dto.sseTemplate !== undefined) {
+      data.sseTemplate = dto.sseTemplate ? JSON.stringify(dto.sseTemplate) : null;
+    }
+    if (dto.requestTemplate !== undefined) {
+      data.requestTemplate = dto.requestTemplate ? JSON.stringify(dto.requestTemplate) : null;
+    }
     return this.prisma.agentEndpoint.update({
       where: { id },
-      data: dto,
+      data,
     });
   }
 
@@ -54,11 +69,26 @@ export class AgentService {
   }
 
   /**
+   * 解析 JSON 字符串模板为对象
+   */
+  private parseTemplate(template: string | Record<string, any> | null): Record<string, any> | null {
+    if (!template) return null;
+    if (typeof template === 'string') {
+      try {
+        return JSON.parse(template);
+      } catch {
+        return null;
+      }
+    }
+    return template;
+  }
+
+  /**
    * 探测 SSE 响应格式
    */
   async probeSseFormat(id: string, input: string) {
     const endpoint = await this.findOne(id);
-    const requestBody = this.buildRequestBody(endpoint.requestTemplate as Record<string, any>, input);
+    const requestBody = this.buildRequestBody(this.parseTemplate(endpoint.requestTemplate), input);
     const config = this.buildAxiosConfig(endpoint);
 
     try {
@@ -86,7 +116,7 @@ export class AgentService {
    */
   async testConnection(id: string, input: string) {
     const endpoint = await this.findOne(id);
-    const requestBody = this.buildRequestBody(endpoint.requestTemplate as Record<string, any>, input);
+    const requestBody = this.buildRequestBody(this.parseTemplate(endpoint.requestTemplate), input);
     const config = this.buildAxiosConfig(endpoint);
 
     const startTime = Date.now();
@@ -94,13 +124,25 @@ export class AgentService {
     try {
       const response = await axios({
         ...config,
+        data: requestBody,
         responseType: 'stream',
       });
+
+      // Check if the response is actually an error (e.g. 422) wrapped in a 200
+      const contentType = response.headers?.['content-type'] || '';
+      if (response.status >= 400) {
+        const errorBody = await this.readStream(response.data);
+        return {
+          success: false,
+          error: `HTTP ${response.status}: ${errorBody}`,
+          latency: Date.now() - startTime,
+        };
+      }
 
       const result = await this.sseParser.parseStream(
         response.data,
         endpoint.sseFormat as string,
-        endpoint.sseTemplate as Record<string, any>,
+        this.parseTemplate(endpoint.sseTemplate),
       );
 
       return {
@@ -111,12 +153,38 @@ export class AgentService {
         format: result.detectedFormat,
       };
     } catch (error: any) {
+      let errorDetail = error.message;
+      if (error.response?.data) {
+        // Read stream error response body
+        try {
+          errorDetail = await this.readStream(error.response.data);
+        } catch {
+          // Not a stream, use as-is
+          if (typeof error.response.data === 'string') {
+            errorDetail = error.response.data;
+          }
+        }
+      }
+      console.log('[AgentService] Error detail:', errorDetail);
       return {
         success: false,
-        error: error.message,
+        error: errorDetail,
         latency: Date.now() - startTime,
       };
     }
+  }
+
+  /**
+   * Read a stream or string into a string
+   */
+  private async readStream(data: any): Promise<string> {
+    if (typeof data === 'string') return data;
+    return new Promise((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      data.on('data', (chunk: Buffer) => chunks.push(chunk));
+      data.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')));
+      data.on('error', reject);
+    });
   }
 
   /**
@@ -125,7 +193,7 @@ export class AgentService {
   async invoke(endpointId: string, input: string, sessionContext?: any) {
     const endpoint = await this.findOne(endpointId);
     const requestBody = this.buildRequestBody(
-      endpoint.requestTemplate as Record<string, any>,
+      this.parseTemplate(endpoint.requestTemplate),
       input,
       sessionContext,
     );
@@ -137,13 +205,14 @@ export class AgentService {
     try {
       const response = await axios({
         ...config,
+        data: requestBody,
         responseType: 'stream',
       });
 
       const result = await this.sseParser.parseStream(
         response.data,
         endpoint.sseFormat as string,
-        endpoint.sseTemplate as Record<string, any>,
+        this.parseTemplate(endpoint.sseTemplate),
         (chunk: string) => {
           if (!firstTokenTime && chunk.trim()) {
             firstTokenTime = Date.now();
@@ -182,11 +251,13 @@ export class AgentService {
     }
 
     const body = JSON.parse(JSON.stringify(template));
-    return this.replaceVariables(body, {
+    const result = this.replaceVariables(body, {
       input,
       context: context ? JSON.stringify(context) : '',
       timestamp: new Date().toISOString(),
     });
+    console.log('[AgentService] Request body:', JSON.stringify(result));
+    return result;
   }
 
   private replaceVariables(obj: any, vars: Record<string, string>): any {
@@ -213,7 +284,6 @@ export class AgentService {
       timeout: endpoint.timeout,
       headers: {
         'Content-Type': 'application/json',
-        Accept: 'text/event-stream',
       },
     };
 

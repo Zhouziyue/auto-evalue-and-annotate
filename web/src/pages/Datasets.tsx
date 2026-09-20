@@ -6,8 +6,32 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { useToastActions } from '@/components/ui/toast'
-import { Plus, Database, Edit, Trash2, Search, Upload, FileText, Download } from 'lucide-react'
+import { Plus, Database, Edit, Trash2, Search, Upload, FileText, Download, Eye, Tag, Sparkles, GitBranch, History, RotateCcw, GitCompare, Shield, BarChart3 } from 'lucide-react'
 import axios from 'axios'
+
+interface TestCase {
+  id: string
+  datasetId: string
+  input: string
+  expectedOutput: string | null
+  difficulty: string | null
+  tags: string | null
+  metadata: any
+  createdAt: string
+}
+
+interface DatasetVersion {
+  id: string
+  datasetId: string
+  version: number
+  name: string
+  description: string | null
+  status: 'draft' | 'published' | 'archived'
+  tags: string | null
+  createdBy: string | null
+  createdAt: string
+  updatedAt: string
+}
 
 interface Dataset {
   id: string
@@ -16,6 +40,8 @@ interface Dataset {
   category: string | null
   _count?: { testCases: number }
   createdAt: string
+  testCases?: TestCase[]
+  versions?: DatasetVersion[]
 }
 
 // 骨架屏
@@ -68,6 +94,25 @@ export default function Datasets() {
   const [importFormat, setImportFormat] = useState<'json' | 'csv'>('json')
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
+  const [detailOpen, setDetailOpen] = useState(false)
+  const [detailDataset, setDetailDataset] = useState<Dataset | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [aiGenerateOpen, setAiGenerateOpen] = useState(false)
+  const [aiGenerateDataset, setAiGenerateDataset] = useState<Dataset | null>(null)
+  const [aiGenerateInput, setAiGenerateInput] = useState('')
+  const [aiGenerateContext, setAiGenerateContext] = useState('')
+  const [aiGenerateLoading, setAiGenerateLoading] = useState(false)
+  const [aiGenerateResult, setAiGenerateResult] = useState<any>(null)
+  const [versions, setVersions] = useState<DatasetVersion[]>([])
+  const [versionsLoading, setVersionsLoading] = useState(false)
+  const [createVersionOpen, setCreateVersionOpen] = useState(false)
+  const [versionFormData, setVersionFormData] = useState({ name: '', description: '' })
+  const [diffOpen, setDiffOpen] = useState(false)
+  const [diffVersions, setDiffVersions] = useState<{ v1: string; v2: string }>({ v1: '', v2: '' })
+  const [diffResult, setDiffResult] = useState<any>(null)
+  const [cleaning, setCleaning] = useState(false)
+  const [qualityReport, setQualityReport] = useState<any>(null)
+  const [qualityLoading, setQualityLoading] = useState(false)
   const { toastSuccess, toastError } = useToastActions()
 
   const handleExport = async (datasetId: string, datasetName: string) => {
@@ -184,6 +229,196 @@ export default function Datasets() {
     setImportOpen(true)
   }
 
+  const openDetail = async (ds: Dataset) => {
+    setDetailLoading(true)
+    setDetailOpen(true)
+    try {
+      const res = await axios.get(`/api/datasets/${ds.id}`)
+      setDetailDataset(res.data)
+      // 获取版本列表
+      fetchVersions(ds.id)
+    } catch (e) {
+      toastError('加载数据集详情失败')
+    }
+    setDetailLoading(false)
+  }
+
+  const fetchVersions = async (datasetId: string) => {
+    setVersionsLoading(true)
+    try {
+      const res = await axios.get(`/api/datasets/${datasetId}/versions`)
+      setVersions(res.data || [])
+    } catch (e) {
+      console.error(e)
+      setVersions([])
+    }
+    setVersionsLoading(false)
+  }
+
+  const handleCreateVersion = async () => {
+    if (!currentDataset || !versionFormData.name) return
+    try {
+      await axios.post(`/api/datasets/${currentDataset.id}/versions`, {
+        name: versionFormData.name,
+        description: versionFormData.description || undefined,
+      })
+      toastSuccess('版本创建成功')
+      setCreateVersionOpen(false)
+      setVersionFormData({ name: '', description: '' })
+      fetchVersions(currentDataset.id)
+    } catch (e: any) {
+      toastError(e?.response?.data?.message || '创建版本失败')
+    }
+  }
+
+  const handlePublishVersion = async (versionId: string) => {
+    if (!currentDataset) return
+    try {
+      await axios.post(`/api/datasets/${currentDataset.id}/versions/${versionId}/publish`)
+      toastSuccess('版本已发布')
+      fetchVersions(currentDataset.id)
+    } catch (e) {
+      toastError('发布失败')
+    }
+  }
+
+  const handleArchiveVersion = async (versionId: string) => {
+    if (!currentDataset) return
+    try {
+      await axios.post(`/api/datasets/${currentDataset.id}/versions/${versionId}/archive`)
+      toastSuccess('版本已归档')
+      fetchVersions(currentDataset.id)
+    } catch (e) {
+      toastError('归档失败')
+    }
+  }
+
+  const handleRollbackVersion = async (versionId: string) => {
+    if (!currentDataset) return
+    try {
+      await axios.post(`/api/datasets/${currentDataset.id}/versions/${versionId}/rollback`)
+      toastSuccess('版本已回滚')
+      fetchVersions(currentDataset.id)
+    } catch (e) {
+      toastError('回滚失败')
+    }
+  }
+
+  const handleDiffVersions = async () => {
+    if (!currentDataset || !diffVersions.v1 || !diffVersions.v2) return
+    try {
+      const res = await axios.post(`/api/datasets/${currentDataset.id}/versions/diff`, {
+        versionId1: diffVersions.v1,
+        versionId2: diffVersions.v2,
+      })
+      setDiffResult(res.data)
+    } catch (e) {
+      toastError('版本对比失败')
+    }
+  }
+
+  const getVersionStatusBadge = (status: string) => {
+    switch (status) {
+      case 'published':
+        return <Badge className="bg-green-500/10 text-green-600 border-green-500/20" variant="outline">已发布</Badge>
+      case 'archived':
+        return <Badge className="bg-gray-500/10 text-gray-600 border-gray-500/20" variant="outline">已归档</Badge>
+      default:
+        return <Badge variant="outline">草稿</Badge>
+    }
+  }
+
+  const handleCleanDataset = async () => {
+    if (!currentDataset) return
+    setCleaning(true)
+    try {
+      const res = await axios.post(`/api/datasets/${currentDataset.id}/clean`)
+      toastSuccess(`清洗完成：${res.data.removedCount || 0} 条数据被移除`)
+      fetchVersions(currentDataset.id)
+    } catch (e: any) {
+      toastError(e?.response?.data?.message || '数据清洗失败')
+    }
+    setCleaning(false)
+  }
+
+  const handleViewQualityReport = async () => {
+    if (!currentDataset) return
+    setQualityLoading(true)
+    try {
+      const res = await axios.get(`/api/datasets/${currentDataset.id}/quality-report`)
+      setQualityReport(res.data)
+    } catch (e) {
+      toastError('获取质量报告失败')
+    }
+    setQualityLoading(false)
+  }
+
+  const getDifficultyColor = (difficulty: string | null) => {
+    switch (difficulty?.toLowerCase()) {
+      case 'easy': return 'bg-green-500/10 text-green-600 border-green-500/20'
+      case 'medium': return 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20'
+      case 'hard': return 'bg-red-500/10 text-red-600 border-red-500/20'
+      default: return 'bg-gray-500/10 text-gray-600 border-gray-500/20'
+    }
+  }
+
+  const getDifficultyLabel = (difficulty: string | null) => {
+    switch (difficulty?.toLowerCase()) {
+      case 'easy': return '简单'
+      case 'medium': return '中等'
+      case 'hard': return '困难'
+      default: return difficulty || '未设置'
+    }
+  }
+
+  const openAiGenerate = (ds: Dataset) => {
+    setAiGenerateDataset(ds)
+    setAiGenerateInput('')
+    setAiGenerateContext('')
+    setAiGenerateResult(null)
+    setAiGenerateOpen(true)
+  }
+
+  const handleAiGenerate = async () => {
+    if (!aiGenerateInput) return
+    setAiGenerateLoading(true)
+    try {
+      const res = await axios.post('/api/datasets/generate', {
+        input: aiGenerateInput,
+        context: aiGenerateContext || undefined,
+      })
+      setAiGenerateResult(res.data)
+      toastSuccess('AI 生成完成')
+    } catch (e: any) {
+      toastError(e?.response?.data?.message || 'AI 生成失败')
+    }
+    setAiGenerateLoading(false)
+  }
+
+  const handleSelectCandidate = async (candidate: any, index: number) => {
+    if (!aiGenerateDataset || !aiGenerateResult) return
+    try {
+      // 先选择答案
+      await axios.post('/api/datasets/generate/select', {
+        generationId: aiGenerateResult.generationId,
+        selectedIndex: index,
+        customAnswer: undefined,
+      })
+      // 然后添加到数据集
+      await axios.post(`/api/datasets/${aiGenerateDataset.id}/cases`, {
+        input: aiGenerateInput,
+        expectedOutput: candidate.text,
+        difficulty: 'medium',
+        tags: 'AI生成',
+      })
+      toastSuccess('已添加到数据集')
+      setAiGenerateOpen(false)
+      fetchDatasets()
+    } catch (e: any) {
+      toastError(e?.response?.data?.message || '添加失败')
+    }
+  }
+
   const categories = [...new Set(datasets.map(d => d.category).filter((c): c is string => !!c))]
 
   const filteredDatasets = datasets.filter(ds => {
@@ -263,6 +498,12 @@ export default function Datasets() {
                       <TableCell className="text-muted-foreground">{new Date(ds.createdAt).toLocaleString()}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
+                          <Button variant="outline" size="sm" onClick={() => openAiGenerate(ds)} className="gap-1">
+                            <Sparkles className="h-3 w-3" /> AI生成
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => openDetail(ds)} aria-label="查看详情">
+                            <Eye className="mr-1 h-3 w-3" /> 详情
+                          </Button>
                           <Button variant="outline" size="sm" onClick={() => handleExport(ds.id, ds.name)} aria-label="导出数据集">
                             <Download className="mr-1 h-3 w-3" /> 导出
                           </Button>
@@ -400,6 +641,474 @@ export default function Datasets() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>取消</Button>
             <Button variant="destructive" onClick={confirmDelete}>确认删除</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Detail Dialog */}
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" /> 数据集详情
+            </DialogTitle>
+            <DialogDescription>查看数据集信息和测试用例</DialogDescription>
+          </DialogHeader>
+          
+          {detailLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+          ) : detailDataset ? (
+            <div className="flex-1 overflow-y-auto space-y-6">
+              {/* 数据集基本信息 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">{detailDataset.name}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-sm text-muted-foreground">描述：</span>
+                      <p className="text-sm">{detailDataset.description || '-'}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm text-muted-foreground">分类：</span>
+                      <div className="mt-1">
+                        {detailDataset.category ? (
+                          <Badge variant="outline">{detailDataset.category}</Badge>
+                        ) : '-'}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-sm text-muted-foreground">创建时间：</span>
+                      <p className="text-sm">{new Date(detailDataset.createdAt).toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm text-muted-foreground">测试用例数：</span>
+                      <p className="text-sm">
+                        <Badge variant="secondary">{detailDataset.testCases?.length || 0}</Badge>
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 测试用例列表 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">测试用例 ({detailDataset.testCases?.length || 0})</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(!detailDataset.testCases || detailDataset.testCases.length === 0) ? (
+                    <div className="py-8 text-center text-muted-foreground">
+                      <FileText className="mx-auto h-12 w-12 text-muted-foreground/40" />
+                      <p className="mt-4">暂无测试用例</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {detailDataset.testCases.map((tc, index) => (
+                        <Card key={tc.id} className="border-l-4 border-l-primary">
+                          <CardContent className="pt-4">
+                            <div className="space-y-3">
+                              {/* 用例标题 */}
+                              <div className="flex items-center justify-between">
+                                <h4 className="font-medium text-sm">用例 #{index + 1}</h4>
+                                <div className="flex items-center gap-2">
+                                  {tc.difficulty && (
+                                    <Badge className={getDifficultyColor(tc.difficulty)} variant="outline">
+                                      {getDifficultyLabel(tc.difficulty)}
+                                    </Badge>
+                                  )}
+                                  {tc.tags && (
+                                    <div className="flex items-center gap-1">
+                                      <Tag className="h-3 w-3 text-muted-foreground" />
+                                      <span className="text-xs text-muted-foreground">{tc.tags}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* 输入内容 */}
+                              <div>
+                                <label className="text-xs font-medium text-muted-foreground">输入问题：</label>
+                                <p className="mt-1 text-sm bg-muted/50 rounded-md p-3">{tc.input}</p>
+                              </div>
+
+                              {/* 期望输出 */}
+                              {tc.expectedOutput && (
+                                <div>
+                                  <label className="text-xs font-medium text-muted-foreground">期望输出：</label>
+                                  <p className="mt-1 text-sm bg-green-500/5 border border-green-500/10 rounded-md p-3">
+                                    {tc.expectedOutput}
+                                  </p>
+                                </div>
+                              )}
+
+                              {/* 元数据 */}
+                              {tc.metadata && (
+                                <div>
+                                  <label className="text-xs font-medium text-muted-foreground">元数据：</label>
+                                  <pre className="mt-1 text-xs bg-muted/50 rounded-md p-2 overflow-x-auto">
+                                    {JSON.stringify(tc.metadata, null, 2)}
+                                  </pre>
+                                </div>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* 版本管理 */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <GitBranch className="h-5 w-5" /> 版本管理
+                    </CardTitle>
+                    <Button size="sm" onClick={() => setCreateVersionOpen(true)}>
+                      <Plus className="mr-1 h-3 w-3" /> 创建版本
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {versionsLoading ? (
+                    <div className="py-8 text-center text-muted-foreground">
+                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto" />
+                      <p className="mt-2 text-sm">加载中...</p>
+                    </div>
+                  ) : versions.length === 0 ? (
+                    <div className="py-8 text-center text-muted-foreground">
+                      <History className="mx-auto h-12 w-12 text-muted-foreground/40" />
+                      <p className="mt-4">暂无版本记录</p>
+                      <p className="mt-1 text-xs">点击"创建版本"开始版本管理</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {versions.map((v) => (
+                        <div key={v.id} className="flex items-center justify-between rounded-lg border p-3">
+                          <div className="flex items-center gap-3">
+                            <div className="flex flex-col">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-sm">v{v.version}</span>
+                                <span className="text-sm">{v.name}</span>
+                                {getVersionStatusBadge(v.status)}
+                              </div>
+                              {v.description && (
+                                <span className="text-xs text-muted-foreground mt-1">{v.description}</span>
+                              )}
+                              <span className="text-xs text-muted-foreground mt-1">
+                                {new Date(v.createdAt).toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {v.status === 'draft' && (
+                              <Button variant="outline" size="sm" onClick={() => handlePublishVersion(v.id)}>
+                                发布
+                              </Button>
+                            )}
+                            {v.status === 'published' && (
+                              <Button variant="outline" size="sm" onClick={() => handleArchiveVersion(v.id)}>
+                                归档
+                              </Button>
+                            )}
+                            <Button variant="outline" size="sm" onClick={() => handleRollbackVersion(v.id)}>
+                              <RotateCcw className="mr-1 h-3 w-3" /> 回滚
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {/* 版本对比 */}
+                      {versions.length >= 2 && (
+                        <div className="mt-4 pt-4 border-t">
+                          <div className="flex items-center gap-2">
+                            <GitCompare className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm font-medium">版本对比</span>
+                            <select
+                              className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+                              value={diffVersions.v1}
+                              onChange={(e) => setDiffVersions({ ...diffVersions, v1: e.target.value })}
+                            >
+                              <option value="">选择版本</option>
+                              {versions.map(v => (
+                                <option key={v.id} value={v.id}>v{v.version} {v.name}</option>
+                              ))}
+                            </select>
+                            <span className="text-muted-foreground">vs</span>
+                            <select
+                              className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+                              value={diffVersions.v2}
+                              onChange={(e) => setDiffVersions({ ...diffVersions, v2: e.target.value })}
+                            >
+                              <option value="">选择版本</option>
+                              {versions.map(v => (
+                                <option key={v.id} value={v.id}>v{v.version} {v.name}</option>
+                              ))}
+                            </select>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={handleDiffVersions}
+                              disabled={!diffVersions.v1 || !diffVersions.v2}
+                            >
+                              对比
+                            </Button>
+                          </div>
+                          
+                          {/* 对比结果 */}
+                          {diffResult && (
+                            <div className="mt-3 rounded-lg bg-muted/50 p-3">
+                              <pre className="text-xs overflow-x-auto">
+                                {JSON.stringify(diffResult, null, 2)}
+                              </pre>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* 数据清洗与质量 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Shield className="h-5 w-5" /> 数据清洗与质量
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleCleanDataset}
+                      disabled={cleaning}
+                    >
+                      {cleaning ? (
+                        <>
+                          <div className="mr-2 h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                          清洗中...
+                        </>
+                      ) : (
+                        <>
+                          <Shield className="mr-1 h-3 w-3" /> 执行清洗
+                        </>
+                      )}
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleViewQualityReport}
+                      disabled={qualityLoading}
+                    >
+                      {qualityLoading ? (
+                        <>
+                          <div className="mr-2 h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                          加载中...
+                        </>
+                      ) : (
+                        <>
+                          <BarChart3 className="mr-1 h-3 w-3" /> 查看质量报告
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* 质量报告 */}
+                  {qualityReport && (
+                    <div className="rounded-lg border p-4 space-y-3">
+                      <h4 className="font-medium text-sm flex items-center gap-2">
+                        <BarChart3 className="h-4 w-4" /> 数据质量报告
+                      </h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="rounded-md bg-muted/50 p-2 text-center">
+                          <div className="text-lg font-bold">{qualityReport.totalCases || 0}</div>
+                          <div className="text-xs text-muted-foreground">总用例数</div>
+                        </div>
+                        <div className="rounded-md bg-green-500/10 p-2 text-center">
+                          <div className="text-lg font-bold text-green-600">{qualityReport.validCases || 0}</div>
+                          <div className="text-xs text-muted-foreground">有效用例</div>
+                        </div>
+                        <div className="rounded-md bg-yellow-500/10 p-2 text-center">
+                          <div className="text-lg font-bold text-yellow-600">{qualityReport.warningCases || 0}</div>
+                          <div className="text-xs text-muted-foreground">警告用例</div>
+                        </div>
+                        <div className="rounded-md bg-red-500/10 p-2 text-center">
+                          <div className="text-lg font-bold text-red-600">{qualityReport.invalidCases || 0}</div>
+                          <div className="text-xs text-muted-foreground">无效用例</div>
+                        </div>
+                      </div>
+                      {qualityReport.issues && qualityReport.issues.length > 0 && (
+                        <div className="mt-3">
+                          <h5 className="text-xs font-medium text-muted-foreground mb-2">发现的问题：</h5>
+                          <ul className="space-y-1">
+                            {qualityReport.issues.slice(0, 5).map((issue: any, idx: number) => (
+                              <li key={idx} className="text-xs text-muted-foreground flex items-center gap-2">
+                                <div className={`h-1.5 w-1.5 rounded-full ${
+                                  issue.severity === 'high' ? 'bg-red-500' : 
+                                  issue.severity === 'medium' ? 'bg-yellow-500' : 'bg-blue-500'
+                                }`} />
+                                {issue.message}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          ) : null}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDetailOpen(false)}>关闭</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Generate Dialog */}
+      <Dialog open={aiGenerateOpen} onOpenChange={setAiGenerateOpen}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" /> AI 智能生成
+            </DialogTitle>
+            <DialogDescription>
+              输入测试问题，AI 将生成多个候选答案供你选择
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-y-auto space-y-4">
+            {/* 输入区域 */}
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">测试问题 *</label>
+                <textarea
+                  className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                  value={aiGenerateInput}
+                  onChange={(e) => setAiGenerateInput(e.target.value)}
+                  placeholder="例如：我们门店蔬菜损耗率达到18%，请分析原因和改善建议"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">参考上下文（可选）</label>
+                <textarea
+                  className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                  value={aiGenerateContext}
+                  onChange={(e) => setAiGenerateContext(e.target.value)}
+                  placeholder="提供相关背景信息，帮助 AI 生成更准确的答案"
+                />
+              </div>
+              <Button 
+                onClick={handleAiGenerate} 
+                disabled={!aiGenerateInput || aiGenerateLoading}
+                className="w-full gap-2"
+              >
+                {aiGenerateLoading ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    AI 生成中...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" /> 生成候选答案
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* 生成结果 */}
+            {aiGenerateResult && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-medium">候选答案 ({aiGenerateResult.candidates?.length || 0})</h4>
+                  {aiGenerateResult.recommendation !== undefined && (
+                    <Badge className="bg-green-500/10 text-green-600 border-green-500/20" variant="outline">
+                      推荐答案 #{aiGenerateResult.recommendation + 1}
+                    </Badge>
+                  )}
+                </div>
+                
+                {aiGenerateResult.candidates?.map((candidate: any, index: number) => (
+                  <Card 
+                    key={index} 
+                    className={`cursor-pointer transition-all hover:shadow-md ${
+                      aiGenerateResult.recommendation === index ? 'border-primary border-2' : ''
+                    }`}
+                    onClick={() => handleSelectCandidate(candidate, index)}
+                  >
+                    <CardContent className="pt-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline">答案 #{index + 1}</Badge>
+                            <Badge variant="secondary" className="text-xs">{candidate.style}</Badge>
+                            {aiGenerateResult.recommendation === index && (
+                              <Badge className="bg-green-500/10 text-green-600 text-xs">推荐</Badge>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-sm bg-muted/50 rounded-md p-3">{candidate.text}</p>
+                        {candidate.scores && (
+                          <div className="flex gap-4 text-xs text-muted-foreground">
+                            <span>准确性: {(candidate.scores.accuracy * 100).toFixed(0)}%</span>
+                            <span>完整性: {(candidate.scores.completeness * 100).toFixed(0)}%</span>
+                            <span>质量: {(candidate.scores.quality * 100).toFixed(0)}%</span>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAiGenerateOpen(false)}>关闭</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Version Dialog */}
+      <Dialog open={createVersionOpen} onOpenChange={setCreateVersionOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <GitBranch className="h-5 w-5" /> 创建版本
+            </DialogTitle>
+            <DialogDescription>为当前数据集创建新版本</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">版本名称 *</label>
+              <Input
+                value={versionFormData.name}
+                onChange={(e) => setVersionFormData({ ...versionFormData, name: e.target.value })}
+                placeholder="例如：v1.0.0 初始版本"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">版本描述</label>
+              <textarea
+                className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                value={versionFormData.description}
+                onChange={(e) => setVersionFormData({ ...versionFormData, description: e.target.value })}
+                placeholder="描述此版本的变更内容..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateVersionOpen(false)}>取消</Button>
+            <Button onClick={handleCreateVersion} disabled={!versionFormData.name}>创建</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

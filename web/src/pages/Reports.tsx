@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { useToastActions } from '@/components/ui/toast'
-import { BarChart3, FileText, Download, TrendingUp, TrendingDown, Minus, Plus, FileSpreadsheet } from 'lucide-react'
+import { BarChart3, FileText, Download, TrendingUp, TrendingDown, Minus, Plus, FileSpreadsheet, Sparkles } from 'lucide-react'
 import axios from 'axios'
 
 interface Report {
@@ -75,6 +75,8 @@ export default function Reports() {
   const [selectedReport, setSelectedReport] = useState<Report | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
   const [generating, setGenerating] = useState(false)
+  const [aiAnalyzing, setAiAnalyzing] = useState(false)
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null)
   const { toastSuccess, toastError } = useToastActions()
 
   useEffect(() => {
@@ -207,6 +209,19 @@ export default function Reports() {
     } catch (e) {
       toastError('Excel 导出失败')
     }
+  }
+
+  const handleAiAnalysis = async (evalRunId: string) => {
+    setAiAnalyzing(true)
+    setAiAnalysis(null)
+    try {
+      const res = await axios.post(`/api/report/ai-analysis/${evalRunId}`)
+      setAiAnalysis(res.data.analysis || res.data.result || JSON.stringify(res.data, null, 2))
+      toastSuccess('AI 分析完成')
+    } catch (e) {
+      toastError('AI 分析失败')
+    }
+    setAiAnalyzing(false)
   }
 
   // 规范 §7.3: 语义色映射
@@ -437,8 +452,16 @@ export default function Reports() {
                 </Card>
               )}
 
-              {/* 下载报告按钮 */}
+              {/* 报告操作按钮 */}
               <div className="flex justify-end gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleAiAnalysis(selectedReport.evalRunId)}
+                  disabled={aiAnalyzing}
+                >
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  {aiAnalyzing ? '分析中...' : 'AI 智能分析'}
+                </Button>
                 <Button variant="outline" onClick={() => handleExportCsv(selectedReport.id)}>
                   <FileText className="mr-2 h-4 w-4" /> CSV
                 </Button>
@@ -449,6 +472,23 @@ export default function Reports() {
                   <Download className="mr-2 h-4 w-4" /> JSON
                 </Button>
               </div>
+
+              {/* AI 分析结果 */}
+              {aiAnalysis && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      AI 智能分析
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <pre className="whitespace-pre-wrap text-sm bg-muted/50 rounded-md p-4 max-h-96 overflow-y-auto">
+                      {aiAnalysis}
+                    </pre>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           )}
         </DialogContent>

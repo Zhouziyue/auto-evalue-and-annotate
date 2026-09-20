@@ -54,18 +54,12 @@ export default function Guardrails() {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" /> 输出护栏
-          </CardTitle>
-          <Button onClick={() => setCheckOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> 运行检查
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <Table>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium flex items-center gap-2"><Shield className="h-5 w-5" /> 输出护栏</h3>
+        <Button size="sm" onClick={() => setCheckOpen(true)}><Plus className="mr-2 h-3.5 w-3.5" />运行检查</Button>
+      </div>
+      <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>名称</TableHead>
@@ -104,9 +98,7 @@ export default function Guardrails() {
                 ))
               )}
             </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      </Table>
 
       <Dialog open={checkOpen} onOpenChange={setCheckOpen}>
         <DialogContent className="max-w-2xl">

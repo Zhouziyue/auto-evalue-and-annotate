@@ -54,18 +54,12 @@ export default function RedTeam() {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-red-500" /> 红队测试
-          </CardTitle>
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> 运行测试
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <Table>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium flex items-center gap-2"><Shield className="h-5 w-5 text-red-500" /> 红队测试</h3>
+        <Button size="sm" onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-3.5 w-3.5" />运行测试</Button>
+      </div>
+      <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>测试时间</TableHead>
@@ -98,9 +92,7 @@ export default function RedTeam() {
                 ))
               )}
             </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      </Table>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-lg">

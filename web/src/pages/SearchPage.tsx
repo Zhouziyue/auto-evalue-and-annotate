@@ -27,39 +27,28 @@ export default function SearchPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" /> 结果搜索
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-2">
-            <div className="flex-1 flex items-center gap-2">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <input
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                placeholder="搜索评测结果..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              />
-            </div>
-            <Button onClick={handleSearch} disabled={!query || loading}>
-              {loading ? '搜索中...' : '搜索'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <div className="flex-1 flex items-center gap-2">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <input
+            className="flex h-8 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+            placeholder="搜索评测结果..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+          />
+        </div>
+        <Button size="sm" onClick={handleSearch} disabled={!query || loading}>
+          {loading ? '搜索中...' : '搜索'}
+        </Button>
+      </div>
 
       {results.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>搜索结果 ({results.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
+        <div className="text-sm text-muted-foreground mb-2">搜索结果 ({results.length})</div>
+      )}
+      {results.length > 0 && (
+        <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>类型</TableHead>
@@ -80,17 +69,11 @@ export default function SearchPage() {
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+          </Table>
       )}
 
       {results.length === 0 && query && !loading && (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            未找到相关结果
-          </CardContent>
-        </Card>
+        <div className="py-12 text-center text-muted-foreground">未找到相关结果</div>
       )}
     </div>
   )

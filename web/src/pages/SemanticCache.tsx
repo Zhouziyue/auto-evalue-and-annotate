@@ -164,79 +164,28 @@ export default function SemanticCache() {
   )
 
   return (
-    <div className="space-y-6">
-      {/* 统计卡片 */}
-      <div className="grid grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <Database className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">缓存条目</span>
-            </div>
-            <p className="text-2xl font-bold mt-2">{stats?.totalEntries?.toLocaleString() || 0}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <Target className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">命中率</span>
-            </div>
-            <p className="text-2xl font-bold mt-2">{stats ? (stats.hitRate * 100).toFixed(1) + '%' : '0%'}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">总命中次数</span>
-            </div>
-            <p className="text-2xl font-bold mt-2">{stats?.totalHits?.toLocaleString() || 0}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">平均延迟</span>
-            </div>
-            <p className="text-2xl font-bold mt-2">{stats?.avgLatency || 0}ms</p>
-          </CardContent>
-        </Card>
+    <div className="space-y-4">
+      {/* 统计 + 操作栏 */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-6 text-sm">
+          <span><span className="text-muted-foreground">缓存条目</span> <span className="font-bold">{stats?.totalEntries?.toLocaleString() || 0}</span></span>
+          <span><span className="text-muted-foreground">命中率</span> <span className="font-bold">{stats ? (stats.hitRate * 100).toFixed(1) + '%' : '0%'}</span></span>
+          <span><span className="text-muted-foreground">总命中</span> <span className="font-bold">{stats?.totalHits?.toLocaleString() || 0}</span></span>
+          <span><span className="text-muted-foreground">延迟</span> <span className="font-bold">{stats?.avgLatency || 0}ms</span></span>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setLookupOpen(true)}><Search className="mr-2 h-3.5 w-3.5" />查询</Button>
+          <Button variant="outline" size="sm" onClick={() => setWarmupOpen(true)}><RefreshCw className="mr-2 h-3.5 w-3.5" />预热</Button>
+          <Button variant="outline" size="sm" onClick={() => setConfigOpen(true)}><Settings className="mr-2 h-3.5 w-3.5" />配置</Button>
+          <Button variant="destructive" size="sm" onClick={handleClearCache}><Trash2 className="mr-2 h-3.5 w-3.5" />清空</Button>
+        </div>
       </div>
 
-      {/* 操作栏 */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex-1 max-w-sm">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="搜索缓存条目..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setLookupOpen(true)}>
-                <Search className="mr-2 h-4 w-4" /> 缓存查询
-              </Button>
-              <Button variant="outline" onClick={() => setWarmupOpen(true)}>
-                <RefreshCw className="mr-2 h-4 w-4" /> 预热
-              </Button>
-              <Button variant="outline" onClick={() => setConfigOpen(true)}>
-                <Settings className="mr-2 h-4 w-4" /> 配置
-              </Button>
-              <Button variant="destructive" onClick={handleClearCache}>
-                <Trash2 className="mr-2 h-4 w-4" /> 清空缓存
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* 搜索 */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input placeholder="搜索缓存条目..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9 h-8 text-sm" />
+      </div>
 
       {/* 命中率趋势 */}
       {trendData.length > 0 && (
@@ -264,12 +213,7 @@ export default function SemanticCache() {
         </Card>
       )}
 
-      {/* 缓存条目列表 */}
-      <Card>
-        <CardHeader>
-          <CardTitle>缓存条目</CardTitle>
-        </CardHeader>
-        <CardContent>
+      {/* 表格 */}
           <Table>
             <TableHeader>
               <TableRow>
@@ -317,8 +261,6 @@ export default function SemanticCache() {
               ))}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
 
       {/* 缓存查询 Dialog */}
       <Dialog open={lookupOpen} onOpenChange={setLookupOpen}>

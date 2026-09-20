@@ -92,7 +92,7 @@ export default function ABTests() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>A/B 测试</CardTitle>

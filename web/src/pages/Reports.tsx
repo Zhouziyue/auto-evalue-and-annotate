@@ -253,7 +253,7 @@ export default function Reports() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* 操作栏 */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">评测报告</h2>
@@ -365,7 +365,7 @@ export default function Reports() {
             <DialogDescription>报告详情</DialogDescription>
           </DialogHeader>
           {selectedReport && selectedReport.summary && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* 概览区 */}
               <div className="grid gap-4 md:grid-cols-4">
                 <Card>

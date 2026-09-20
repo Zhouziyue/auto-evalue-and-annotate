@@ -45,22 +45,18 @@ export default function Traces() {
   )
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>追踪系统</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-4 flex items-center gap-2">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <input
-              className="flex h-10 w-full max-w-sm rounded-md border border-input bg-background px-3 py-2 text-sm"
-              placeholder="搜索追踪..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <Table>
+    <div className="space-y-4">
+      <h3 className="text-lg font-medium">追踪系统</h3>
+      <div className="mb-4 flex items-center gap-2">
+        <Search className="h-4 w-4 text-muted-foreground" />
+        <input
+          className="flex h-8 w-full max-w-sm rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+          placeholder="搜索追踪..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+      <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>名称</TableHead>
@@ -104,8 +100,6 @@ export default function Traces() {
               )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
 
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">

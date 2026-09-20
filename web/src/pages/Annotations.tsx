@@ -138,7 +138,7 @@ export default function Annotations() {
     : items.filter(item => item.status === statusFilter)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* 统计卡片 */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>

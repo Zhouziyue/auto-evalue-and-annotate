@@ -179,7 +179,7 @@ export default function Pipelines() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* 预设流水线 */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">

@@ -53,16 +53,12 @@ export default function RAGEval() {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>RAG 评测</CardTitle>
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> 运行评测
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <Table>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium">RAG 评测</h3>
+        <Button size="sm" onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-3.5 w-3.5" />运行评测</Button>
+      </div>
+      <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>查询</TableHead>
@@ -98,8 +94,6 @@ export default function RAGEval() {
               )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>

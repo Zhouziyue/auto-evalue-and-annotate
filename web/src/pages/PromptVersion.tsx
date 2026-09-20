@@ -184,7 +184,7 @@ export default function PromptVersion() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>

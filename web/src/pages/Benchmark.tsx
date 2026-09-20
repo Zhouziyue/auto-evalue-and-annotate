@@ -58,16 +58,12 @@ export default function Benchmark() {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>基准测试</CardTitle>
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> 运行测试
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <Table>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium">基准测试</h3>
+        <Button size="sm" onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-3.5 w-3.5" />运行测试</Button>
+      </div>
+      <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>类型</TableHead>
@@ -103,8 +99,6 @@ export default function Benchmark() {
               )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>

@@ -81,17 +81,11 @@ export default function ReportGen() {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" /> 报告生成
-          </CardTitle>
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> 新建配置
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <Table>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium flex items-center gap-2"><FileText className="h-5 w-5" /> 报告生成</h3>
+        <Button size="sm" onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-3.5 w-3.5" />新建配置</Button>
+      </div>
+      <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>名称</TableHead>
@@ -130,15 +124,9 @@ export default function ReportGen() {
               )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>生成的报告</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
+      <h4 className="text-sm font-medium">生成的报告</h4>
+      <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>报告名称</TableHead>
@@ -166,8 +154,6 @@ export default function ReportGen() {
               )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>

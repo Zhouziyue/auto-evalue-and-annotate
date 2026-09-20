@@ -81,17 +81,11 @@ export default function AlertRules() {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" /> 告警规则
-          </CardTitle>
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> 新建规则
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <Table>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium flex items-center gap-2"><Bell className="h-5 w-5" /> 告警规则</h3>
+        <Button size="sm" onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-3.5 w-3.5" />新建规则</Button>
+      </div>
+      <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>名称</TableHead>
@@ -127,15 +121,9 @@ export default function AlertRules() {
               )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>最近告警</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
+      <h4 className="text-sm font-medium">最近告警</h4>
+      <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>规则</TableHead>
@@ -165,8 +153,6 @@ export default function AlertRules() {
               )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>

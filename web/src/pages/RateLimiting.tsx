@@ -68,35 +68,18 @@ export default function RateLimiting() {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Gauge className="h-5 w-5" /> API 限流
-          </CardTitle>
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> 新建配置
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {stats && (
-            <div className="mb-4 grid gap-4 md:grid-cols-3">
-              <div className="rounded-lg border p-3">
-                <div className="text-sm text-muted-foreground">总请求</div>
-                <div className="mt-1 text-xl font-bold">{stats.totalRequests || 0}</div>
-              </div>
-              <div className="rounded-lg border p-3">
-                <div className="text-sm text-muted-foreground">被限流</div>
-                <div className="mt-1 text-xl font-bold">{stats.rateLimited || 0}</div>
-              </div>
-              <div className="rounded-lg border p-3">
-                <div className="text-sm text-muted-foreground">限流率</div>
-                <div className="mt-1 text-xl font-bold">
-                  {stats.rateLimitRate ? `${(stats.rateLimitRate * 100).toFixed(1)}%` : '-'}
-                </div>
-              </div>
-            </div>
-          )}
-          <Table>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium flex items-center gap-2"><Gauge className="h-5 w-5" /> API 限流</h3>
+        <Button size="sm" onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-3.5 w-3.5" />新建配置</Button>
+      </div>
+      {stats && (
+        <div className="flex items-center gap-6 text-sm">
+          <span><span className="text-muted-foreground">总请求</span> <span className="font-bold">{stats.totalRequests || 0}</span></span>
+          <span><span className="text-muted-foreground">被限流</span> <span className="font-bold">{stats.rateLimited || 0}</span></span>
+          <span><span className="text-muted-foreground">限流率</span> <span className="font-bold">{stats.rateLimitRate ? (stats.rateLimitRate * 100).toFixed(1) + '%' : '-'}</span></span>
+        </div>
+      )}
+      <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>名称</TableHead>
@@ -130,8 +113,6 @@ export default function RateLimiting() {
               )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>

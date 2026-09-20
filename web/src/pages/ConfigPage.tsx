@@ -68,17 +68,11 @@ export default function ConfigPage() {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" /> 配置管理
-          </CardTitle>
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> 新建配置
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <Table>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium flex items-center gap-2"><Settings className="h-5 w-5" /> 配置管理</h3>
+        <Button size="sm" onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-3.5 w-3.5" />新建配置</Button>
+      </div>
+      <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Key</TableHead>
@@ -119,8 +113,6 @@ export default function ConfigPage() {
               )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>

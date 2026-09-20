@@ -46,14 +46,8 @@ export default function DataLineage() {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <GitBranch className="h-5 w-5" /> 数据血缘
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
+      <h3 className="text-lg font-medium flex items-center gap-2"><GitBranch className="h-5 w-5" /> 数据血缘</h3>
+      <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>名称</TableHead>
@@ -87,8 +81,6 @@ export default function DataLineage() {
               )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
 
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">

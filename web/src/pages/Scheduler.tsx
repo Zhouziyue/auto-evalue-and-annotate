@@ -104,17 +104,11 @@ export default function Scheduler() {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" /> 评测调度
-          </CardTitle>
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> 新建任务
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <Table>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium flex items-center gap-2"><Clock className="h-5 w-5" /> 评测调度</h3>
+        <Button size="sm" onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-3.5 w-3.5" />新建任务</Button>
+      </div>
+      <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>名称</TableHead>
@@ -167,8 +161,6 @@ export default function Scheduler() {
               )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>

@@ -73,17 +73,11 @@ export default function Anonymization() {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" /> 数据脱敏
-          </CardTitle>
-          <Button onClick={() => setAnonymizeOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> 运行脱敏
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <Table>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium flex items-center gap-2"><Shield className="h-5 w-5" /> 数据脱敏</h3>
+        <Button size="sm" onClick={() => setAnonymizeOpen(true)}><Plus className="mr-2 h-3.5 w-3.5" />运行脱敏</Button>
+      </div>
+      <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>规则名称</TableHead>
@@ -128,8 +122,7 @@ export default function Anonymization() {
               )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
+
 
       <Dialog open={anonymizeOpen} onOpenChange={setAnonymizeOpen}>
         <DialogContent className="max-w-2xl">

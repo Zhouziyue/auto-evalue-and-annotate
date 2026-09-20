@@ -97,17 +97,11 @@ export default function Permissions() {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" /> 用户管理
-          </CardTitle>
-          <Button onClick={() => setCreateUserOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> 新建用户
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <Table>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium flex items-center gap-2"><Users className="h-5 w-5" /> 用户管理</h3>
+        <Button size="sm" onClick={() => setCreateUserOpen(true)}><Plus className="mr-2 h-3.5 w-3.5" />新建用户</Button>
+      </div>
+      <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>名称</TableHead>
@@ -135,20 +129,12 @@ export default function Permissions() {
               )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Key className="h-5 w-5" /> API Keys
-          </CardTitle>
-          <Button onClick={() => setCreateKeyOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> 新建 Key
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <Table>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium flex items-center gap-2"><Key className="h-5 w-5" /> API Keys</h3>
+        <Button size="sm" onClick={() => setCreateKeyOpen(true)}><Plus className="mr-2 h-3.5 w-3.5" />新建 Key</Button>
+      </div>
+      <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>名称</TableHead>
@@ -186,8 +172,6 @@ export default function Permissions() {
               )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
 
       <Dialog open={createUserOpen} onOpenChange={setCreateUserOpen}>
         <DialogContent>

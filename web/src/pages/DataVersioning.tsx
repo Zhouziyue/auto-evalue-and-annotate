@@ -78,17 +78,11 @@ export default function DataVersioning() {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <GitBranch className="h-5 w-5" /> 数据版本控制
-          </CardTitle>
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> 新建版本
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <Table>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium flex items-center gap-2"><GitBranch className="h-5 w-5" /> 数据版本控制</h3>
+        <Button size="sm" onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-3.5 w-3.5" />新建版本</Button>
+      </div>
+      <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>数据集</TableHead>
@@ -131,8 +125,6 @@ export default function DataVersioning() {
               )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-lg">

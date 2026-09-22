@@ -278,27 +278,27 @@ export default function Agents() {
                             <span>未测试</span>
                           )}
                         </div>
-                        <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                        <div className="flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
                           <Button
-                            variant="ghost" size="sm"
+                            variant="ghost" size="sm" className="h-6 w-6 p-0"
                             onClick={(e) => { e.stopPropagation(); handleTest(agent.id) }}
                             aria-label="测试连接"
                           >
-                            <Zap className="h-3.5 w-3.5" />
+                            <Zap className="h-3 w-3" />
                           </Button>
                           <Button
-                            variant="ghost" size="sm"
+                            variant="ghost" size="sm" className="h-6 w-6 p-0"
                             onClick={(e) => { e.stopPropagation(); openEdit(agent) }}
                             aria-label="编辑"
                           >
-                            <Edit className="h-3.5 w-3.5" />
+                            <Edit className="h-3 w-3" />
                           </Button>
                           <Button
-                            variant="ghost" size="sm"
+                            variant="ghost" size="sm" className="h-6 w-6 p-0"
                             onClick={(e) => { e.stopPropagation(); handleDelete(agent.id) }}
                             aria-label="删除"
                           >
-                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                            <Trash2 className="h-3 w-3 text-destructive" />
                           </Button>
                         </div>
                       </div>

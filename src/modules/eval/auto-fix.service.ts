@@ -98,44 +98,52 @@ export class AutoFixService {
     // 遍历所有维度，为低分维度生成修复方案
     for (const [dim, vals] of Object.entries(dimScores)) {
       const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+      const avgPercent = (avg * 100).toFixed(1);
+      const targetPercent = Math.min(90, avg * 100 + 20).toFixed(1);
       
       if (avg < 0.6) {
         let fixType = FixActionType.PROMPT_REWRITE;
         let description = `优化 ${dim} 维度：提升该维度的表现`;
-        let before = '当前表现';
-        let after = '优化后表现';
-        let message = `检测到${dim}维度得分偏低（${(avg * 100).toFixed(1)}%），建议优化`;
+        let before = `当前得分：${avgPercent}%`;
+        let after = `预期提升至：${targetPercent}%`;
+        let message = `检测到${dim}维度得分偏低（${avgPercent}%），建议优化`;
 
-        if (dim === '安全性') {
+        if (dim === '安全性' || dim === 'safety') {
           fixType = FixActionType.SAFETY_GUARDRAIL;
           description = '添加安全护栏：在 system prompt 中增加安全约束';
-          before = '无安全约束';
-          after = '添加安全准则，禁止生成有害内容';
+          before = `安全评分：${avgPercent}%`;
+          after = `预期提升至：${targetPercent}%`;
           message = '检测到安全评分偏低，建议添加安全护栏';
-        } else if (dim === '忠实度') {
+        } else if (dim === '忠实度' || dim === 'faithfulness') {
           fixType = FixActionType.KNOWLEDGE_ADD;
           description = '补充知识库：添加参考文档或上下文信息';
-          before = '无参考知识';
-          after = '在 prompt 中添加相关领域知识';
+          before = `忠实度得分：${avgPercent}%`;
+          after = `预期提升至：${targetPercent}%`;
           message = '检测到忠实度偏低，建议补充领域知识';
-        } else if (dim === '完整性') {
+        } else if (dim === '完整性' || dim === 'completeness') {
           fixType = FixActionType.PROMPT_REWRITE;
           description = '优化 Prompt：增加完整性要求';
-          before = '无完整性要求';
-          after = '添加完整性要求，确保回答覆盖所有要点';
+          before = `完整性得分：${avgPercent}%`;
+          after = `预期提升至：${targetPercent}%`;
           message = '检测到完整性偏低，建议优化 Prompt';
-        } else if (dim === '准确性') {
+        } else if (dim === '准确性' || dim === 'accuracy') {
           fixType = FixActionType.PROMPT_REWRITE;
           description = '优化 Prompt：增强准确性要求，添加事实核查';
-          before = '无准确性约束';
-          after = '添加准确性要求，确保回答事实正确';
+          before = `准确性得分：${avgPercent}%`;
+          after = `预期提升至：${targetPercent}%`;
           message = '检测到准确性偏低，建议优化 Prompt';
-        } else if (dim === '相关性') {
+        } else if (dim === '相关性' || dim === 'relevance') {
           fixType = FixActionType.PARAMETER_ADJUST;
           description = '调整参数：优化上下文管理，提升相关性';
-          before = '上下文管理不足';
-          after = '优化上下文窗口，确保回答与问题相关';
+          before = `相关性得分：${avgPercent}%`;
+          after = `预期提升至：${targetPercent}%`;
           message = '检测到相关性偏低，建议优化上下文管理';
+        } else if (dim === 'fluency' || dim === '流畅性') {
+          fixType = FixActionType.PROMPT_REWRITE;
+          description = '优化 Prompt：改进语言表达，提升流畅度';
+          before = `流畅度得分：${avgPercent}%`;
+          after = `预期提升至：${targetPercent}%`;
+          message = '检测到流畅度偏低，建议优化 Prompt';
         }
 
         fixPlans.push({

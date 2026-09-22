@@ -1145,9 +1145,16 @@ export default function EvalRuns() {
                               {result.metrics && Object.keys(result.metrics).length > 0 && (
                                 <div>
                                   <label className="text-xs font-medium text-muted-foreground">详细指标：</label>
-                                  <pre className="mt-1 text-xs bg-muted/50 rounded-md p-2 overflow-x-auto">
-                                    {JSON.stringify(result.metrics, null, 2)}
-                                  </pre>
+                                  <div className="mt-1 grid grid-cols-2 md:grid-cols-3 gap-2">
+                                    {Object.entries(result.metrics).map(([key, value]: [string, any]) => (
+                                      <div key={key} className="rounded-md border px-2 py-1.5 text-xs">
+                                        <span className="text-muted-foreground">{key}：</span>
+                                        <span className="font-medium">
+                                          {typeof value === 'number' ? (value > 1 ? value.toFixed(0) : (value * 100).toFixed(1) + '%') : String(value)}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
                                 </div>
                               )}
                             </div>

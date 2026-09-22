@@ -345,7 +345,7 @@ export default function Skills() {
                         )}
                       </div>
 
-                      {/* Stats */}
+                      {/* Stats + Actions */}
                       <div className="flex items-center justify-between border-t border-border-light pt-3 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Eye className="h-3 w-3" /> {skill._count?.endpoints || 0} 接入点
@@ -356,18 +356,16 @@ export default function Skills() {
                         <span className="flex items-center gap-1">
                           <Tag className="h-3 w-3" /> {skill._count?.skillVersions || 0} 版本
                         </span>
-                      </div>
-
-                      {/* Hover Actions */}
-                      <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0"
-                          onClick={(e) => { e.stopPropagation(); openEdit(skill) }} aria-label="编辑">
-                          <Edit className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0"
-                          onClick={(e) => { e.stopPropagation(); handleDelete(skill.id) }} aria-label="删除">
-                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                        </Button>
+                        <div className="flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0"
+                            onClick={(e) => { e.stopPropagation(); openEdit(skill) }} aria-label="编辑">
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0"
+                            onClick={(e) => { e.stopPropagation(); handleDelete(skill.id) }} aria-label="删除">
+                            <Trash2 className="h-3 w-3 text-destructive" />
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>

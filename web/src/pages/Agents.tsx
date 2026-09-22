@@ -197,41 +197,30 @@ export default function Agents() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Bot className="h-5 w-5" />
-              智能体管理
-            </CardTitle>
-            <p className="mt-1 text-sm text-muted-foreground">
-              管理已接入的 AI 智能体，配置模型、系统提示词和技能绑定
-            </p>
-          </div>
-          <Button onClick={() => { resetForm(); setCreateOpen(true) }}>
-            <Plus className="mr-2 h-4 w-4" /> 接入智能体
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {/* Search */}
-          <div className="mb-4 flex items-center gap-2">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="搜索智能体名称、描述或模型..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="max-w-sm"
-            />
-            <div className="ml-auto flex items-center gap-2 text-sm text-muted-foreground">
-              <Activity className="h-4 w-4" />
-              共 {agents.length} 个智能体
-            </div>
-          </div>
+    <div className="space-y-4">
+      {/* 工具栏 */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4 text-sm">
+          <span className="text-muted-foreground">共 <span className="font-medium text-foreground">{agents.length}</span> 个智能体</span>
+        </div>
+        <Button size="sm" onClick={() => { resetForm(); setCreateOpen(true) }}>
+          <Plus className="mr-2 h-4 w-4" /> 接入智能体
+        </Button>
+      </div>
 
-          {loading ? <SkeletonCards /> : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {/* 搜索 */}
+      <div className="flex items-center gap-2">
+        <Search className="h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="搜索智能体名称、描述或模型..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="max-w-sm"
+        />
+      </div>
+
+      {loading ? <SkeletonCards /> : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredAgents.length === 0 ? (
                 <div className="col-span-full py-12 text-center">
                   <Bot className="mx-auto h-12 w-12 text-muted-foreground/40" />
@@ -319,8 +308,6 @@ export default function Agents() {
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
 
       {/* Create Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>

@@ -446,72 +446,75 @@ export default function EvalRuns() {
 
       {/* 评测历史 */}
       {activeTab === 'history' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><PlayCircle className="h-5 w-5" /> 评测执行记录</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
+        <div className="space-y-3">
+          {/* 紧凑行内统计条 */}
+          <div className="flex items-center gap-4 text-sm">
+            <span className="text-muted-foreground">共 <span className="font-medium text-foreground">{runs.length}</span> 条记录</span>
+            <span className="text-muted-foreground">通过 <span className="font-medium text-success">{runs.reduce((sum, r) => sum + r.passedCases, 0)}</span></span>
+            <span className="text-muted-foreground">失败 <span className="font-medium text-destructive">{runs.reduce((sum, r) => sum + r.failedCases, 0)}</span></span>
+            <span className="text-muted-foreground">平均通过率 <span className="font-medium text-foreground">{runs.length > 0 ? `${(runs.reduce((sum, r) => sum + (r.totalCases > 0 ? r.passedCases / r.totalCases : 0), 0) / runs.length * 100).toFixed(1)}%` : '-'}</span></span>
+          </div>
+          {/* 表格直接展示 */}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>状态</TableHead>
+                <TableHead>总用例</TableHead>
+                <TableHead>通过</TableHead>
+                <TableHead>失败</TableHead>
+                <TableHead>通过率</TableHead>
+                <TableHead>开始时间</TableHead>
+                <TableHead>结束时间</TableHead>
+                <TableHead className="text-right">操作</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">
+                  <div className="flex items-center justify-center gap-2 py-4">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    加载中...
+                  </div>
+                </TableCell></TableRow>
+              ) : runs.length === 0 ? (
                 <TableRow>
-                  <TableHead>状态</TableHead>
-                  <TableHead>总用例</TableHead>
-                  <TableHead>通过</TableHead>
-                  <TableHead>失败</TableHead>
-                  <TableHead>通过率</TableHead>
-                  <TableHead>开始时间</TableHead>
-                  <TableHead>结束时间</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">
-                    <div className="flex items-center justify-center gap-2 py-4">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                      加载中...
+                  <TableCell colSpan={8} className="text-center">
+                    <div className="py-12">
+                      <PlayCircle className="mx-auto h-12 w-12 text-muted-foreground/40" />
+                      <p className="mt-4 text-muted-foreground">暂无评测记录</p>
+                      <p className="mt-1 text-xs text-muted-foreground">完成评测后，记录会显示在此处</p>
                     </div>
-                  </TableCell></TableRow>
-                ) : runs.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center">
-                      <div className="py-12">
-                        <PlayCircle className="mx-auto h-12 w-12 text-muted-foreground/40" />
-                        <p className="mt-4 text-muted-foreground">暂无评测记录</p>
-                        <p className="mt-1 text-xs text-muted-foreground">完成评测后，记录会显示在此处</p>
-                      </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                runs.map((run) => (
+                  <TableRow key={run.id} className="hover:bg-muted/50 transition-colors duration-150">
+                    <TableCell>
+                      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusColor(run.status)}`}>
+                        {run.status}
+                      </span>
+                    </TableCell>
+                    <TableCell>{run.totalCases}</TableCell>
+                    <TableCell className="text-success">{run.passedCases}</TableCell>
+                    <TableCell className="text-destructive">{run.failedCases}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">
+                        {run.totalCases > 0 ? `${((run.passedCases / run.totalCases) * 100).toFixed(1)}%` : '-'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{run.startTime ? new Date(run.startTime).toLocaleString() : '-'}</TableCell>
+                    <TableCell className="text-muted-foreground">{run.endTime ? new Date(run.endTime).toLocaleString() : '-'}</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="outline" size="sm" onClick={() => openDetail(run)}>
+                        <Eye className="mr-1 h-3 w-3" /> 查看详情
+                      </Button>
                     </TableCell>
                   </TableRow>
-                ) : (
-                  runs.map((run) => (
-                    <TableRow key={run.id} className="hover:bg-muted/50 transition-colors duration-150">
-                      <TableCell>
-                        <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusColor(run.status)}`}>
-                          {run.status}
-                        </span>
-                      </TableCell>
-                      <TableCell>{run.totalCases}</TableCell>
-                      <TableCell className="text-success">{run.passedCases}</TableCell>
-                      <TableCell className="text-destructive">{run.failedCases}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {run.totalCases > 0 ? `${((run.passedCases / run.totalCases) * 100).toFixed(1)}%` : '-'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{run.startTime ? new Date(run.startTime).toLocaleString() : '-'}</TableCell>
-                      <TableCell className="text-muted-foreground">{run.endTime ? new Date(run.endTime).toLocaleString() : '-'}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="outline" size="sm" onClick={() => openDetail(run)}>
-                          <Eye className="mr-1 h-3 w-3" /> 查看详情
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       )}
 
       {/* 指标评测 */}

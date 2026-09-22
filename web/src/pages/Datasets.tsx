@@ -613,106 +613,108 @@ export default function Datasets() {
   })
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2"><Database className="h-5 w-5" /> 评测数据集</CardTitle>
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> 新建数据集
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {/* Filters */}
-          <div className="mb-4 flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="搜索数据集..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="max-w-sm"
-              />
-            </div>
-            {categories.length > 0 && (
-              <select
-                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-              >
-                <option value="">全部分类</option>
-                {categories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            )}
-          </div>
+    <div className="space-y-4">
+      {/* 工具栏 */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4 text-sm">
+          <span className="text-muted-foreground">共 <span className="font-medium text-foreground">{datasets.length}</span> 个数据集</span>
+          <span className="text-muted-foreground">总用例 <span className="font-medium text-foreground">{datasets.reduce((sum, d) => sum + (d._count?.testCases || 0), 0)}</span></span>
+        </div>
+        <Button size="sm" onClick={() => setCreateOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" /> 新建数据集
+        </Button>
+      </div>
 
-          {loading ? <SkeletonTable /> : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>名称</TableHead>
-                  <TableHead>描述</TableHead>
-                  <TableHead>分类</TableHead>
-                  <TableHead className="text-center">用例数</TableHead>
-                  <TableHead>创建时间</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
+      {/* 筛选栏 */}
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="搜索数据集..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="max-w-sm"
+          />
+        </div>
+        {categories.length > 0 && (
+          <select
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+          >
+            <option value="">全部分类</option>
+            {categories.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {/* 表格直接展示 */}
+      {loading ? <SkeletonTable /> : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>名称</TableHead>
+              <TableHead>描述</TableHead>
+              <TableHead>分类</TableHead>
+              <TableHead className="text-center">用例数</TableHead>
+              <TableHead>创建时间</TableHead>
+              <TableHead className="text-right">操作</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredDatasets.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center">
+                  <div className="py-12">
+                    <Database className="mx-auto h-12 w-12 text-muted-foreground/40" />
+                    <p className="mt-4 text-muted-foreground">暂无数据</p>
+                    <p className="mt-1 text-xs text-muted-foreground">点击"新建数据集"开始创建</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredDatasets.map((ds) => (
+                <TableRow key={ds.id} className="hover:bg-muted/50 transition-colors duration-150">
+                  <TableCell className="font-medium">{ds.name}</TableCell>
+                  <TableCell className="max-w-[200px] truncate text-muted-foreground">{ds.description || '-'}</TableCell>
+                  <TableCell>{ds.category ? <Badge variant="outline">{ds.category}</Badge> : '-'}</TableCell>
+                  <TableCell className="text-center">
+                    <Badge variant="secondary">{ds._count?.testCases || 0}</Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{new Date(ds.createdAt).toLocaleString()}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      <Button variant="outline" size="sm" onClick={() => openSyntheticGenerate(ds)} className="gap-1">
+                        <FlaskConical className="h-3 w-3" /> 智能生成
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => openAiGenerate(ds)} className="gap-1">
+                        <Sparkles className="h-3 w-3" /> AI生成
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => openDetail(ds)} aria-label="查看详情">
+                        <Eye className="mr-1 h-3 w-3" /> 详情
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => handleExport(ds.id, ds.name)} aria-label="导出数据集">
+                        <Download className="mr-1 h-3 w-3" /> 导出
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => openImport(ds)} aria-label="导入测试用例">
+                        <Upload className="mr-1 h-3 w-3" /> 导入
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => openEdit(ds)} aria-label="编辑数据集">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleDelete(ds.id)} aria-label="删除数据集">
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredDatasets.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center">
-                      <div className="py-12">
-                        <Database className="mx-auto h-12 w-12 text-muted-foreground/40" />
-                        <p className="mt-4 text-muted-foreground">暂无数据</p>
-                        <p className="mt-1 text-xs text-muted-foreground">点击"新建数据集"开始创建</p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredDatasets.map((ds) => (
-                    <TableRow key={ds.id} className="hover:bg-muted/50 transition-colors duration-150">
-                      <TableCell className="font-medium">{ds.name}</TableCell>
-                      <TableCell className="max-w-[200px] truncate text-muted-foreground">{ds.description || '-'}</TableCell>
-                      <TableCell>{ds.category ? <Badge variant="outline">{ds.category}</Badge> : '-'}</TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant="secondary">{ds._count?.testCases || 0}</Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{new Date(ds.createdAt).toLocaleString()}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button variant="outline" size="sm" onClick={() => openSyntheticGenerate(ds)} className="gap-1">
-                            <FlaskConical className="h-3 w-3" /> 智能生成
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => openAiGenerate(ds)} className="gap-1">
-                            <Sparkles className="h-3 w-3" /> AI生成
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => openDetail(ds)} aria-label="查看详情">
-                            <Eye className="mr-1 h-3 w-3" /> 详情
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleExport(ds.id, ds.name)} aria-label="导出数据集">
-                            <Download className="mr-1 h-3 w-3" /> 导出
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => openImport(ds)} aria-label="导入测试用例">
-                            <Upload className="mr-1 h-3 w-3" /> 导入
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => openEdit(ds)} aria-label="编辑数据集">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(ds.id)} aria-label="删除数据集">
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      )}
 
       {/* Create Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>

@@ -249,50 +249,45 @@ export default function Skills() {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Wrench className="h-5 w-5" />
-              技能管理
-            </CardTitle>
-            <p className="mt-1 text-sm text-muted-foreground">
-              管理智能体技能——定义指令、工具绑定和上下文需求
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline" size="sm"
-              onClick={() => setViewMode(viewMode === 'card' ? 'table' : 'card')}
-            >
-              {viewMode === 'card' ? '表格视图' : '卡片视图'}
-            </Button>
-            <Button onClick={() => { resetForm(); setCreateOpen(true) }}>
-              <Plus className="mr-2 h-4 w-4" /> 新建技能
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {/* Search and Batch Actions */}
-          <div className="mb-4 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="搜索技能名称、描述或分类..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="max-w-sm"
-              />
-            </div>
-            {selectedIds.length > 0 && (
-              <Button variant="destructive" size="sm" onClick={handleBatchDelete} aria-label="批量删除选中技能">
-                <Trash2 className="mr-1 h-3 w-3" /> 删除选中 ({selectedIds.length})
-              </Button>
-            )}
-          </div>
+    <div className="space-y-4">
+      {/* 工具栏 */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4 text-sm">
+          <span className="text-muted-foreground">共 <span className="font-medium text-foreground">{skills.length}</span> 个技能</span>
+          <span className="text-muted-foreground">接入点 <span className="font-medium text-foreground">{skills.reduce((sum, s) => sum + (s._count?.endpoints || 0), 0)}</span></span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline" size="sm"
+            onClick={() => setViewMode(viewMode === 'card' ? 'table' : 'card')}
+          >
+            {viewMode === 'card' ? '表格视图' : '卡片视图'}
+          </Button>
+          <Button size="sm" onClick={() => { resetForm(); setCreateOpen(true) }}>
+            <Plus className="mr-2 h-4 w-4" /> 新建技能
+          </Button>
+        </div>
+      </div>
 
-          {loading ? <SkeletonCards /> : viewMode === 'card' ? (
+      {/* 搜索和批量操作 */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="搜索技能名称、描述或分类..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="max-w-sm"
+          />
+        </div>
+        {selectedIds.length > 0 && (
+          <Button variant="destructive" size="sm" onClick={handleBatchDelete} aria-label="批量删除选中技能">
+            <Trash2 className="mr-1 h-3 w-3" /> 删除选中 ({selectedIds.length})
+          </Button>
+        )}
+      </div>
+
+      {loading ? <SkeletonCards /> : viewMode === 'card' ? (
             /* Card View */
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredSkills.length === 0 ? (
@@ -451,8 +446,6 @@ export default function Skills() {
               </TableBody>
             </Table>
           )}
-        </CardContent>
-      </Card>
 
       {/* Create Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>

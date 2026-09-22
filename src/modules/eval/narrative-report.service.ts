@@ -22,10 +22,12 @@ export class NarrativeReportService {
    * 生成自然语言评测报告
    */
   async generateNarrativeReport(evalRunId: string): Promise<NarrativeReport> {
-    // 1. 获取评测运行数据
+    // 1. 获取评测运行数据（包含关联的技能和端点信息）
     const evalRun = await this.prisma.evalRun.findUnique({
       where: { id: evalRunId },
       include: {
+        skill: true,
+        endpoint: true,
         results: {
           include: {
             testCase: true,
@@ -37,6 +39,10 @@ export class NarrativeReportService {
     if (!evalRun) {
       throw new NotFoundException(`评测运行 ${evalRunId} 不存在`);
     }
+
+    // 添加技能名称和端点名称到 evalRun 对象
+    (evalRun as any).skillName = evalRun.skill?.name || '未知技能';
+    (evalRun as any).endpointName = evalRun.endpoint?.name || '未知端点';
 
     const sections: { title: string; content: string }[] = [];
 

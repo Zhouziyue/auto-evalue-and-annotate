@@ -972,84 +972,106 @@ export default function EvalRuns() {
                         已标注 {annotationResult.annotated}/{annotationResult.total}
                       </Badge>
                     )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleFailureAnalysis}
-                      disabled={failureAnalysisLoading || !detailRun.results?.length}
-                      className="gap-1"
-                    >
-                      {failureAnalysisLoading ? (
-                        <><div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" /> 分析中...</>
-                      ) : (
-                        <><BarChart3 className="h-3 w-3" /> 失败分析</>
-                      )}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleGenerateProfile}
-                      disabled={capabilityProfileLoading || !detailRun.results?.length}
-                      className="gap-1"
-                    >
-                      {capabilityProfileLoading ? (
-                        <><div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" /> 生成中...</>
-                      ) : (
-                        <><Award className="h-3 w-3" /> 能力画像</>
-                      )}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleRootCauseAnalysis}
-                      disabled={rootCauseLoading || !detailRun.results?.length}
-                      className="gap-1"
-                    >
-                      {rootCauseLoading ? (
-                        <><div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" /> 分析中...</>
-                      ) : (
-                        <><Zap className="h-3 w-3" /> 根因分析</>
-                      )}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleGenerateNarrativeReport}
-                      disabled={narrativeReportLoading || !detailRun.results?.length}
-                      className="gap-1"
-                    >
-                      {narrativeReportLoading ? (
-                        <><div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" /> 生成中...</>
-                      ) : (
-                        <><FileText className="h-3 w-3" /> AI 报告</>
-                      )}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleGenerateFixPlan}
-                      disabled={fixLoading || !detailRun.results?.length}
-                      className="gap-1"
-                    >
-                      {fixLoading ? (
-                        <><div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" /> 生成中...</>
-                      ) : (
-                        <><CheckCircle2 className="h-3 w-3" /> 一键修复</>
-                      )}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleAutoAnnotate}
-                      disabled={annotating || !detailRun.results?.length}
-                      className="gap-1"
-                    >
-                      {annotating ? (
-                        <><div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" /> 标注中...</>
-                      ) : (
-                        <><Sparkles className="h-3 w-3" /> AI 自动标注</>
-                      )}
-                    </Button>
+                    {/* AI 分析按钮组 - 根据失败用例数量动态显示 */}
+                    {(() => {
+                      const failedCount = detailRun.results?.filter((r: any) => r.status === 'failed').length || 0
+                      const hasResults = (detailRun.results?.length || 0) > 0
+                      const hasFailures = failedCount > 0
+                      return (
+                        <>
+                          {/* 能力画像 - 始终可用 */}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleGenerateProfile}
+                            disabled={capabilityProfileLoading || !hasResults}
+                            className="gap-1"
+                          >
+                            {capabilityProfileLoading ? (
+                              <><div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" /> 生成中...</>
+                            ) : (
+                              <><Award className="h-3 w-3" /> 能力画像</>
+                            )}
+                          </Button>
+                          {/* AI 报告 - 始终可用 */}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleGenerateNarrativeReport}
+                            disabled={narrativeReportLoading || !hasResults}
+                            className="gap-1"
+                          >
+                            {narrativeReportLoading ? (
+                              <><div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" /> 生成中...</>
+                            ) : (
+                              <><FileText className="h-3 w-3" /> AI 报告</>
+                            )}
+                          </Button>
+                          {/* AI 自动标注 - 始终可用 */}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleAutoAnnotate}
+                            disabled={annotating || !hasResults}
+                            className="gap-1"
+                          >
+                            {annotating ? (
+                              <><div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" /> 标注中...</>
+                            ) : (
+                              <><Sparkles className="h-3 w-3" /> AI 标注</>
+                            )}
+                          </Button>
+                          {/* 失败分析 - 仅有失败用例时显示 */}
+                          {hasFailures && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleFailureAnalysis}
+                              disabled={failureAnalysisLoading}
+                              className="gap-1"
+                            >
+                              {failureAnalysisLoading ? (
+                                <><div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" /> 分析中...</>
+                              ) : (
+                                <><BarChart3 className="h-3 w-3" /> 失败分析</>
+                              )}
+                            </Button>
+                          )}
+                          {/* 根因分析 - 仅有失败用例时显示 */}
+                          {hasFailures && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleRootCauseAnalysis}
+                              disabled={rootCauseLoading}
+                              className="gap-1"
+                            >
+                              {rootCauseLoading ? (
+                                <><div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" /> 分析中...</>
+                              ) : (
+                                <><Zap className="h-3 w-3" /> 根因分析</>
+                              )}
+                            </Button>
+                          )}
+                          {/* 一键修复 - 仅有失败用例时显示 */}
+                          {hasFailures && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleGenerateFixPlan}
+                              disabled={fixLoading}
+                              className="gap-1"
+                            >
+                              {fixLoading ? (
+                                <><div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" /> 生成中...</>
+                              ) : (
+                                <><CheckCircle2 className="h-3 w-3" /> 一键修复</>
+                              )}
+                            </Button>
+                          )}
+                        </>
+                      )
+                    })()}
                   </div>
                 </CardHeader>
                 <CardContent>

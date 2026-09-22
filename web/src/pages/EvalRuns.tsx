@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { useToastActions } from '@/components/ui/toast'
-import { PlayCircle, BarChart3, Shield, FileText, Zap, Eye, CheckCircle2, XCircle, Sparkles, Award } from 'lucide-react'
+import { PlayCircle, BarChart3, Shield, FileText, Zap, Eye, CheckCircle2, XCircle, Sparkles, Award, Tag } from 'lucide-react'
 import axios from 'axios'
 
 export default function EvalRuns() {
@@ -52,6 +52,42 @@ export default function EvalRuns() {
   const [yamlContent, setYamlContent] = useState('')
   const [yamlPreview, setYamlPreview] = useState<any>(null)
   const [datasetName, setDatasetName] = useState('')
+  // 自动标注状态
+  const [annotating, setAnnotating] = useState(false)
+  const [annotationResult, setAnnotationResult] = useState<any>(null)
+  // 指标管理状态
+  const [metricsConfigOpen, setMetricsConfigOpen] = useState(false)
+  const [availableMetrics, setAvailableMetrics] = useState<any[]>([])
+  const [taskTypes, setTaskTypes] = useState<any[]>([])
+  const [selectedTaskType, setSelectedTaskType] = useState<string>('qa')
+  const [recommendedMetrics, setRecommendedMetrics] = useState<any[]>([])
+
+  // 失败分析状态
+  const [failureAnalysisOpen, setFailureAnalysisOpen] = useState(false)
+  const [failureAnalysisResult, setFailureAnalysisResult] = useState<any>(null)
+  const [failureAnalysisLoading, setFailureAnalysisLoading] = useState(false)
+
+  // 能力画像状态
+  const [capabilityProfileOpen, setCapabilityProfileOpen] = useState(false)
+  const [capabilityProfile, setCapabilityProfile] = useState<any>(null)
+  const [capabilityProfileLoading, setCapabilityProfileLoading] = useState(false)
+
+  // 根因分析状态
+  const [rootCauseOpen, setRootCauseOpen] = useState(false)
+  const [rootCauseResult, setRootCauseResult] = useState<any>(null)
+  const [rootCauseLoading, setRootCauseLoading] = useState(false)
+
+  // 自然语言报告状态
+  const [narrativeReportOpen, setNarrativeReportOpen] = useState(false)
+  const [narrativeReport, setNarrativeReport] = useState<any>(null)
+  const [narrativeReportLoading, setNarrativeReportLoading] = useState(false)
+
+  // 自动修复状态
+  const [autoFixOpen, setAutoFixOpen] = useState(false)
+  const [fixPlans, setFixPlans] = useState<any[]>([])
+  const [fixLoading, setFixLoading] = useState(false)
+  const [fixVerifying, setFixVerifying] = useState<string | null>(null)
+  const [fixVerifyResult, setFixVerifyResult] = useState<any>(null)
 
   useEffect(() => {
     fetchRuns()
@@ -79,6 +115,39 @@ export default function EvalRuns() {
     }
   }
 
+  const fetchMetricsConfig = async () => {
+    try {
+      const [metricsRes, taskTypesRes] = await Promise.all([
+        axios.get('/api/eval/metrics/types'),
+        axios.get('/api/eval/metrics/task-types'),
+      ])
+      setAvailableMetrics(metricsRes.data)
+      setTaskTypes(taskTypesRes.data)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const fetchRecommendedMetrics = async (taskType: string) => {
+    try {
+      const res = await axios.get(`/api/eval/metrics/recommend?taskType=${taskType}`)
+      setRecommendedMetrics(res.data.recommendedMetrics || [])
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const openMetricsConfig = async () => {
+    setMetricsConfigOpen(true)
+    await fetchMetricsConfig()
+    await fetchRecommendedMetrics(selectedTaskType)
+  }
+
+  const handleTaskTypeChange = async (taskType: string) => {
+    setSelectedTaskType(taskType)
+    await fetchRecommendedMetrics(taskType)
+  }
+
   const runJudge = async () => {
     setJudgeLoading(true)
     try {
@@ -100,6 +169,7 @@ export default function EvalRuns() {
   const openDetail = async (run: any) => {
     setDetailLoading(true)
     setDetailOpen(true)
+    setAnnotationResult(null)
     try {
       const res = await axios.get(`/api/report/eval-runs/${run.id}`)
       setDetailRun(res.data)
@@ -107,6 +177,134 @@ export default function EvalRuns() {
       toastError('加载评测详情失败')
     }
     setDetailLoading(false)
+  }
+
+  const handleAutoAnnotate = async () => {
+    if (!detailRun) return
+    setAnnotating(true)
+    try {
+      const res = await axios.post(`/api/annotation/auto-annotate/${detailRun.id}`)
+      setAnnotationResult(res.data)
+      toastSuccess(`自动标注完成：${res.data.annotated} 条已标注`)
+      // 刷新详情
+      const detailRes = await axios.get(`/api/report/eval-runs/${detailRun.id}`)
+      setDetailRun(detailRes.data)
+    } catch (e: any) {
+      toastError(e?.response?.data?.message || '自动标注失败')
+    }
+    setAnnotating(false)
+  }
+
+  // 失败模式分析
+  const handleFailureAnalysis = async () => {
+    if (!detailRun) return
+    setFailureAnalysisLoading(true)
+    try {
+      const res = await axios.post('/api/eval/failure-clustering/analyze', {
+        evalRunId: detailRun.id,
+      })
+      setFailureAnalysisResult(res.data)
+      setFailureAnalysisOpen(true)
+      toastSuccess('失败模式分析完成')
+    } catch (e: any) {
+      toastError(e?.response?.data?.message || '分析失败')
+    }
+    setFailureAnalysisLoading(false)
+  }
+
+  // 生成能力画像
+  const handleGenerateProfile = async () => {
+    if (!detailRun) return
+    setCapabilityProfileLoading(true)
+    try {
+      const res = await axios.post('/api/eval/capability-profile/generate', {
+        evalRunId: detailRun.id,
+      })
+      setCapabilityProfile(res.data)
+      setCapabilityProfileOpen(true)
+      toastSuccess('能力画像生成完成')
+    } catch (e: any) {
+      toastError(e?.response?.data?.message || '生成能力画像失败')
+    }
+    setCapabilityProfileLoading(false)
+  }
+
+  // 根因分析
+  const handleRootCauseAnalysis = async () => {
+    if (!detailRun) return
+    setRootCauseLoading(true)
+    try {
+      const res = await axios.post('/api/eval/root-cause/analyze', {
+        evalRunId: detailRun.id,
+      })
+      setRootCauseResult(res.data)
+      setRootCauseOpen(true)
+      toastSuccess('根因分析完成')
+    } catch (e: any) {
+      toastError(e?.response?.data?.message || '根因分析失败')
+    }
+    setRootCauseLoading(false)
+  }
+
+  // 生成自然语言报告
+  const handleGenerateNarrativeReport = async () => {
+    if (!detailRun) return
+    setNarrativeReportLoading(true)
+    try {
+      const res = await axios.post('/api/eval/narrative-report/generate', {
+        evalRunId: detailRun.id,
+      })
+      setNarrativeReport(res.data)
+      setNarrativeReportOpen(true)
+      toastSuccess('自然语言报告生成完成')
+    } catch (e: any) {
+      toastError(e?.response?.data?.message || '生成报告失败')
+    }
+    setNarrativeReportLoading(false)
+  }
+
+  // 生成修复方案
+  const handleGenerateFixPlan = async () => {
+    if (!detailRun) return
+    setFixLoading(true)
+    try {
+      const res = await axios.post('/api/eval/auto-fix/plan', {
+        evalRunId: detailRun.id,
+      })
+      setFixPlans(res.data)
+      setAutoFixOpen(true)
+      toastSuccess('修复方案生成完成')
+    } catch (e: any) {
+      toastError(e?.response?.data?.message || '生成修复方案失败')
+    }
+    setFixLoading(false)
+  }
+
+  // 应用修复
+  const handleApplyFix = async (fixId: string) => {
+    try {
+      await axios.post('/api/eval/auto-fix/apply', { fixId })
+      toastSuccess('修复方案已应用')
+    } catch (e: any) {
+      toastError(e?.response?.data?.message || '应用修复失败')
+    }
+  }
+
+  // 验证修复效果
+  const handleVerifyFix = async (fixId: string) => {
+    if (!detailRun) return
+    setFixVerifying(fixId)
+    try {
+      const res = await axios.post('/api/eval/auto-fix/verify', {
+        evalRunId: detailRun.id,
+        fixId,
+      })
+      setFixVerifyResult(res.data)
+      toastSuccess('修复效果验证完成')
+    } catch (e: any) {
+      toastError(e?.response?.data?.message || '验证修复效果失败')
+    }
+    setFixVerifying(null)
   }
 
   const getScoreColor = (score: number) => {
@@ -234,6 +432,15 @@ export default function EvalRuns() {
           onClick={() => setActiveTab('yaml')}
         >
           <FileText className="mr-2 h-4 w-4" /> YAML导入
+        </Button>
+        <div className="flex-1" />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={openMetricsConfig}
+          className="gap-1"
+        >
+          <BarChart3 className="h-4 w-4" /> 指标配置
         </Button>
       </div>
 
@@ -754,8 +961,93 @@ export default function EvalRuns() {
 
               {/* 测试用例详情 */}
               <Card>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-lg">测试用例详情 ({detailRun.results?.length || 0})</CardTitle>
+                  <div className="flex items-center gap-2">
+                    {annotationResult && (
+                      <Badge variant="outline" className="text-xs">
+                        已标注 {annotationResult.annotated}/{annotationResult.total}
+                      </Badge>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleFailureAnalysis}
+                      disabled={failureAnalysisLoading || !detailRun.results?.length}
+                      className="gap-1"
+                    >
+                      {failureAnalysisLoading ? (
+                        <><div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" /> 分析中...</>
+                      ) : (
+                        <><BarChart3 className="h-3 w-3" /> 失败分析</>
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleGenerateProfile}
+                      disabled={capabilityProfileLoading || !detailRun.results?.length}
+                      className="gap-1"
+                    >
+                      {capabilityProfileLoading ? (
+                        <><div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" /> 生成中...</>
+                      ) : (
+                        <><Award className="h-3 w-3" /> 能力画像</>
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRootCauseAnalysis}
+                      disabled={rootCauseLoading || !detailRun.results?.length}
+                      className="gap-1"
+                    >
+                      {rootCauseLoading ? (
+                        <><div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" /> 分析中...</>
+                      ) : (
+                        <><Zap className="h-3 w-3" /> 根因分析</>
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleGenerateNarrativeReport}
+                      disabled={narrativeReportLoading || !detailRun.results?.length}
+                      className="gap-1"
+                    >
+                      {narrativeReportLoading ? (
+                        <><div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" /> 生成中...</>
+                      ) : (
+                        <><FileText className="h-3 w-3" /> AI 报告</>
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleGenerateFixPlan}
+                      disabled={fixLoading || !detailRun.results?.length}
+                      className="gap-1"
+                    >
+                      {fixLoading ? (
+                        <><div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" /> 生成中...</>
+                      ) : (
+                        <><CheckCircle2 className="h-3 w-3" /> 一键修复</>
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAutoAnnotate}
+                      disabled={annotating || !detailRun.results?.length}
+                      className="gap-1"
+                    >
+                      {annotating ? (
+                        <><div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" /> 标注中...</>
+                      ) : (
+                        <><Sparkles className="h-3 w-3" /> AI 自动标注</>
+                      )}
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {(!detailRun.results || detailRun.results.length === 0) ? (
@@ -846,6 +1138,665 @@ export default function EvalRuns() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setDetailOpen(false)}>关闭</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 失败分析 Dialog */}
+      <Dialog open={failureAnalysisOpen} onOpenChange={setFailureAnalysisOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" /> 失败模式分析
+            </DialogTitle>
+            <DialogDescription>
+              AI 自动分析失败用例的根因和分布
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto space-y-6">
+            {failureAnalysisResult ? (
+              <>
+                {/* 概览统计 */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">分析概览</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <div className="text-2xl font-bold">{failureAnalysisResult.totalFailures}</div>
+                        <div className="text-sm text-muted-foreground">失败用例数</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold">{failureAnalysisResult.modeDistribution?.length || 0}</div>
+                        <div className="text-sm text-muted-foreground">失败模式类型</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold">{failureAnalysisResult.topIssues?.length || 0}</div>
+                        <div className="text-sm text-muted-foreground">主要问题</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* 失败模式分布 */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">失败模式分布</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {failureAnalysisResult.modeDistribution?.map((mode: any) => (
+                        <div key={mode.mode} className="rounded-lg border p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="h-3 w-3 rounded-full"
+                                style={{ backgroundColor: mode.color }}
+                              />
+                              <span className="font-medium">{mode.name}</span>
+                              <Badge variant="outline" className="text-xs">
+                                {mode.count} 例
+                              </Badge>
+                            </div>
+                            <span className="text-sm font-medium">
+                              {mode.percentage.toFixed(1)}%
+                            </span>
+                          </div>
+                          {/* 进度条 */}
+                          <div className="h-2 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all"
+                              style={{
+                                width: `${mode.percentage}%`,
+                                backgroundColor: mode.color,
+                              }}
+                            />
+                          </div>
+                          {/* 示例 */}
+                          {mode.examples && mode.examples.length > 0 && (
+                            <div className="mt-3">
+                              <div className="text-xs text-muted-foreground mb-1">示例：</div>
+                              <div className="space-y-1">
+                                {mode.examples.slice(0, 3).map((example: string, idx: number) => (
+                                  <div key={idx} className="text-xs bg-muted/50 rounded px-2 py-1 truncate">
+                                    {example}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Top 问题和建议 */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">主要问题与改进建议</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {failureAnalysisResult.topIssues?.map((issue: any, idx: number) => (
+                        <div key={idx} className="rounded-lg border p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <Badge
+                                variant={issue.severity === 'high' ? 'destructive' : issue.severity === 'medium' ? 'default' : 'secondary'}
+                              >
+                                {issue.severity === 'high' ? '高' : issue.severity === 'medium' ? '中' : '低'}
+                              </Badge>
+                              <span className="font-medium">{issue.name}</span>
+                              <Badge variant="outline" className="text-xs">
+                                {issue.affectedCases} 例
+                              </Badge>
+                            </div>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">{issue.description}</p>
+                          <div className="bg-primary/5 border border-primary/10 rounded-md p-3">
+                            <div className="text-xs font-medium text-primary mb-1">改进建议：</div>
+                            <p className="text-sm">{issue.suggestion}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            ) : (
+              <div className="py-12 text-center text-muted-foreground">
+                <BarChart3 className="mx-auto h-12 w-12 text-muted-foreground/40" />
+                <p className="mt-4">暂无分析结果</p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFailureAnalysisOpen(false)}>关闭</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 能力画像 Dialog */}
+      <Dialog open={capabilityProfileOpen} onOpenChange={setCapabilityProfileOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Award className="h-5 w-5" /> 能力画像
+            </DialogTitle>
+            <DialogDescription>
+              基于评测结果自动生成的智能体能力画像
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto space-y-6">
+            {capabilityProfile ? (
+              <>
+                {/* 概览 */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">能力概览</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <div className="text-2xl font-bold">{capabilityProfile.overallScore?.toFixed(1)}</div>
+                        <div className="text-sm text-muted-foreground">综合得分</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-green-600">{capabilityProfile.dimensions?.length || 0}</div>
+                        <div className="text-sm text-muted-foreground">评估维度</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold">{capabilityProfile.modelName || '-'}</div>
+                        <div className="text-sm text-muted-foreground">评测对象</div>
+                      </div>
+                    </div>
+                    <p className="mt-4 text-sm text-muted-foreground text-center">{capabilityProfile.summary}</p>
+                  </CardContent>
+                </Card>
+
+                {/* 雷达图 */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">能力雷达图</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex justify-center">
+                      <svg viewBox="0 0 400 400" className="w-80 h-80">
+                        {/* 背景网格 */}
+                        {[20, 40, 60, 80, 100].map((level) => {
+                          const points = capabilityProfile.radarChartData?.labels.map((_: string, i: number) => {
+                            const angle = (Math.PI * 2 * i) / capabilityProfile.radarChartData.labels.length - Math.PI / 2
+                            const r = level * 1.5
+                            const x = 200 + r * Math.cos(angle)
+                            const y = 200 + r * Math.sin(angle)
+                            return `${x},${y}`
+                          }).join(' ')
+                          return <polygon key={level} points={points} fill="none" stroke="#e5e7eb" strokeWidth="1" />
+                        })}
+                        {/* 轴线 */}
+                        {capabilityProfile.radarChartData?.labels.map((_: string, i: number) => {
+                          const angle = (Math.PI * 2 * i) / capabilityProfile.radarChartData.labels.length - Math.PI / 2
+                          const x = 200 + 150 * Math.cos(angle)
+                          const y = 200 + 150 * Math.sin(angle)
+                          return <line key={i} x1="200" y1="200" x2={x} y2={y} stroke="#e5e7eb" strokeWidth="1" />
+                        })}
+                        {/* 数据区域 */}
+                        {capabilityProfile.radarChartData && (() => {
+                          const points = capabilityProfile.radarChartData.values.map((val: number, i: number) => {
+                            const angle = (Math.PI * 2 * i) / capabilityProfile.radarChartData.labels.length - Math.PI / 2
+                            const r = (val / 100) * 150
+                            const x = 200 + r * Math.cos(angle)
+                            const y = 200 + r * Math.sin(angle)
+                            return `${x},${y}`
+                          }).join(' ')
+                          return <polygon points={points} fill="rgba(59, 130, 246, 0.2)" stroke="#3b82f6" strokeWidth="2" />
+                        })()}
+                        {/* 数据点 */}
+                        {capabilityProfile.radarChartData?.values.map((val: number, i: number) => {
+                          const angle = (Math.PI * 2 * i) / capabilityProfile.radarChartData.labels.length - Math.PI / 2
+                          const r = (val / 100) * 150
+                          const x = 200 + r * Math.cos(angle)
+                          const y = 200 + r * Math.sin(angle)
+                          return <circle key={i} cx={x} cy={y} r="4" fill="#3b82f6" />
+                        })}
+                        {/* 标签 */}
+                        {capabilityProfile.radarChartData?.labels.map((label: string, i: number) => {
+                          const angle = (Math.PI * 2 * i) / capabilityProfile.radarChartData.labels.length - Math.PI / 2
+                          const r = 170
+                          const x = 200 + r * Math.cos(angle)
+                          const y = 200 + r * Math.sin(angle)
+                          return <text key={i} x={x} y={y} textAnchor="middle" dominantBaseline="middle" className="text-xs fill-muted-foreground">{label}</text>
+                        })}
+                      </svg>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* 各维度详情 */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">各维度得分</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {capabilityProfile.dimensions?.map((dim: any) => (
+                        <div key={dim.dimension} className="rounded-lg border p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <div className="h-3 w-3 rounded-full" style={{ backgroundColor: dim.color }} />
+                              <span className="font-medium text-sm">{dim.name}</span>
+                            </div>
+                            <span className="text-sm font-bold">{dim.percentage.toFixed(1)}%</span>
+                          </div>
+                          <div className="h-2 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all"
+                              style={{ width: `${dim.percentage}%`, backgroundColor: dim.color }}
+                            />
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">{dim.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* 优势与劣势 */}
+                <div className="grid grid-cols-2 gap-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm text-green-600">优势能力</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {capabilityProfile.strengths?.map((s: any, i: number) => (
+                          <div key={i} className="flex items-center justify-between text-sm">
+                            <span>{s.name}</span>
+                            <Badge className="bg-green-500/10 text-green-600 border-green-500/20" variant="outline">
+                              {s.percentage.toFixed(1)}%
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm text-red-600">待提升</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {capabilityProfile.weaknesses?.map((w: any, i: number) => (
+                          <div key={i} className="flex items-center justify-between text-sm">
+                            <span>{w.name}</span>
+                            <Badge className="bg-red-500/10 text-red-600 border-red-500/20" variant="outline">
+                              {w.percentage.toFixed(1)}%
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </>
+            ) : (
+              <div className="py-12 text-center text-muted-foreground">
+                <Award className="mx-auto h-12 w-12 text-muted-foreground/40" />
+                <p className="mt-4">暂无能力画像数据</p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCapabilityProfileOpen(false)}>关闭</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 根因分析 Dialog */}
+      <Dialog open={rootCauseOpen} onOpenChange={setRootCauseOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5" /> 根因分析与修复建议
+            </DialogTitle>
+            <DialogDescription>
+              AI 自动分析 bad case 的根本原因，并给出可操作的修复建议
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto space-y-6">
+            {rootCauseResult ? (
+              <>
+                {/* 概览 */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">分析概览</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <div className="text-2xl font-bold">{rootCauseResult.totalCases}</div>
+                        <div className="text-sm text-muted-foreground">总用例数</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-red-600">{rootCauseResult.analyzedCases}</div>
+                        <div className="text-sm text-muted-foreground">Bad Cases</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold">{rootCauseResult.rootCauseDistribution?.length || 0}</div>
+                        <div className="text-sm text-muted-foreground">根因类型</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* 根因分布 */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">根因分布</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {rootCauseResult.rootCauseDistribution?.map((cause: any) => (
+                        <div key={cause.type} className="rounded-lg border p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-sm">{cause.name}</span>
+                              <Badge variant="outline" className="text-xs">{cause.count} 例</Badge>
+                            </div>
+                            <span className="text-sm font-medium">{cause.percentage.toFixed(1)}%</span>
+                          </div>
+                          <div className="h-2 bg-muted rounded-full overflow-hidden">
+                            <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${cause.percentage}%` }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* 整体建议 */}
+                {rootCauseResult.overallSuggestions?.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">整体改进建议</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-2">
+                        {rootCauseResult.overallSuggestions.map((s: string, i: number) => (
+                          <li key={i} className="flex items-start gap-2 text-sm">
+                            <span className="text-primary mt-0.5">•</span>
+                            <span>{s}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Bad Case 详情 */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Bad Case 详情 ({rootCauseResult.caseDetails?.length || 0})</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3 max-h-80 overflow-y-auto">
+                      {rootCauseResult.caseDetails?.slice(0, 20).map((c: any, i: number) => (
+                        <div key={i} className="rounded-lg border p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Badge variant={c.fixPriority === 'high' ? 'destructive' : c.fixPriority === 'medium' ? 'default' : 'secondary'} className="text-xs">
+                                {c.fixPriority === 'high' ? '高' : c.fixPriority === 'medium' ? '中' : '低'}
+                              </Badge>
+                              <span className="text-sm font-medium">{c.rootCauseName}</span>
+                              <Badge variant="outline" className="text-xs">置信度 {(c.confidence * 100).toFixed(0)}%</Badge>
+                            </div>
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate">输入：{c.input}</p>
+                          <p className="text-xs text-muted-foreground truncate">输出：{c.actualOutput}</p>
+                          <div className="bg-primary/5 border border-primary/10 rounded-md p-2">
+                            <p className="text-xs"><span className="font-medium">修复建议：</span>{c.fixSuggestion}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            ) : (
+              <div className="py-12 text-center text-muted-foreground">
+                <Zap className="mx-auto h-12 w-12 text-muted-foreground/40" />
+                <p className="mt-4">暂无分析结果</p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRootCauseOpen(false)}>关闭</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 自然语言报告 Dialog */}
+      <Dialog open={narrativeReportOpen} onOpenChange={setNarrativeReportOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" /> AI 评测报告
+            </DialogTitle>
+            <DialogDescription>
+              {narrativeReport?.skillName ? `评测对象：${narrativeReport.skillName}` : '自然语言评测报告'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto space-y-4">
+            {narrativeReport ? (
+              <>
+                {narrativeReport.sections?.map((section: any, i: number) => (
+                  <Card key={i}>
+                    <CardHeader>
+                      <CardTitle className="text-base">{section.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-sm whitespace-pre-line leading-relaxed">{section.content}</div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </>
+            ) : (
+              <div className="py-12 text-center text-muted-foreground">
+                <FileText className="mx-auto h-12 w-12 text-muted-foreground/40" />
+                <p className="mt-4">暂无报告</p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNarrativeReportOpen(false)}>关闭</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 自动修复 Dialog */}
+      <Dialog open={autoFixOpen} onOpenChange={setAutoFixOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5" /> 一键修复
+            </DialogTitle>
+            <DialogDescription>
+              基于根因分析自动生成修复方案，应用后自动验证效果
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto space-y-4">
+            {fixPlans.length > 0 ? (
+              <>
+                {fixPlans.map((plan: any, i: number) => (
+                  <Card key={plan.fixId || i}>
+                    <CardHeader>
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <Badge variant="outline">{plan.fixAction?.type || '修复'}</Badge>
+                        {plan.fixAction?.description || '修复方案'}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <p className="text-sm text-muted-foreground">{plan.message}</p>
+                      {plan.fixAction?.before && (
+                        <div className="text-xs">
+                          <span className="font-medium">修复前：</span>
+                          <span className="text-muted-foreground">{plan.fixAction.before}</span>
+                        </div>
+                      )}
+                      {plan.fixAction?.after && (
+                        <div className="text-xs">
+                          <span className="font-medium">修复后：</span>
+                          <span className="text-green-600">{plan.fixAction.after}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleApplyFix(plan.fixId)}
+                          disabled={plan.fixAction?.applied}
+                        >
+                          {plan.fixAction?.applied ? '已应用' : '应用修复'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleVerifyFix(plan.fixId)}
+                          disabled={fixVerifying === plan.fixId}
+                        >
+                          {fixVerifying === plan.fixId ? '验证中...' : '验证效果'}
+                        </Button>
+                      </div>
+                      {fixVerifyResult && (
+                        <div className="bg-muted/50 rounded-md p-3 text-xs space-y-1">
+                          <div>修复前通过率：<span className="font-medium">{fixVerifyResult.beforePassRate}%</span></div>
+                          <div>修复后通过率：<span className="font-medium text-green-600">{fixVerifyResult.afterPassRate}%</span></div>
+                          <div>提升幅度：<span className="font-medium text-green-600">+{fixVerifyResult.improvement}%</span></div>
+                          <div className="text-muted-foreground">{fixVerifyResult.verdict}</div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </>
+            ) : (
+              <div className="py-12 text-center text-muted-foreground">
+                <CheckCircle2 className="mx-auto h-12 w-12 text-muted-foreground/40" />
+                <p className="mt-4">暂无修复方案</p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAutoFixOpen(false)}>关闭</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 指标配置 Dialog */}
+      <Dialog open={metricsConfigOpen} onOpenChange={setMetricsConfigOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" /> 指标配置
+            </DialogTitle>
+            <DialogDescription>
+              根据任务类型选择推荐的评测指标，或自定义指标组合
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto space-y-6">
+            {/* 任务类型选择 */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium">选择任务类型</h4>
+              <div className="grid grid-cols-4 gap-2">
+                {taskTypes.map((tt) => (
+                  <Button
+                    key={tt.id}
+                    variant={selectedTaskType === tt.id ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleTaskTypeChange(tt.id)}
+                    className="justify-start"
+                  >
+                    {tt.name}
+                  </Button>
+                ))}
+              </div>
+              {taskTypes.find(tt => tt.id === selectedTaskType) && (
+                <p className="text-xs text-muted-foreground">
+                  {taskTypes.find(tt => tt.id === selectedTaskType)?.description}
+                </p>
+              )}
+            </div>
+
+            {/* 推荐指标 */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" /> 推荐指标
+              </h4>
+              {recommendedMetrics.length > 0 ? (
+                <div className="grid gap-3">
+                  {recommendedMetrics.map((metric: any) => (
+                    <Card key={metric.id}>
+                      <CardContent className="pt-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline">{metric.name}</Badge>
+                              <Badge variant="secondary" className="text-xs">
+                                {metric.category === 'quality' ? '质量' :
+                                 metric.category === 'safety' ? '安全' :
+                                 metric.category === 'efficiency' ? '效率' : '检索'}
+                              </Badge>
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              评分范围: {metric.scoreRange?.min || 0} - {metric.scoreRange?.max || 1}
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{metric.description}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  请选择任务类型以查看推荐指标
+                </p>
+              )}
+            </div>
+
+            {/* 所有可用指标 */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium">所有可用指标 ({availableMetrics.length})</h4>
+              <div className="grid grid-cols-2 gap-3 max-h-60 overflow-y-auto">
+                {availableMetrics.map((metric: any) => (
+                  <div key={metric.id} className="rounded-lg border p-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium">{metric.name}</span>
+                      <Badge variant="outline" className="text-xs">
+                        {metric.isBuiltIn ? '内置' : '自定义'}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{metric.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMetricsConfigOpen(false)}>关闭</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

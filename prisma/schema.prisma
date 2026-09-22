@@ -79,15 +79,17 @@ model SkillVersion {
 // ============================================
 
 model Dataset {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  category    String?  // 分类标签
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               String   @id @default(uuid())
+  name             String
+  description      String?
+  category         String?  // 分类标签
+  validationStatus String   @default("draft") // draft, validating, validated, rejected
+  validationReport String?  // 验证报告 JSON
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  testCases   TestCase[]
-  snapshots   DatasetSnapshot[]
+  testCases        TestCase[]
+  snapshots        DatasetSnapshot[]
 
   @@map("datasets")
 }

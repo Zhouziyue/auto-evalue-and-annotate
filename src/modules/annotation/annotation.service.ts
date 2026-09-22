@@ -100,4 +100,98 @@ export class AnnotationService {
 
     return { agreement: similarity, aiScores, humanScores, dimensions: keys.length };
   }
+
+  /**
+   * 批量自动标注：对某个评测运行的所有结果进行 AI 标注
+   */
+  async batchAutoAnnotate(evalRunId: string) {
+    // 查询该评测运行下的所有结果
+    const results = await this.prisma.evalResult.findMany({
+      where: { evalRunId },
+      include: { testCase: true },
+    });
+
+    if (results.length === 0) {
+      return { evalRunId, total: 0, annotated: 0, failed: 0, message: '没有找到评测结果' };
+    }
+
+    let annotated = 0;
+    let failed = 0;
+    const annotations = [];
+
+    for (const result of results) {
+      // 检查是否已有 AI 标注
+      const existingAnnotation = await this.prisma.annotation.findFirst({
+        where: { evalResultId: result.id, type: 'ai' },
+      });
+      if (existingAnnotation) {
+        annotations.push(existingAnnotation);
+        annotated++;
+        continue;
+      }
+
+      try {
+        const annotation = await this.aiAnnotate(result.id);
+        annotations.push(annotation);
+        annotated++;
+      } catch (error) {
+        failed++;
+      }
+    }
+
+    return {
+      evalRunId,
+      total: results.length,
+      annotated,
+      failed,
+      annotations,
+    };
+  }
+
+  /**
+   * 获取评测运行的标注统计
+   */
+  async getEvalRunAnnotationStats(evalRunId: string) {
+    const results = await this.prisma.evalResult.findMany({
+      where: { evalRunId },
+      include: {
+        annotations: true,
+        testCase: true,
+      },
+    });
+
+    const totalResults = results.length;
+    const annotatedResults = results.filter(r => r.annotations.some(a => a.type === 'ai'));
+    const humanAnnotated = results.filter(r => r.annotations.some(a => a.type === 'human'));
+
+    // 计算平均分数
+    let avgScores = {};
+    if (annotatedResults.length > 0) {
+      const scoreKeys = ['准确性', '完整性', '相关性', '安全性'];
+      for (const key of scoreKeys) {
+        let sum = 0;
+        let count = 0;
+        for (const r of annotatedResults) {
+          const aiAnnotation = r.annotations.find(a => a.type === 'ai');
+          if (aiAnnotation) {
+            const scores = aiAnnotation.scores as Record<string, number>;
+            if (scores[key] !== undefined) {
+              sum += scores[key];
+              count++;
+            }
+          }
+        }
+        avgScores[key] = count > 0 ? sum / count : 0;
+      }
+    }
+
+    return {
+      evalRunId,
+      totalResults,
+      aiAnnotated: annotatedResults.length,
+      humanAnnotated: humanAnnotated.length,
+      pendingAnnotation: totalResults - annotatedResults.length,
+      avgScores,
+    };
+  }
 }

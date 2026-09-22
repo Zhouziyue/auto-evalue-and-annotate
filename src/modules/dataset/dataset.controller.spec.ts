@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DatasetController } from './dataset.controller';
 import { DatasetService } from './dataset.service';
 import { AiGenerationService } from './ai-generation.service';
+import { SyntheticDatasetService } from './synthetic-dataset.service';
 import { DatasetVersionService } from './dataset-version.service';
 import { DatasetCurationService } from './dataset-curation.service';
 
@@ -10,6 +11,7 @@ describe('DatasetController', () => {
   let controller: DatasetController;
   let datasetService: Partial<Record<keyof DatasetService, jest.Mock>>;
   let aiGenService: Partial<Record<keyof AiGenerationService, jest.Mock>>;
+  let syntheticService: Partial<Record<keyof SyntheticDatasetService, jest.Mock>>;
   let versionService: Partial<Record<keyof DatasetVersionService, jest.Mock>>;
   let curationService: Partial<Record<keyof DatasetCurationService, jest.Mock>>;
 
@@ -26,7 +28,8 @@ describe('DatasetController', () => {
       exportCases: jest.fn(),
       createSnapshot: jest.fn(),
     };
-    aiGenService = { generateCases: jest.fn() };
+    aiGenService = { generateCandidates: jest.fn(), batchGenerate: jest.fn(), selectAnswer: jest.fn() };
+    syntheticService = { generateAndSaveToDataset: jest.fn(), generateDataset: jest.fn(), exportToYaml: jest.fn() };
     versionService = { createVersion: jest.fn(), listVersions: jest.fn() };
     curationService = { curateDataset: jest.fn() };
 
@@ -35,6 +38,7 @@ describe('DatasetController', () => {
       providers: [
         { provide: DatasetService, useValue: datasetService },
         { provide: AiGenerationService, useValue: aiGenService },
+        { provide: SyntheticDatasetService, useValue: syntheticService },
         { provide: DatasetVersionService, useValue: versionService },
         { provide: DatasetCurationService, useValue: curationService },
       ],
@@ -135,5 +139,22 @@ describe('DatasetController', () => {
     datasetService.createSnapshot.mockResolvedValue(result);
 
     expect(await controller.createSnapshot('ds-1', { version: 'v1.0' })).toEqual(result);
+  });
+
+  it('syntheticGenerate - 智能批量生成', async () => {
+    const dto = { prompt: '测试场景', numPersonas: 2, numTestCasesPerPersona: 3 };
+    const result = { result: { testCases: [] }, importedCount: 6 };
+    syntheticService.generateAndSaveToDataset.mockResolvedValue(result);
+
+    expect(await controller.syntheticGenerate('ds-1', dto)).toEqual(result);
+    expect(syntheticService.generateAndSaveToDataset).toHaveBeenCalledWith('ds-1', dto);
+  });
+
+  it('previewSynthetic - 预览智能生成结果', async () => {
+    const dto = { prompt: '测试场景' };
+    const result = { personas: [], testCases: [], summary: {} };
+    syntheticService.generateDataset.mockResolvedValue(result);
+
+    expect(await controller.previewSynthetic(dto)).toEqual(result);
   });
 });

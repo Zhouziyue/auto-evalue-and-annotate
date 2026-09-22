@@ -3,9 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { useToastActions } from '@/components/ui/toast'
-import { Tag, CheckCircle, XCircle, Clock, Edit3, Filter } from 'lucide-react'
+import { Tag, CheckCircle, XCircle, Clock, Edit3, Filter, Sparkles, Plus, Zap, BarChart3 } from 'lucide-react'
 import axios from 'axios'
 
 interface AnnotationTask {
@@ -40,6 +40,13 @@ export default function Annotations() {
   const [workbenchOpen, setWorkbenchOpen] = useState(false)
   const [currentItem, setCurrentItem] = useState<AnnotationItem | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  // 自动标注状态
+  const [autoAnnotateOpen, setAutoAnnotateOpen] = useState(false)
+  const [evalRuns, setEvalRuns] = useState<any[]>([])
+  const [selectedEvalRunId, setSelectedEvalRunId] = useState<string>('')
+  const [autoAnnotateLoading, setAutoAnnotateLoading] = useState(false)
+  const [autoAnnotateResult, setAutoAnnotateResult] = useState<any>(null)
+  const [annotationStats, setAnnotationStats] = useState<any>(null)
   const { toastSuccess, toastError } = useToastActions()
 
   useEffect(() => {
@@ -108,6 +115,38 @@ export default function Annotations() {
     }
   }
 
+  const openAutoAnnotate = async () => {
+    setAutoAnnotateResult(null)
+    setSelectedEvalRunId('')
+    setAutoAnnotateOpen(true)
+    // 加载评测运行列表
+    try {
+      const res = await axios.get('/api/report/eval-runs')
+      setEvalRuns(res.data || [])
+    } catch (e) {
+      setEvalRuns([])
+    }
+  }
+
+  const handleAutoAnnotate = async () => {
+    if (!selectedEvalRunId) return
+    setAutoAnnotateLoading(true)
+    try {
+      const res = await axios.post(`/api/annotation/auto-annotate/${selectedEvalRunId}`)
+      setAutoAnnotateResult(res.data)
+      toastSuccess(`自动标注完成：${res.data.annotated} 条已标注`)
+      // 加载标注统计
+      try {
+        const statsRes = await axios.get(`/api/annotation/eval-stats/${selectedEvalRunId}`)
+        setAnnotationStats(statsRes.data)
+      } catch {}
+      fetchTasks()
+    } catch (e: any) {
+      toastError(e?.response?.data?.message || '自动标注失败')
+    }
+    setAutoAnnotateLoading(false)
+  }
+
   // 规范 §7.3: 语义色映射
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -139,6 +178,16 @@ export default function Annotations() {
 
   return (
     <div className="space-y-4">
+      {/* 页面标题 + 操作按钮 */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium flex items-center gap-2">
+          <Tag className="h-5 w-5" /> 标注管理
+        </h3>
+        <Button onClick={openAutoAnnotate} className="gap-2">
+          <Sparkles className="h-4 w-4" /> 自动标注
+        </Button>
+      </div>
+
       {/* 统计卡片 */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
@@ -435,6 +484,106 @@ export default function Annotations() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* 自动标注 Dialog */}
+      <Dialog open={autoAnnotateOpen} onOpenChange={setAutoAnnotateOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" /> AI 自动标注
+            </DialogTitle>
+            <DialogDescription>
+              选择评测运行，AI 将自动对所有评测结果进行多维度评分标注
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {!autoAnnotateResult ? (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">选择评测运行 *</label>
+                  <select
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    value={selectedEvalRunId}
+                    onChange={(e) => setSelectedEvalRunId(e.target.value)}
+                  >
+                    <option value="">请选择评测运行...</option>
+                    {evalRuns.map((run: any) => (
+                      <option key={run.id} value={run.id}>
+                        {run.id.slice(0, 8)}... | {run.status} | {run.totalCases || 0} 用例 | {new Date(run.createdAt).toLocaleString()}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="rounded-md bg-muted/50 p-4 space-y-2">
+                  <h4 className="text-sm font-medium flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-warning" /> 标注说明
+                  </h4>
+                  <ul className="text-xs text-muted-foreground space-y-1">
+                    <li>• AI 将从<strong>准确性、完整性、相关性、安全性</strong>四个维度评分</li>
+                    <li>• 每条评测结果会自动生成 AI 标注和评语</li>
+                    <li>• 已标注的结果不会重复标注</li>
+                    <li>• 标注完成后可在标注工作台中人工审核</li>
+                  </ul>
+                </div>
+              </>
+            ) : (
+              <div className="space-y-4">
+                {/* 标注结果统计 */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="rounded-md bg-success/10 p-3 text-center">
+                    <div className="text-2xl font-bold text-success">{autoAnnotateResult.annotated || 0}</div>
+                    <div className="text-xs text-muted-foreground">已标注</div>
+                  </div>
+                  <div className="rounded-md bg-muted/50 p-3 text-center">
+                    <div className="text-2xl font-bold">{autoAnnotateResult.total || 0}</div>
+                    <div className="text-xs text-muted-foreground">总计</div>
+                  </div>
+                  <div className="rounded-md bg-destructive/10 p-3 text-center">
+                    <div className="text-2xl font-bold text-destructive">{autoAnnotateResult.failed || 0}</div>
+                    <div className="text-xs text-muted-foreground">失败</div>
+                  </div>
+                </div>
+
+                {/* 平均分 */}
+                {annotationStats?.avgScores && (
+                  <div className="rounded-lg border p-4">
+                    <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4" /> 平均评分
+                    </h4>
+                    <div className="grid grid-cols-4 gap-3">
+                      {Object.entries(annotationStats.avgScores).map(([key, value]: [string, any]) => (
+                        <div key={key} className="text-center">
+                          <div className="text-lg font-bold">{(value * 100).toFixed(0)}%</div>
+                          <div className="text-xs text-muted-foreground">{key}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            {!autoAnnotateResult ? (
+              <>
+                <Button variant="outline" onClick={() => setAutoAnnotateOpen(false)}>取消</Button>
+                <Button onClick={handleAutoAnnotate} disabled={!selectedEvalRunId || autoAnnotateLoading} className="gap-2">
+                  {autoAnnotateLoading ? (
+                    <><div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> 标注中...</>
+                  ) : (
+                    <><Sparkles className="h-4 w-4" /> 开始自动标注</>
+                  )}
+                </Button>
+              </>
+            ) : (
+              <Button onClick={() => setAutoAnnotateOpen(false)}>关闭</Button>
+            )}
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

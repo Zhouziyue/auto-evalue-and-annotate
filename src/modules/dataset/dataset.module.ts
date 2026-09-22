@@ -5,8 +5,11 @@ import { AiGenerationService } from './ai-generation.service';
 import { SyntheticDatasetService } from './synthetic-dataset.service';
 import { DatasetVersionService } from './dataset-version.service';
 import { DatasetCurationService } from './dataset-curation.service';
+import { DatasetValidationService } from './dataset-validation.service';
+import { AgentModule } from '../agent/agent.module';
 
 @Module({
+  imports: [AgentModule],
   controllers: [DatasetController],
   providers: [
     DatasetService,
@@ -14,6 +17,7 @@ import { DatasetCurationService } from './dataset-curation.service';
     SyntheticDatasetService,
     DatasetVersionService,
     DatasetCurationService,
+    DatasetValidationService,
   ],
   exports: [
     DatasetService,
@@ -21,6 +25,7 @@ import { DatasetCurationService } from './dataset-curation.service';
     SyntheticDatasetService,
     DatasetVersionService,
     DatasetCurationService,
+    DatasetValidationService,
   ],
 })
 export class DatasetModule {}

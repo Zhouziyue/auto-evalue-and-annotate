@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { useToastActions } from '@/components/ui/toast'
-import { Plus, Database, Edit, Trash2, Search, Upload, FileText, Download, Eye, Tag, Sparkles, GitBranch, History, RotateCcw, GitCompare, Shield, BarChart3 } from 'lucide-react'
+import { Plus, Database, Edit, Trash2, Search, Upload, FileText, Download, Eye, Tag, Sparkles, GitBranch, History, RotateCcw, GitCompare, Shield, BarChart3, FlaskConical, Users, Zap, CheckCircle2, AlertCircle, XCircle, Play } from 'lucide-react'
 import axios from 'axios'
 
 interface TestCase {
@@ -38,10 +38,28 @@ interface Dataset {
   name: string
   description: string | null
   category: string | null
+  validationStatus?: 'draft' | 'validating' | 'validated' | 'rejected'
+  validationReport?: string | null
   _count?: { testCases: number }
   createdAt: string
   testCases?: TestCase[]
   versions?: DatasetVersion[]
+}
+
+interface ValidationReport {
+  datasetId: string
+  totalCases: number
+  difficultyDistribution: { easy: number; medium: number; hard: number }
+  coverageScore: number
+  discriminationScore: number
+  overallQuality: number
+  problematicCases: Array<{
+    testCaseId: string
+    issue: 'too_easy' | 'too_hard' | 'low_discrimination' | 'duplicate_intent'
+    suggestion: string
+  }>
+  suggestions: string[]
+  status: string
 }
 
 // 骨架屏
@@ -113,6 +131,32 @@ export default function Datasets() {
   const [cleaning, setCleaning] = useState(false)
   const [qualityReport, setQualityReport] = useState<any>(null)
   const [qualityLoading, setQualityLoading] = useState(false)
+  // 智能批量生成状态
+  const [syntheticOpen, setSyntheticOpen] = useState(false)
+  const [syntheticDataset, setSyntheticDataset] = useState<Dataset | null>(null)
+  const [syntheticConfig, setSyntheticConfig] = useState({
+    prompt: '',
+    numPersonas: '3',
+    numTestCasesPerPersona: '5',
+    instructions: '',
+    edgeCases: true,
+    language: '中文',
+  })
+  const [syntheticLoading, setSyntheticLoading] = useState(false)
+  const [syntheticResult, setSyntheticResult] = useState<any>(null)
+  const [syntheticStep, setSyntheticStep] = useState<'config' | 'preview' | 'done'>('config')
+  // 验证状态
+  const [validating, setValidating] = useState(false)
+  const [validationReport, setValidationReport] = useState<ValidationReport | null>(null)
+  const [rejectReason, setRejectReason] = useState('')
+  const [rejectOpen, setRejectOpen] = useState(false)
+  // 批量生成状态
+  const [batchGenPrompt, setBatchGenPrompt] = useState('')
+  const [batchGenCount, setBatchGenCount] = useState('100')
+  const [batchGenPersonas, setBatchGenPersonas] = useState('10')
+  const [batchGenEdgeCases, setBatchGenEdgeCases] = useState(true)
+  const [batchGenLoading, setBatchGenLoading] = useState(false)
+  const [batchGenResult, setBatchGenResult] = useState<any>(null)
   const { toastSuccess, toastError } = useToastActions()
 
   const handleExport = async (datasetId: string, datasetName: string) => {
@@ -232,11 +276,16 @@ export default function Datasets() {
   const openDetail = async (ds: Dataset) => {
     setDetailLoading(true)
     setDetailOpen(true)
+    setValidationReport(null)
     try {
       const res = await axios.get(`/api/datasets/${ds.id}`)
       setDetailDataset(res.data)
       // 获取版本列表
       fetchVersions(ds.id)
+      // 获取验证报告
+      if (res.data.validationReport) {
+        handleFetchValidationReport()
+      }
     } catch (e) {
       toastError('加载数据集详情失败')
     }
@@ -379,6 +428,141 @@ export default function Datasets() {
     setAiGenerateOpen(true)
   }
 
+  const openSyntheticGenerate = (ds: Dataset) => {
+    setSyntheticDataset(ds)
+    setSyntheticConfig({ prompt: '', numPersonas: '3', numTestCasesPerPersona: '5', instructions: '', edgeCases: true, language: '中文' })
+    setSyntheticResult(null)
+    setSyntheticStep('config')
+    setSyntheticOpen(true)
+  }
+
+  const handleSyntheticPreview = async () => {
+    if (!syntheticConfig.prompt) return
+    setSyntheticLoading(true)
+    try {
+      const res = await axios.post('/api/datasets/synthetic/preview', {
+        prompt: syntheticConfig.prompt,
+        numPersonas: parseInt(syntheticConfig.numPersonas),
+        numTestCasesPerPersona: parseInt(syntheticConfig.numTestCasesPerPersona),
+        instructions: syntheticConfig.instructions || undefined,
+        edgeCases: syntheticConfig.edgeCases,
+        language: syntheticConfig.language,
+      })
+      setSyntheticResult(res.data)
+      setSyntheticStep('preview')
+    } catch (e: any) {
+      toastError(e?.response?.data?.message || '智能生成失败')
+    }
+    setSyntheticLoading(false)
+  }
+
+  const handleSyntheticImport = async () => {
+    if (!syntheticDataset || !syntheticConfig.prompt) return
+    setSyntheticLoading(true)
+    try {
+      const res = await axios.post(`/api/datasets/${syntheticDataset.id}/synthetic-generate`, {
+        prompt: syntheticConfig.prompt,
+        numPersonas: parseInt(syntheticConfig.numPersonas),
+        numTestCasesPerPersona: parseInt(syntheticConfig.numTestCasesPerPersona),
+        instructions: syntheticConfig.instructions || undefined,
+        edgeCases: syntheticConfig.edgeCases,
+        language: syntheticConfig.language,
+      })
+      setSyntheticStep('done')
+      toastSuccess(`成功导入 ${res.data.importedCount} 条测试用例`)
+      fetchDatasets()
+    } catch (e: any) {
+      toastError(e?.response?.data?.message || '导入失败')
+    }
+    setSyntheticLoading(false)
+  }
+
+  // 批量生成
+  const handleBatchGenerate = async () => {
+    if (!detailDataset || !batchGenPrompt) return
+    setBatchGenLoading(true)
+    setBatchGenResult(null)
+    try {
+      const res = await axios.post(`/api/datasets/${detailDataset.id}/synthetic-generate`, {
+        prompt: batchGenPrompt,
+        numPersonas: parseInt(batchGenPersonas),
+        numTestCasesPerPersona: Math.ceil(parseInt(batchGenCount) / parseInt(batchGenPersonas)),
+        edgeCases: batchGenEdgeCases,
+        language: '中文',
+      })
+      setBatchGenResult(res.data)
+      toastSuccess(`成功生成 ${res.data.importedCount} 条测试用例`)
+      // 刷新数据集列表和详情
+      fetchDatasets()
+      if (detailDataset) {
+        const dsRes = await axios.get(`/api/datasets/${detailDataset.id}`)
+        setDetailDataset(dsRes.data)
+      }
+    } catch (e: any) {
+      toastError(e?.response?.data?.message || '批量生成失败')
+    }
+    setBatchGenLoading(false)
+  }
+
+  // 验证相关函数
+  const handleValidate = async () => {
+    if (!detailDataset) return
+    setValidating(true)
+    try {
+      const res = await axios.post(`/api/datasets/${detailDataset.id}/validate`, {})
+      setValidationReport(res.data)
+      toastSuccess('验证完成')
+      fetchDatasets()
+    } catch (e: any) {
+      toastError(e?.response?.data?.message || '验证失败')
+    }
+    setValidating(false)
+  }
+
+  const handleFetchValidationReport = async () => {
+    if (!detailDataset) return
+    try {
+      const res = await axios.get(`/api/datasets/${detailDataset.id}/validation-report`)
+      setValidationReport(res.data)
+    } catch (e: any) {
+      if (e?.response?.status !== 404) {
+        toastError('获取验证报告失败')
+      }
+    }
+  }
+
+  const handleApprove = async () => {
+    if (!detailDataset) return
+    try {
+      await axios.post(`/api/datasets/${detailDataset.id}/approve`)
+      toastSuccess('数据集已审批通过')
+      fetchDatasets()
+      if (detailDataset) {
+        const res = await axios.get(`/api/datasets/${detailDataset.id}`)
+        setDetailDataset(res.data)
+      }
+    } catch (e: any) {
+      toastError(e?.response?.data?.message || '审批失败')
+    }
+  }
+
+  const handleReject = async () => {
+    if (!detailDataset) return
+    try {
+      await axios.post(`/api/datasets/${detailDataset.id}/reject`, { reason: rejectReason })
+      toastSuccess('数据集已被拒绝')
+      setRejectOpen(false)
+      setRejectReason('')
+      fetchDatasets()
+      if (detailDataset) {
+        const res = await axios.get(`/api/datasets/${detailDataset.id}`)
+        setDetailDataset(res.data)
+      }
+    } catch (e: any) {
+      toastError(e?.response?.data?.message || '操作失败')
+    }
+  }
+
   const handleAiGenerate = async () => {
     if (!aiGenerateInput) return
     setAiGenerateLoading(true)
@@ -498,6 +682,9 @@ export default function Datasets() {
                       <TableCell className="text-muted-foreground">{new Date(ds.createdAt).toLocaleString()}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
+                          <Button variant="outline" size="sm" onClick={() => openSyntheticGenerate(ds)} className="gap-1">
+                            <FlaskConical className="h-3 w-3" /> 智能生成
+                          </Button>
                           <Button variant="outline" size="sm" onClick={() => openAiGenerate(ds)} className="gap-1">
                             <Sparkles className="h-3 w-3" /> AI生成
                           </Button>
@@ -968,8 +1155,273 @@ export default function Datasets() {
             </div>
           ) : null}
 
+          {/* 批量智能生成 */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <FlaskConical className="h-4 w-4" /> 批量智能生成
+              </CardTitle>
+              <Badge variant="outline">{detailDataset?.testCases?.length || 0} 条用例</Badge>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">场景描述 *</label>
+                  <textarea
+                    className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                    value={batchGenPrompt}
+                    onChange={(e) => setBatchGenPrompt(e.target.value)}
+                    placeholder="描述 AI 智能体的使用场景，例如：&#10;我们是一个生鲜电商平台的客服智能体，需要处理用户的订单查询、退换货、商品咨询等问题..."
+                  />
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">生成数量</label>
+                    <input
+                      type="number"
+                      min="10"
+                      max="500"
+                      step="10"
+                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={batchGenCount}
+                      onChange={(e) => setBatchGenCount(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Persona 数</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="20"
+                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={batchGenPersonas}
+                      onChange={(e) => setBatchGenPersonas(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex items-end pb-0.5">
+                    <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={batchGenEdgeCases}
+                        onChange={(e) => setBatchGenEdgeCases(e.target.checked)}
+                        className="rounded border-input"
+                      />
+                      <Zap className="h-3.5 w-3.5 text-warning" />
+                      包含边缘用例
+                    </label>
+                  </div>
+                </div>
+                <Button
+                  onClick={handleBatchGenerate}
+                  disabled={!batchGenPrompt || batchGenLoading}
+                  className="w-full gap-2"
+                >
+                  {batchGenLoading ? (
+                    <><div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> AI 批量生成中...</>
+                  ) : (
+                    <><FlaskConical className="h-4 w-4" /> 一键批量生成 {batchGenCount} 条用例</>
+                  )}
+                </Button>
+              </div>
+
+              {batchGenResult && (
+                <div className="rounded-lg border p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-medium flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-success" /> 生成完成
+                    </h4>
+                    <Badge className="bg-green-500/10 text-green-600 border-green-500/20" variant="outline">
+                      导入 {batchGenResult.importedCount} 条
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="rounded-md bg-muted/50 p-2 text-center">
+                      <div className="text-lg font-bold">{batchGenResult.result?.summary?.totalPersonas || 0}</div>
+                      <div className="text-xs text-muted-foreground">Persona</div>
+                    </div>
+                    <div className="rounded-md bg-muted/50 p-2 text-center">
+                      <div className="text-lg font-bold">{batchGenResult.result?.summary?.totalTestCases || 0}</div>
+                      <div className="text-xs text-muted-foreground">总用例</div>
+                    </div>
+                    <div className="rounded-md bg-yellow-500/10 p-2 text-center">
+                      <div className="text-lg font-bold text-yellow-600">{batchGenResult.result?.summary?.edgeCaseCount || 0}</div>
+                      <div className="text-xs text-muted-foreground">边缘用例</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* 评测集验证 */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Shield className="h-4 w-4" /> 评测集验证
+              </CardTitle>
+              {detailDataset?.validationStatus && (
+                <Badge variant={
+                  detailDataset.validationStatus === 'validated' ? 'default' :
+                  detailDataset.validationStatus === 'rejected' ? 'destructive' :
+                  detailDataset.validationStatus === 'validating' ? 'secondary' : 'outline'
+                }>
+                  {detailDataset.validationStatus === 'validated' ? '已验证' :
+                   detailDataset.validationStatus === 'rejected' ? '已拒绝' :
+                   detailDataset.validationStatus === 'validating' ? '验证中' : '草稿'}
+                </Badge>
+              )}
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* 验证操作按钮 */}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleValidate}
+                  disabled={validating || detailDataset?.validationStatus === 'validated'}
+                  className="gap-1"
+                >
+                  {validating ? (
+                    <><div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" /> 验证中...</>
+                  ) : (
+                    <><Play className="h-3 w-3" /> 执行验证</>
+                  )}
+                </Button>
+                {detailDataset?.validationStatus === 'draft' && validationReport && (
+                  <>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handleApprove}
+                      className="gap-1 bg-green-600 hover:bg-green-700"
+                    >
+                      <CheckCircle2 className="h-3 w-3" /> 审批通过
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setRejectOpen(true)}
+                      className="gap-1"
+                    >
+                      <XCircle className="h-3 w-3" /> 拒绝
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              {/* 验证报告 */}
+              {validationReport && (
+                <div className="space-y-4">
+                  {/* 综合质量分 */}
+                  <div className="rounded-lg border p-4">
+                    <h4 className="text-sm font-medium mb-3">综合质量评估</h4>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold">{(validationReport.overallQuality * 100).toFixed(0)}%</div>
+                        <div className="text-xs text-muted-foreground">综合质量分</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold">{(validationReport.coverageScore * 100).toFixed(0)}%</div>
+                        <div className="text-xs text-muted-foreground">覆盖度</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold">{(validationReport.discriminationScore * 100).toFixed(0)}%</div>
+                        <div className="text-xs text-muted-foreground">区分度</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 难度分布 */}
+                  <div className="rounded-lg border p-4">
+                    <h4 className="text-sm font-medium mb-3">难度分布</h4>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-green-600">{validationReport.difficultyDistribution.easy}</div>
+                        <div className="text-xs text-muted-foreground">简单</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-yellow-600">{validationReport.difficultyDistribution.medium}</div>
+                        <div className="text-xs text-muted-foreground">中等</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-red-600">{validationReport.difficultyDistribution.hard}</div>
+                        <div className="text-xs text-muted-foreground">困难</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 问题用例 */}
+                  {validationReport.problematicCases.length > 0 && (
+                    <div className="rounded-lg border p-4">
+                      <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4 text-warning" /> 问题用例 ({validationReport.problematicCases.length})
+                      </h4>
+                      <div className="max-h-40 overflow-y-auto space-y-2">
+                        {validationReport.problematicCases.slice(0, 5).map((pc, idx) => (
+                          <div key={idx} className="rounded-md bg-muted/50 p-2 text-xs">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Badge variant={
+                                pc.issue === 'too_easy' ? 'default' :
+                                pc.issue === 'too_hard' ? 'destructive' : 'secondary'
+                              } className="text-xs">
+                                {pc.issue === 'too_easy' ? '过易' :
+                                 pc.issue === 'too_hard' ? '过难' :
+                                 pc.issue === 'low_discrimination' ? '区分度低' : '重复意图'}
+                              </Badge>
+                            </div>
+                            <p className="text-muted-foreground">{pc.suggestion}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 建议 */}
+                  {validationReport.suggestions.length > 0 && (
+                    <div className="rounded-lg border p-4">
+                      <h4 className="text-sm font-medium mb-3">改进建议</h4>
+                      <ul className="space-y-2">
+                        {validationReport.suggestions.map((s, idx) => (
+                          <li key={idx} className="text-xs text-muted-foreground flex items-start gap-2">
+                            <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                            {s}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setDetailOpen(false)}>关闭</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 拒绝原因 Dialog */}
+      <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>拒绝数据集</DialogTitle>
+            <DialogDescription>请输入拒绝原因</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">拒绝原因</label>
+              <textarea
+                className="flex min-h-[100px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="请输入拒绝原因..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectOpen(false)}>取消</Button>
+            <Button variant="destructive" onClick={handleReject}>确认拒绝</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1109,6 +1561,214 @@ export default function Datasets() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateVersionOpen(false)}>取消</Button>
             <Button onClick={handleCreateVersion} disabled={!versionFormData.name}>创建</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 智能批量生成 Dialog */}
+      <Dialog open={syntheticOpen} onOpenChange={setSyntheticOpen}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FlaskConical className="h-5 w-5 text-primary" /> 智能批量生成
+            </DialogTitle>
+            <DialogDescription>
+              {syntheticStep === 'config' && '配置生成参数，AI 将基于用户画像自动生成评测用例'}
+              {syntheticStep === 'preview' && `预览生成结果，共 ${syntheticResult?.testCases?.length || 0} 条用例`}
+              {syntheticStep === 'done' && '生成完成'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto space-y-4">
+            {syntheticStep === 'config' && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">场景描述 / Prompt 模板 *</label>
+                  <textarea
+                    className="flex min-h-[100px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                    value={syntheticConfig.prompt}
+                    onChange={(e) => setSyntheticConfig({ ...syntheticConfig, prompt: e.target.value })}
+                    placeholder="描述 AI 智能体的使用场景，例如：&#10;我们是一个生鲜电商平台的客服智能体，需要处理用户的订单查询、退换货、商品咨询等问题..."
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-1">
+                      <Users className="h-3.5 w-3.5" /> Persona 数量
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="10"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={syntheticConfig.numPersonas}
+                      onChange={(e) => setSyntheticConfig({ ...syntheticConfig, numPersonas: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">每 Persona 用例数</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="20"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={syntheticConfig.numTestCasesPerPersona}
+                      onChange={(e) => setSyntheticConfig({ ...syntheticConfig, numTestCasesPerPersona: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">额外指令（可选）</label>
+                  <textarea
+                    className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                    value={syntheticConfig.instructions}
+                    onChange={(e) => setSyntheticConfig({ ...syntheticConfig, instructions: e.target.value })}
+                    placeholder="例如：重点关注生鲜配送延迟和退款场景..."
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">语言</label>
+                    <select
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={syntheticConfig.language}
+                      onChange={(e) => setSyntheticConfig({ ...syntheticConfig, language: e.target.value })}
+                    >
+                      <option value="中文">中文</option>
+                      <option value="英文">英文</option>
+                      <option value="中英混合">中英混合</option>
+                    </select>
+                  </div>
+                  <div className="flex items-end pb-2">
+                    <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={syntheticConfig.edgeCases}
+                        onChange={(e) => setSyntheticConfig({ ...syntheticConfig, edgeCases: e.target.checked })}
+                        className="rounded border-input"
+                      />
+                      <Zap className="h-3.5 w-3.5 text-warning" />
+                      包含边缘/对抗用例
+                    </label>
+                  </div>
+                </div>
+                <div className="rounded-md bg-muted/50 p-3">
+                  <p className="text-xs text-muted-foreground">
+                    预计生成 <strong className="text-foreground">
+                      {parseInt(syntheticConfig.numPersonas) * parseInt(syntheticConfig.numTestCasesPerPersona) + (syntheticConfig.edgeCases ? 5 : 0)}
+                    </strong> 条测试用例
+                    （{syntheticConfig.numPersonas} 个 Persona × {syntheticConfig.numTestCasesPerPersona} 条/Persona{syntheticConfig.edgeCases ? ' + 5 条边缘用例' : ''}）
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {syntheticStep === 'preview' && syntheticResult && (
+              <div className="space-y-4">
+                {/* Persona 概览 */}
+                <div className="rounded-lg border p-4">
+                  <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                    <Users className="h-4 w-4" /> 生成的用户画像 ({syntheticResult.personas?.length || 0})
+                  </h4>
+                  <div className="grid gap-2">
+                    {syntheticResult.personas?.map((p: any, i: number) => (
+                      <div key={i} className="flex items-center gap-3 rounded-md bg-muted/30 p-2">
+                        <Badge variant="outline" className="shrink-0">{p.name}</Badge>
+                        <span className="text-xs text-muted-foreground truncate">{p.description}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 测试用例预览 */}
+                <div className="rounded-lg border p-4">
+                  <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                    <FileText className="h-4 w-4" /> 测试用例 ({syntheticResult.testCases?.length || 0})
+                  </h4>
+                  <div className="max-h-64 overflow-y-auto space-y-2">
+                    {syntheticResult.testCases?.map((tc: any, i: number) => (
+                      <div key={i} className="rounded-md border p-2.5 text-sm">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant={tc.category === 'edge_case' ? 'destructive' : tc.category === 'adversarial' ? 'default' : 'secondary'} className="text-xs">
+                            {tc.category === 'edge_case' ? '边缘' : tc.category === 'adversarial' ? '对抗' : '普通'}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">{tc.difficulty}</Badge>
+                          <span className="text-xs text-muted-foreground">{tc.personaName}</span>
+                        </div>
+                        <p className="text-xs">{tc.input}</p>
+                        {tc.expectedBehavior && (
+                          <p className="text-xs text-muted-foreground mt-1">期望: {tc.expectedBehavior}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 统计摘要 */}
+                <div className="grid grid-cols-4 gap-3">
+                  <div className="rounded-md bg-muted/50 p-2 text-center">
+                    <div className="text-lg font-bold">{syntheticResult.summary?.totalPersonas || 0}</div>
+                    <div className="text-xs text-muted-foreground">Persona</div>
+                  </div>
+                  <div className="rounded-md bg-muted/50 p-2 text-center">
+                    <div className="text-lg font-bold">{syntheticResult.summary?.totalTestCases || 0}</div>
+                    <div className="text-xs text-muted-foreground">总用例</div>
+                  </div>
+                  <div className="rounded-md bg-yellow-500/10 p-2 text-center">
+                    <div className="text-lg font-bold text-yellow-600">{syntheticResult.summary?.edgeCaseCount || 0}</div>
+                    <div className="text-xs text-muted-foreground">边缘用例</div>
+                  </div>
+                  <div className="rounded-md bg-green-500/10 p-2 text-center">
+                    <div className="text-lg font-bold text-green-600">{Object.keys(syntheticResult.summary?.categories || {}).length}</div>
+                    <div className="text-xs text-muted-foreground">分类数</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {syntheticStep === 'done' && (
+              <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                <div className="h-16 w-16 rounded-full bg-success/10 flex items-center justify-center">
+                  <CheckCircle2 className="h-8 w-8 text-success" />
+                </div>
+                <div className="text-center">
+                  <h4 className="text-lg font-medium">生成完成</h4>
+                  <p className="text-sm text-muted-foreground">
+                    已成功将 {syntheticResult?.testCases?.length || 0} 条测试用例导入数据集
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            {syntheticStep === 'config' && (
+              <>
+                <Button variant="outline" onClick={() => setSyntheticOpen(false)}>取消</Button>
+                <Button onClick={handleSyntheticPreview} disabled={!syntheticConfig.prompt || syntheticLoading} className="gap-2">
+                  {syntheticLoading ? (
+                    <><div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> AI 生成中...</>
+                  ) : (
+                    <><FlaskConical className="h-4 w-4" /> 预览生成结果</>
+                  )}
+                </Button>
+              </>
+            )}
+            {syntheticStep === 'preview' && (
+              <>
+                <Button variant="outline" onClick={() => setSyntheticStep('config')}>返回配置</Button>
+                <Button onClick={handleSyntheticImport} disabled={syntheticLoading} className="gap-2">
+                  {syntheticLoading ? (
+                    <><div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> 导入中...</>
+                  ) : (
+                    <><Upload className="h-4 w-4" /> 导入到数据集</>
+                  )}
+                </Button>
+              </>
+            )}
+            {syntheticStep === 'done' && (
+              <Button onClick={() => setSyntheticOpen(false)}>关闭</Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -3,9 +3,11 @@ import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { DatasetService } from './dataset.service';
 import { AiGenerationService } from './ai-generation.service';
+import { SyntheticDatasetService } from './synthetic-dataset.service';
 import { DatasetVersionService } from './dataset-version.service';
 import { DatasetCurationService } from './dataset-curation.service';
-import { CreateDatasetDto, UpdateDatasetDto, CreateTestCaseDto, GenerateDto, SelectAnswerDto } from './dataset.dto';
+import { DatasetValidationService } from './dataset-validation.service';
+import { CreateDatasetDto, UpdateDatasetDto, CreateTestCaseDto, GenerateDto, SelectAnswerDto, SyntheticGenerateDto } from './dataset.dto';
 
 @ApiTags('评测数据集')
 @ApiBearerAuth()
@@ -14,8 +16,10 @@ export class DatasetController {
   constructor(
     private readonly datasetService: DatasetService,
     private readonly aiGenerationService: AiGenerationService,
+    private readonly syntheticDatasetService: SyntheticDatasetService,
     private readonly datasetVersionService: DatasetVersionService,
     private readonly datasetCurationService: DatasetCurationService,
+    private readonly datasetValidationService: DatasetValidationService,
   ) {}
 
   // 数据集 CRUD
@@ -91,6 +95,27 @@ export class DatasetController {
   @ApiOperation({ summary: '选择/修正 AI 生成的答案' })
   selectAnswer(@Body() dto: SelectAnswerDto) {
     return this.aiGenerationService.selectAnswer(dto);
+  }
+
+  // 智能批量生成
+  @Post(':id/synthetic-generate')
+  @ApiOperation({ summary: '智能批量生成评测用例（基于 Persona）' })
+  syntheticGenerate(@Param('id') id: string, @Body() dto: SyntheticGenerateDto) {
+    return this.syntheticDatasetService.generateAndSaveToDataset(id, dto);
+  }
+
+  @Post('synthetic/preview')
+  @ApiOperation({ summary: '预览智能生成结果（不保存到数据库）' })
+  previewSynthetic(@Body() dto: SyntheticGenerateDto) {
+    return this.syntheticDatasetService.generateDataset(dto);
+  }
+
+  @Post('synthetic/export-yaml')
+  @ApiOperation({ summary: '导出合成数据为 YAML 格式' })
+  exportSyntheticYaml(@Body() dto: SyntheticGenerateDto) {
+    return this.syntheticDatasetService.generateDataset(dto).then(result =>
+      this.syntheticDatasetService.exportToYaml(result),
+    );
   }
 
   // 快照
@@ -181,5 +206,34 @@ export class DatasetController {
   @ApiOperation({ summary: '启用/禁用筛选规则' })
   toggleFilterRule(@Param('id') id: string, @Body() body: { enabled: boolean }) {
     return this.datasetCurationService.toggleRule(id, body.enabled);
+  }
+
+  // ========== 评测集验证 ==========
+
+  @Post(':id/validate')
+  @ApiOperation({ summary: '执行评测集验证（试跑）' })
+  validateDataset(
+    @Param('id') id: string,
+    @Body() body: { baselineEndpointId?: string },
+  ) {
+    return this.datasetValidationService.validateDataset(id, body.baselineEndpointId);
+  }
+
+  @Get(':id/validation-report')
+  @ApiOperation({ summary: '获取验证报告' })
+  getValidationReport(@Param('id') id: string) {
+    return this.datasetValidationService.getValidationReport(id);
+  }
+
+  @Post(':id/approve')
+  @ApiOperation({ summary: '审批通过数据集' })
+  approveDataset(@Param('id') id: string) {
+    return this.datasetValidationService.approveDataset(id);
+  }
+
+  @Post(':id/reject')
+  @ApiOperation({ summary: '审批拒绝数据集' })
+  rejectDataset(@Param('id') id: string, @Body() body: { reason?: string }) {
+    return this.datasetValidationService.rejectDataset(id, body.reason);
   }
 }

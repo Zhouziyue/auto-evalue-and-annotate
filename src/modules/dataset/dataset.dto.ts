@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum, IsArray, IsNumber, IsObject } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsArray, IsNumber, IsObject, IsBoolean } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateDatasetDto {
@@ -85,4 +85,35 @@ export class SelectAnswerDto {
   @IsOptional()
   @IsString()
   customAnswer?: string;
+}
+
+export class SyntheticGenerateDto {
+  @ApiProperty({ description: '场景描述/Prompt 模板' })
+  @IsString()
+  prompt: string;
+
+  @ApiPropertyOptional({ description: 'Persona 数量', default: 3 })
+  @IsOptional()
+  @IsNumber()
+  numPersonas?: number;
+
+  @ApiPropertyOptional({ description: '每个 Persona 生成的测试用例数', default: 5 })
+  @IsOptional()
+  @IsNumber()
+  numTestCasesPerPersona?: number;
+
+  @ApiPropertyOptional({ description: '额外生成指令' })
+  @IsOptional()
+  @IsString()
+  instructions?: string;
+
+  @ApiPropertyOptional({ description: '是否生成边缘情况', default: true })
+  @IsOptional()
+  @IsBoolean()
+  edgeCases?: boolean;
+
+  @ApiPropertyOptional({ description: '生成语言', default: '中文' })
+  @IsOptional()
+  @IsString()
+  language?: string;
 }

@@ -68,6 +68,12 @@ import { KnowledgeBaseEvalService } from './knowledge-base-eval.service';
 import { CustomMetricService } from './custom-metric.service';
 import { ResultAggregationService } from './result-aggregation.service';
 import { TaskTemplateService } from './task-template.service';
+import { MetricConfigService, TaskType as MetricTaskType } from './metric-config.service';
+import { FailureClusteringService } from './failure-clustering.service';
+import { CapabilityProfileService } from './capability-profile.service';
+import { RootCauseAnalysisService } from './root-cause-analysis.service';
+import { NarrativeReportService } from './narrative-report.service';
+import { AutoFixService } from './auto-fix.service';
 import { ModelVersionService, DataPipelineService, ResultSubscriptionService } from './model-pipeline-services';
 import {
   MetricRegressionService, DataValidationService, ResultShardingService,
@@ -240,6 +246,12 @@ export class EvalController {
     private customMetricService: CustomMetricService,
     private resultAggregationService: ResultAggregationService,
     private taskTemplateService: TaskTemplateService,
+    private metricConfigService: MetricConfigService,
+    private failureClusteringService: FailureClusteringService,
+    private capabilityProfileService: CapabilityProfileService,
+    private rootCauseAnalysisService: RootCauseAnalysisService,
+    private narrativeReportService: NarrativeReportService,
+    private autoFixService: AutoFixService,
     private modelVersionService: ModelVersionService,
     private dataPipelineService: DataPipelineService,
     private resultSubscriptionService: ResultSubscriptionService,
@@ -3859,4 +3871,117 @@ export class EvalController {
   @Post('dataset-quality-report-adv-adv/generate') async generateDatasetQualityReportAdvAdv(@Body() body: any) { return this.datasetQualityReportAdvAdvService.generate(body.datasetId); }
   @Post('eval-snapshot-report-adv/generate') async generateEvalSnapshotReportAdv(@Body() body: any) { return this.evalSnapshotReportAdvService.generate(body.snapshotId); }
   @Post('task-orch-report-adv/generate') async generateTaskOrchReportAdv(@Body() body: any) { return this.taskOrchestrationReportAdvService.generate(body.workflowId); }
+
+  // ========== 指标管理 API ==========
+
+  @Get('metrics/types')
+  async getAllMetricTypes() {
+    return this.metricConfigService.getAllMetrics();
+  }
+
+  @Get('metrics/recommend')
+  async getRecommendedMetrics(@Query('taskType') taskType: MetricTaskType) {
+    return this.metricConfigService.getRecommendedMetrics(taskType);
+  }
+
+  @Get('metrics/task-types')
+  async getTaskTypes() {
+    return this.metricConfigService.getTaskTypes();
+  }
+
+  @Get('metrics/categories')
+  async getMetricCategories() {
+    return this.metricConfigService.getMetricCategories();
+  }
+
+  @Get('metrics/:metricId')
+  async getMetricDetail(@Param('metricId') metricId: string) {
+    return this.metricConfigService.getMetricDetail(metricId);
+  }
+
+  @Post('metrics/custom')
+  async createCustomMetric(@Body() body: any) {
+    return this.metricConfigService.createCustomMetric(body);
+  }
+
+  @Post('metrics/custom/:metricId/delete')
+  async deleteCustomMetric(@Param('metricId') metricId: string) {
+    return this.metricConfigService.deleteCustomMetric(metricId);
+  }
+
+  // ========== 失败模式聚类 API ==========
+
+  // 分析评测运行的失败模式聚类
+  @Post('failure-clustering/analyze')
+  async analyzeFailures(@Body() body: { evalRunId: string }) {
+    return this.failureClusteringService.analyzeFailures(body.evalRunId);
+  }
+
+  // 获取所有失败模式定义
+  @Get('failure-clustering/modes')
+  async getFailureModeDefinitions() {
+    return this.failureClusteringService.getFailureModeDefinitions();
+  }
+
+  // ========== 能力画像 API ==========
+
+  // 基于评测运行生成能力画像
+  @Post('capability-profile/generate')
+  async generateCapabilityProfile(@Body() body: { evalRunId: string }) {
+    return this.capabilityProfileService.generateProfile(body.evalRunId);
+  }
+
+  // 获取所有能力维度定义
+  @Get('capability-profile/dimensions')
+  async getCapabilityDefinitions() {
+    return this.capabilityProfileService.getCapabilityDefinitions();
+  }
+
+  // ========== 根因分析 API ==========
+
+  // 对评测运行进行根因分析
+  @Post('root-cause/analyze')
+  async analyzeRootCauses(@Body() body: { evalRunId: string }) {
+    return this.rootCauseAnalysisService.analyzeRootCauses(body.evalRunId);
+  }
+
+  // 获取根因类型定义
+  @Get('root-cause/definitions')
+  async getRootCauseDefinitions() {
+    return this.rootCauseAnalysisService.getRootCauseDefinitions();
+  }
+
+  // 获取修复建议模板
+  @Get('root-cause/fix-templates')
+  async getFixSuggestionTemplates() {
+    return this.rootCauseAnalysisService.getFixSuggestionTemplates();
+  }
+
+  // ========== 自然语言报告 API ==========
+
+  // 生成自然语言评测报告
+  @Post('narrative-report/generate')
+  async generateNarrativeReport(@Body() body: { evalRunId: string }) {
+    return this.narrativeReportService.generateNarrativeReport(body.evalRunId);
+  }
+
+  // ========== 自动修复 API ==========
+
+  // 生成修复方案
+  @Post('auto-fix/plan')
+  async generateFixPlan(@Body() body: { evalRunId: string }) {
+    return this.autoFixService.generateFixPlan(body.evalRunId);
+  }
+
+  // 应用修复
+  @Post('auto-fix/apply')
+  async applyFix(@Body() body: { fixId: string }) {
+    return this.autoFixService.applyFix(body.fixId);
+  }
+
+  // 验证修复效果
+  @Post('auto-fix/verify')
+  async verifyFix(@Body() body: { evalRunId: string; fixId: string }) {
+    return this.autoFixService.verifyFix(body.evalRunId, body.fixId);
+  }
 }

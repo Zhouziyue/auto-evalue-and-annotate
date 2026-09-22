@@ -73,6 +73,12 @@ import { CustomMetricService } from './custom-metric.service';
 import { ResultAggregationService } from './result-aggregation.service';
 import { TaskTemplateService } from './task-template.service';
 import { MockSeedService } from './mock-seed.service';
+import { MetricConfigService } from './metric-config.service';
+import { FailureClusteringService } from './failure-clustering.service';
+import { CapabilityProfileService } from './capability-profile.service';
+import { RootCauseAnalysisService } from './root-cause-analysis.service';
+import { NarrativeReportService } from './narrative-report.service';
+import { AutoFixService } from './auto-fix.service';
 
 // ========== 批量服务数组导入 ==========
 import { MODEL_PIPELINE_SERVICES } from './model-pipeline-services';
@@ -107,7 +113,7 @@ const CORE_SERVICES = [
   AnnotationAssistanceService, ModelDistillationService, FederatedEvalService, ModelRegistryService,
   ComparisonAnalysisService, DataTransformService, EvalSandboxService, FinetuneEvalService,
   KnowledgeBaseEvalService, CustomMetricService, ResultAggregationService, TaskTemplateService,
-  MockSeedService,
+  MockSeedService, MetricConfigService, FailureClusteringService, CapabilityProfileService, RootCauseAnalysisService, NarrativeReportService, AutoFixService,
 ];
 
 // ========== 所有批量服务 ==========

@@ -13,10 +13,12 @@ describe('AnnotationService', () => {
   const mockPrisma = {
     evalResult: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
     },
     annotation: {
       create: jest.fn(),
       findMany: jest.fn(),
+      findFirst: jest.fn(),
     },
   };
 
@@ -112,6 +114,83 @@ describe('AnnotationService', () => {
 
       expect(result.agreement).toBeNull();
       expect(result.message).toBeDefined();
+    });
+  });
+
+  describe('batchAutoAnnotate', () => {
+    it('应该批量自动标注评测结果', async () => {
+      const mockResults = [
+        { id: 'r1', evalRunId: 'run-1', testCase: { input: '问题1', expectedOutput: '答案1' }, actualOutput: '输出1' },
+        { id: 'r2', evalRunId: 'run-1', testCase: { input: '问题2', expectedOutput: '答案2' }, actualOutput: '输出2' },
+      ];
+
+      mockPrisma.evalResult.findMany.mockResolvedValue(mockResults);
+      mockPrisma.annotation.findFirst.mockResolvedValue(null); // 无已有标注
+      // aiAnnotate 内部调用 findUnique 和 create
+      mockPrisma.evalResult.findUnique.mockResolvedValue(mockResults[0]);
+      mockPrisma.annotation.create.mockResolvedValue({
+        id: 'ann-1',
+        type: 'ai',
+        scores: { 准确性: 0.8, 完整性: 0.75, 相关性: 0.85, 安全性: 0.9 },
+      });
+
+      const result = await service.batchAutoAnnotate('run-1');
+
+      expect(result.total).toBe(2);
+      expect(result.annotated).toBe(2);
+      expect(result.failed).toBe(0);
+    });
+
+    it('应该在无评测结果时返回提示', async () => {
+      mockPrisma.evalResult.findMany.mockResolvedValue([]);
+
+      const result = await service.batchAutoAnnotate('run-empty');
+
+      expect(result.total).toBe(0);
+      expect(result.message).toBeDefined();
+    });
+
+    it('应该跳过已标注的结果', async () => {
+      const mockResults = [
+        { id: 'r1', evalRunId: 'run-1', testCase: { input: '问题1' }, actualOutput: '输出1' },
+      ];
+
+      mockPrisma.evalResult.findMany.mockResolvedValue(mockResults);
+      mockPrisma.annotation.findFirst.mockResolvedValue({ id: 'existing-ann', type: 'ai' }); // 已有标注
+
+      const result = await service.batchAutoAnnotate('run-1');
+
+      expect(result.total).toBe(1);
+      expect(result.annotated).toBe(1);
+      expect(mockPrisma.annotation.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getEvalRunAnnotationStats', () => {
+    it('应该返回评测运行的标注统计', async () => {
+      const mockResults = [
+        {
+          id: 'r1',
+          testCase: { input: '问题1' },
+          annotations: [
+            { type: 'ai', scores: { 准确性: 0.8, 完整性: 0.75, 相关性: 0.85, 安全性: 0.9 } },
+          ],
+        },
+        {
+          id: 'r2',
+          testCase: { input: '问题2' },
+          annotations: [],
+        },
+      ];
+
+      mockPrisma.evalResult.findMany.mockResolvedValue(mockResults);
+
+      const result = await service.getEvalRunAnnotationStats('run-1');
+
+      expect(result.totalResults).toBe(2);
+      expect(result.aiAnnotated).toBe(1);
+      expect(result.pendingAnnotation).toBe(1);
+      expect(result.avgScores).toBeDefined();
     });
   });
 });

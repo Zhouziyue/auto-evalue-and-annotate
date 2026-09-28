@@ -13,9 +13,8 @@ export class AgentService {
   ) {}
 
   async create(dto: CreateAgentDto) {
-    return this.prisma.agentEndpoint.create({
+    const endpoint = await this.prisma.agentEndpoint.create({
       data: {
-        skillId: dto.skillId,
         name: dto.name,
         description: dto.description,
         url: dto.url,
@@ -31,17 +30,88 @@ export class AgentService {
         maxRetries: dto.maxRetries || 3,
       },
     });
+
+    // 如果提供了 skillIds，自动创建关联
+    if (dto.skillIds && dto.skillIds.length > 0) {
+      for (const skillId of dto.skillIds) {
+        await this.prisma.skillAgent.create({
+          data: { skillId, endpointId: endpoint.id, role: 'primary' },
+        });
+      }
+    }
+
+    return endpoint;
   }
 
-  async findAll(skillId?: string) {
-    const where = skillId ? { skillId } : {};
-    return this.prisma.agentEndpoint.findMany({ where });
+  async findAll() {
+    return this.prisma.agentEndpoint.findMany({
+      include: {
+        _count: {
+          select: { skillAgents: true, evalRuns: true },
+        },
+        skillAgents: {
+          include: {
+            skill: { select: { id: true, name: true, icon: true, category: true } },
+          },
+        },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
   }
 
   async findOne(id: string) {
-    const endpoint = await this.prisma.agentEndpoint.findUnique({ where: { id } });
+    const endpoint = await this.prisma.agentEndpoint.findUnique({
+      where: { id },
+      include: {
+        skillAgents: {
+          include: {
+            skill: { select: { id: true, name: true, icon: true, category: true } },
+          },
+        },
+        _count: {
+          select: { skillAgents: true, evalRuns: true },
+        },
+      },
+    });
     if (!endpoint) throw new NotFoundException(`Agent endpoint ${id} not found`);
     return endpoint;
+  }
+
+  /**
+   * 获取 Agent 关联的技能列表
+   */
+  async getLinkedSkills(endpointId: string) {
+    const links = await this.prisma.skillAgent.findMany({
+      where: { endpointId },
+      include: {
+        skill: { select: { id: true, name: true, icon: true, category: true, description: true, status: true } },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+    return links.map(l => ({ linkId: l.id, role: l.role, config: l.config, skill: l.skill }));
+  }
+
+  /**
+   * 关联 Agent 到技能
+   */
+  async linkToSkill(endpointId: string, skillId: string, role = 'primary') {
+    return this.prisma.skillAgent.create({
+      data: { endpointId, skillId, role },
+      include: {
+        skill: { select: { id: true, name: true, icon: true, category: true } },
+      },
+    });
+  }
+
+  /**
+   * 取消 Agent 与技能的关联
+   */
+  async unlinkFromSkill(endpointId: string, linkId: string) {
+    const link = await this.prisma.skillAgent.findFirst({
+      where: { id: linkId, endpointId },
+    });
+    if (!link) throw new NotFoundException('关联记录不存在');
+    return this.prisma.skillAgent.delete({ where: { id: linkId } });
   }
 
   async update(id: string, dto: UpdateAgentDto) {

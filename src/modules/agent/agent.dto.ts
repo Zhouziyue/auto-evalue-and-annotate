@@ -2,10 +2,6 @@ import { IsString, IsOptional, IsUrl, IsEnum, IsNumber, IsObject } from 'class-v
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateAgentDto {
-  @ApiProperty({ description: '所属技能ID' })
-  @IsString()
-  skillId: string;
-
   @ApiProperty({ description: '智能体名称' })
   @IsString()
   name: string;
@@ -68,6 +64,10 @@ export class CreateAgentDto {
   @IsOptional()
   @IsNumber()
   maxRetries?: number;
+
+  @ApiPropertyOptional({ description: '关联的技能ID列表（可选，创建后通过关联 API 管理）' })
+  @IsOptional()
+  skillIds?: string[];
 }
 
 export class UpdateAgentDto {

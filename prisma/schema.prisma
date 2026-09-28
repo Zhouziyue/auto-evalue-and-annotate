@@ -10,7 +10,7 @@ datasource db {
 }
 
 // ============================================
-// 智能体管理
+// 智能体管理（Skill Package 模式）
 // ============================================
 
 model Skill {
@@ -20,6 +20,11 @@ model Skill {
   version     String   @default("1.0.0")
   category    String?  // 分类：function_call, rag, agent, chat, classification, summarization
   tags        String?  // 标签，逗号分隔
+  // 新增：Package 支持
+  parentId    String?  // 父技能ID，支持嵌套
+  packageType String   @default("root") // root | sub_skill
+  icon        String?  // 图标标识（emoji 或 icon name）
+  // 保留字段
   instructions String? // 技能指令内容（SKILL.md 风格的 Markdown）
   allowedTools String? // 允许使用的工具列表，逗号分隔
   requiredContext String? // 需要的上下文信息，逗号分隔
@@ -29,16 +34,55 @@ model Skill {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  endpoints   AgentEndpoint[]
+  // 嵌套关系
+  parent      Skill?   @relation("SkillNesting", fields: [parentId], references: [id], onDelete: Cascade)
+  children    Skill[]  @relation("SkillNesting")
+  // 文件树
+  files       SkillFile[]
+  // M:N 关联智能体（通过中间表）
+  skillAgents SkillAgent[]
+  // 评测 & 版本
   evalRuns    EvalRun[]
   skillVersions SkillVersion[]
 
   @@map("skills")
 }
 
+// 技能包文件（文件树管理）
+model SkillFile {
+  id        String   @id @default(uuid())
+  skillId   String
+  path      String   // 相对路径，如 "SKILL.md"、"prompts/main.md"
+  content   String   // 文件内容
+  fileType  String   // markdown, json, yaml, text, python, javascript
+  size      Int      @default(0) // 文件大小（字节）
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  skill     Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([skillId, path])
+  @@map("skill_files")
+}
+
+// 技能-智能体关联中间表（M:N）
+model SkillAgent {
+  id         String   @id @default(uuid())
+  skillId    String
+  endpointId String
+  role       String   @default("primary") // primary | fallback | observer
+  config     String?  // 关联配置 JSON
+  createdAt  DateTime @default(now())
+
+  skill      Skill          @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  endpoint   AgentEndpoint  @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+
+  @@unique([skillId, endpointId])
+  @@map("skill_agents")
+}
+
 model AgentEndpoint {
   id             String   @id @default(uuid())
-  skillId        String
   name           String
   description    String?  // 智能体描述
   url            String
@@ -55,7 +99,8 @@ model AgentEndpoint {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  skill          Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  // M:N 关联技能（通过中间表）
+  skillAgents    SkillAgent[]
   evalRuns       EvalRun[]
 
   @@map("agent_endpoints")

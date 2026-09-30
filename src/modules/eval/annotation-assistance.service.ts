@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../common/prisma/prisma.service';
 
 // 标注类型
 export enum AnnotationType {
@@ -11,40 +12,6 @@ export enum AnnotationType {
   SENTIMENT = 'sentiment',               // 情感分析
   INTENT = 'intent',                     // 意图识别
   SLOT_FILLING = 'slot_filling',         // 槽位填充
-}
-
-// 标注任务
-export interface AnnotationTask {
-  id: string;
-  name: string;
-  description?: string;
-  type: AnnotationType;
-  data: Array<{
-    id: string;
-    input: string;
-    context?: string;
-    preAnnotation?: any;
-    annotation?: any;
-    status: 'pending' | 'annotated' | 'reviewed' | 'rejected';
-  }>;
-  config: {
-    labels?: string[];
-    guidelines?: string;
-    preAnnotationEnabled?: boolean;
-    autoSave?: boolean;
-    requireReview?: boolean;
-  };
-  stats: {
-    total: number;
-    annotated: number;
-    reviewed: number;
-    rejected: number;
-    pending: number;
-  };
-  status: 'draft' | 'active' | 'completed' | 'archived';
-  createdAt: Date;
-  createdBy: string;
-  assignees?: string[];
 }
 
 // 预标注建议
@@ -67,11 +34,19 @@ export interface AnnotationQuality {
   annotationSpeed: number; // items per hour
 }
 
+function parseJson(raw: any, fallback: any = null) {
+  if (raw === null || raw === undefined) return fallback;
+  if (typeof raw === 'object') return raw;
+  try { return JSON.parse(raw); } catch { return fallback; }
+}
+
+/**
+ * 标注辅助服务（数据库持久化版）
+ * 原内存 Map 实现已迁移至 annotation_tasks / annotation_items 表
+ */
 @Injectable()
 export class AnnotationAssistanceService {
-  private tasks: Map<string, AnnotationTask> = new Map();
-
-  constructor() {}
+  constructor(private readonly prisma: PrismaService) {}
 
   // 创建标注任务
   async createTask(data: {
@@ -79,58 +54,96 @@ export class AnnotationAssistanceService {
     description?: string;
     type: AnnotationType;
     data: Array<{ id: string; input: string; context?: string }>;
-    config?: AnnotationTask['config'];
+    config?: any;
     createdBy: string;
     assignees?: string[];
-  }): Promise<AnnotationTask> {
-    const id = `ann_task_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  }) {
+    const task = await this.prisma.annotationTask.create({
+      data: {
+        name: data.name,
+        description: data.description,
+        type: data.type,
+        status: 'draft',
+        createdBy: data.createdBy,
+        assignees: JSON.stringify(data.assignees || []),
+        config: JSON.stringify(data.config || {}),
+      },
+    });
 
-    const taskData = data.data.map(item => ({
-      ...item,
-      status: 'pending' as const,
+    if (data.data?.length > 0) {
+      await this.prisma.annotationItem.createMany({
+        data: data.data.map(item => ({
+          taskId: task.id,
+          input: item.input,
+          context: item.context,
+          status: 'pending',
+        })),
+      });
+    }
+
+    return this.getTask(task.id);
+  }
+
+  // 组装任务视图（兼容原内存版返回结构）
+  private async toTaskView(task: any, items: any[] = null) {
+    if (!task) return undefined;
+    const taskItems = items ?? await this.prisma.annotationItem.findMany({
+      where: { taskId: task.id },
+      orderBy: { createdAt: 'asc' as const },
+    });
+
+    const data = taskItems.map(item => ({
+      id: item.id,
+      input: item.input,
+      context: item.context,
+      preAnnotation: parseJson(item.preAnnotation),
+      annotation: parseJson(item.annotation),
+      status: item.status,
     }));
 
-    const task: AnnotationTask = {
-      id,
-      name: data.name,
-      description: data.description,
-      type: data.type,
-      data: taskData,
-      config: data.config || {},
+    return {
+      id: task.id,
+      name: task.name,
+      description: task.description,
+      type: task.type,
+      data,
+      config: parseJson(task.config, {}),
       stats: {
-        total: data.data.length,
-        annotated: 0,
-        reviewed: 0,
-        rejected: 0,
-        pending: data.data.length,
+        total: data.length,
+        annotated: data.filter(d => d.status === 'annotated').length,
+        reviewed: data.filter(d => d.status === 'reviewed').length,
+        rejected: data.filter(d => d.status === 'rejected').length,
+        pending: data.filter(d => d.status === 'pending').length,
       },
-      status: 'draft',
-      createdAt: new Date(),
-      createdBy: data.createdBy,
-      assignees: data.assignees,
+      status: task.status,
+      createdAt: task.createdAt,
+      createdBy: task.createdBy,
+      assignees: parseJson(task.assignees, []),
     };
-
-    this.tasks.set(id, task);
-    return task;
   }
 
   // 生成预标注
   async generatePreAnnotations(taskId: string): Promise<PreAnnotationSuggestion[]> {
-    const task = this.tasks.get(taskId);
+    const task = await this.prisma.annotationTask.findUnique({ where: { id: taskId } });
     if (!task) throw new Error('Task not found');
 
+    const items = await this.prisma.annotationItem.findMany({ where: { taskId } });
+    const config = parseJson(task.config, {});
     const suggestions: PreAnnotationSuggestion[] = [];
 
-    for (const item of task.data) {
-      const itemSuggestions = this.generateSuggestions(item.input, task.type, task.config.labels || []);
-      suggestions.push({
+    for (const item of items) {
+      const itemSuggestions = this.generateSuggestions(item.input, task.type as AnnotationType, config.labels || []);
+      const preAnnotation: PreAnnotationSuggestion = {
         itemId: item.id,
         suggestions: itemSuggestions,
         autoAnnotation: itemSuggestions[0]?.confidence > 0.8 ? itemSuggestions[0].label : undefined,
-      });
+      };
+      suggestions.push(preAnnotation);
 
-      // 更新数据项
-      item.preAnnotation = suggestions[suggestions.length - 1];
+      await this.prisma.annotationItem.update({
+        where: { id: item.id },
+        data: { preAnnotation: JSON.stringify(preAnnotation) },
+      });
     }
 
     return suggestions;
@@ -155,11 +168,12 @@ export class AnnotationAssistanceService {
         }
         break;
 
-      case AnnotationType.NER:
+      case AnnotationType.NER: {
         // 简单的实体识别
         const entities = this.extractEntities(input);
         suggestions.push(...entities);
         break;
+      }
 
       default:
         // 默认建议
@@ -175,7 +189,7 @@ export class AnnotationAssistanceService {
   private calculateConfidence(input: string, label: string): number {
     const lowerInput = input.toLowerCase();
     const lowerLabel = label.toLowerCase();
-    
+
     // 简单的关键词匹配
     const keywords: Record<string, string[]> = {
       '正面': ['好', '优秀', '棒', '赞', '喜欢', '满意'],
@@ -199,7 +213,7 @@ export class AnnotationAssistanceService {
   // 提取实体
   private extractEntities(input: string): Array<{ label: string; confidence: number; source: string }> {
     const entities: Array<{ label: string; confidence: number; source: string }> = [];
-    
+
     // 简单的实体识别规则
     const patterns = [
       { pattern: /\d{4}-\d{2}-\d{2}/g, label: 'DATE', confidence: 0.9 },
@@ -220,115 +234,146 @@ export class AnnotationAssistanceService {
 
   // 提交标注
   async submitAnnotation(taskId: string, itemId: string, annotation: any): Promise<void> {
-    const task = this.tasks.get(taskId);
-    if (!task) throw new Error('Task not found');
-
-    const item = task.data.find(d => d.id === itemId);
+    const item = await this.prisma.annotationItem.findFirst({ where: { id: itemId, taskId } });
     if (!item) throw new Error('Item not found');
 
-    item.annotation = annotation;
-    item.status = 'annotated';
-
-    // 更新统计
-    task.stats.annotated++;
-    task.stats.pending--;
+    await this.prisma.annotationItem.update({
+      where: { id: itemId },
+      data: { annotation: JSON.stringify(annotation), status: 'annotated' },
+    });
   }
 
   // 审核标注
   async reviewAnnotation(taskId: string, itemId: string, approved: boolean): Promise<void> {
-    const task = this.tasks.get(taskId);
-    if (!task) throw new Error('Task not found');
-
-    const item = task.data.find(d => d.id === itemId);
+    const item = await this.prisma.annotationItem.findFirst({ where: { id: itemId, taskId } });
     if (!item) throw new Error('Item not found');
 
-    if (approved) {
-      item.status = 'reviewed';
-      task.stats.reviewed++;
-    } else {
-      item.status = 'rejected';
-      task.stats.rejected++;
-      task.stats.annotated--;
-    }
+    await this.prisma.annotationItem.update({
+      where: { id: itemId },
+      data: { status: approved ? 'reviewed' : 'rejected' },
+    });
   }
 
   // 获取任务列表
-  async listTasks(type?: AnnotationType, status?: string): Promise<AnnotationTask[]> {
-    let tasks = Array.from(this.tasks.values());
-    if (type) tasks = tasks.filter(t => t.type === type);
-    if (status) tasks = tasks.filter(t => t.status === status);
-    return tasks.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  async listTasks(type?: AnnotationType, status?: string) {
+    const where: any = {};
+    if (type) where.type = type;
+    if (status) where.status = status;
+
+    const tasks = await this.prisma.annotationTask.findMany({
+      where,
+      orderBy: { createdAt: 'desc' as const },
+      include: { items: { orderBy: { createdAt: 'asc' as const } } },
+    });
+
+    return Promise.all(tasks.map(t => this.toTaskView(t, t.items)));
   }
 
   // 获取任务详情
-  async getTask(id: string): Promise<AnnotationTask | undefined> {
-    return this.tasks.get(id);
+  async getTask(id: string) {
+    const task = await this.prisma.annotationTask.findUnique({ where: { id } });
+    return this.toTaskView(task);
   }
 
   // 获取待标注项
-  async getPendingItems(taskId: string, limit: number = 10): Promise<AnnotationTask['data']> {
-    const task = this.tasks.get(taskId);
-    if (!task) return [];
-    return task.data.filter(d => d.status === 'pending').slice(0, limit);
+  async getPendingItems(taskId: string, limit: number = 10) {
+    const items = await this.prisma.annotationItem.findMany({
+      where: { taskId, status: 'pending' },
+      take: limit,
+      orderBy: { createdAt: 'asc' as const },
+    });
+    return items.map(item => ({
+      id: item.id,
+      input: item.input,
+      context: item.context,
+      preAnnotation: parseJson(item.preAnnotation),
+      status: item.status,
+    }));
   }
 
   // 获取已标注项
-  async getAnnotatedItems(taskId: string, limit: number = 10): Promise<AnnotationTask['data']> {
-    const task = this.tasks.get(taskId);
-    if (!task) return [];
-    return task.data.filter(d => d.status === 'annotated' || d.status === 'reviewed').slice(0, limit);
+  async getAnnotatedItems(taskId: string, limit: number = 10) {
+    const items = await this.prisma.annotationItem.findMany({
+      where: { taskId, status: { in: ['annotated', 'reviewed'] } },
+      take: limit,
+      orderBy: { createdAt: 'asc' as const },
+    });
+    return items.map(item => ({
+      id: item.id,
+      input: item.input,
+      context: item.context,
+      preAnnotation: parseJson(item.preAnnotation),
+      annotation: parseJson(item.annotation),
+      status: item.status,
+    }));
   }
 
   // 激活任务
-  async activateTask(taskId: string): Promise<AnnotationTask> {
-    const task = this.tasks.get(taskId);
+  async activateTask(taskId: string) {
+    const task = await this.prisma.annotationTask.findUnique({ where: { id: taskId } });
     if (!task) throw new Error('Task not found');
-    task.status = 'active';
-    return task;
+    const updated = await this.prisma.annotationTask.update({ where: { id: taskId }, data: { status: 'active' } });
+    return this.toTaskView(updated);
   }
 
   // 完成任务
-  async completeTask(taskId: string): Promise<AnnotationTask> {
-    const task = this.tasks.get(taskId);
+  async completeTask(taskId: string) {
+    const task = await this.prisma.annotationTask.findUnique({ where: { id: taskId } });
     if (!task) throw new Error('Task not found');
-    task.status = 'completed';
-    return task;
+    const updated = await this.prisma.annotationTask.update({ where: { id: taskId }, data: { status: 'completed' } });
+    return this.toTaskView(updated);
+  }
+
+  // 分配任务
+  async assignTask(taskId: string, assignees: string[]) {
+    const task = await this.prisma.annotationTask.findUnique({ where: { id: taskId } });
+    if (!task) throw new Error('Task not found');
+    const updated = await this.prisma.annotationTask.update({
+      where: { id: taskId },
+      data: { assignees: JSON.stringify(assignees) },
+    });
+    return this.toTaskView(updated);
   }
 
   // 获取标注质量指标
   async getQualityMetrics(taskId: string): Promise<AnnotationQuality> {
-    const task = this.tasks.get(taskId);
-    if (!task) throw new Error('Task not found');
+    const items = await this.prisma.annotationItem.findMany({ where: { taskId } });
+    if (items.length === 0) {
+      const task = await this.prisma.annotationTask.findUnique({ where: { id: taskId } });
+      if (!task) throw new Error('Task not found');
+    }
 
-    const totalAnnotated = task.stats.annotated + task.stats.reviewed;
-    const avgConfidence = task.data.reduce((sum, item) => {
-      const preAnnotation = item.preAnnotation as PreAnnotationSuggestion;
-      const confidence = preAnnotation?.suggestions?.[0]?.confidence || 0.5;
-      return sum + confidence;
-    }, 0) / task.data.length;
+    const reviewed = items.filter(i => i.status === 'reviewed').length;
+    const annotated = items.filter(i => i.status === 'annotated' || i.status === 'reviewed').length;
+
+    let confidenceSum = 0;
+    for (const item of items) {
+      const pre = parseJson(item.preAnnotation);
+      confidenceSum += pre?.suggestions?.[0]?.confidence || 0.5;
+    }
 
     return {
       taskId,
       interAnnotatorAgreement: 0.85 + Math.random() * 0.1,
-      avgConfidence,
-      reviewPassRate: totalAnnotated > 0 ? task.stats.reviewed / totalAnnotated : 0,
+      avgConfidence: items.length > 0 ? confidenceSum / items.length : 0,
+      reviewPassRate: annotated > 0 ? reviewed / annotated : 0,
       annotationSpeed: 20 + Math.random() * 10,
     };
   }
 
   // 导出标注结果
-  async exportAnnotations(taskId: string): Promise<any[]> {
-    const task = this.tasks.get(taskId);
-    if (!task) return [];
+  async exportAnnotations(taskId: string) {
+    const items = await this.prisma.annotationItem.findMany({
+      where: { taskId, status: { in: ['annotated', 'reviewed'] } },
+      orderBy: { createdAt: 'asc' as const },
+    });
 
-    return task.data
-      .filter(d => d.status === 'reviewed' || d.status === 'annotated')
-      .map(d => ({
-        id: d.id,
-        input: d.input,
-        annotation: d.annotation,
-        preAnnotation: d.preAnnotation,
-      }));
+    return items.map(d => ({
+      id: d.id,
+      input: d.input,
+      annotation: parseJson(d.annotation),
+      preAnnotation: parseJson(d.preAnnotation),
+    }));
   }
 
   // 获取标注类型

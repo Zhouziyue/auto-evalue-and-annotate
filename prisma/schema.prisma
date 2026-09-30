@@ -238,19 +238,61 @@ model EvalResult {
 // ============================================
 
 model Annotation {
-  id            String   @id @default(uuid())
+  id            String    @id @default(uuid())
   evalResultId  String
+  taskId        String?   // 关联标注任务（批量自动标注时写入）
   type          String   // ai, human
   annotatorId   String?  // 标注员ID（人工标注时）
   scores        String   // 评分数据（JSON字符串）
   comment       String?  // 批注
+  status        String    @default("pending") // pending, approved, rejected, modified, conflict
+  confidence    Float?    // AI 标注置信度（0-1）
+  modelVersion  String?   // AI 标注使用的模型标识
+  reviewedBy    String?   // 审核人
+  reviewedAt    DateTime? // 审核时间
   isFinal       Boolean  @default(false) // 是否为最终标注
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  evalResult    EvalResult @relation(fields: [evalResultId], references: [id], onDelete: Cascade)
+  evalResult    EvalResult      @relation(fields: [evalResultId], references: [id], onDelete: Cascade)
+  task          AnnotationTask? @relation(fields: [taskId], references: [id], onDelete: SetNull)
 
   @@map("annotations")
+}
+
+model AnnotationTask {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  type        String   @default("eval_review") // eval_review=评测结果审核, classification/ner/... =辅助标注
+  status      String   @default("pending") // pending, in_progress, completed, archived
+  evalRunId   String?
+  createdBy   String?
+  assignees   String?  // JSON 字符串数组
+  config      String?  // 任务配置（JSON字符串：labels/guidelines等）
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  annotations Annotation[]
+  items       AnnotationItem[]
+
+  @@map("annotation_tasks")
+}
+
+model AnnotationItem {
+  id            String   @id @default(uuid())
+  taskId        String
+  input         String
+  context       String?
+  preAnnotation String?  // 预标注建议（JSON字符串）
+  annotation    String?  // 人工标注结果（JSON字符串）
+  status        String   @default("pending") // pending, annotated, reviewed, rejected
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  task          AnnotationTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("annotation_items")
 }
 
 // ============================================

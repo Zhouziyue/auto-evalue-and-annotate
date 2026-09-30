@@ -3292,6 +3292,14 @@ export class EvalController {
     return this.annotationAssistanceService.completeTask(id);
   }
 
+  @Post('annotation/tasks/:id/assign')
+  async assignAnnotationTask(
+    @Param('id') id: string,
+    @Body() body: { assignees: string[] },
+  ) {
+    return this.annotationAssistanceService.assignTask(id, body.assignees || []);
+  }
+
   @Get('annotation/tasks/:id/quality')
   async getAnnotationQuality(@Param('id') id: string) {
     return this.annotationAssistanceService.getQualityMetrics(id);

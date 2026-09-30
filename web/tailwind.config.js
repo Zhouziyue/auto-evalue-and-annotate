@@ -9,7 +9,7 @@ export default {
     extend: {
       fontFamily: {
         sans: [
-          "-apple-system", "BlinkMacSystemFont", '"Segoe UI"', "Roboto",
+          "Inter", "-apple-system", "BlinkMacSystemFont", '"Segoe UI"', "Roboto",
           '"PingFang SC"', '"Microsoft YaHei"', '"Noto Sans SC"', "sans-serif",
         ],
         mono: [
@@ -84,13 +84,13 @@ export default {
         },
       },
       borderRadius: {
-        // 规范 §5.1: 圆角系统
+        // Supabase 风：克制圆角
         none: "0",
         sm: "4px",
-        md: "8px",
-        lg: "var(--radius)",
-        xl: "16px",
-        "2xl": "calc(var(--radius) + 4px)",
+        md: "var(--radius)",
+        lg: "8px",
+        xl: "12px",
+        "2xl": "16px",
         full: "9999px",
       },
       boxShadow: {

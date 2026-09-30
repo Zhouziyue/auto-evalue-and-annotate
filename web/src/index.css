@@ -2,116 +2,123 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ===== Design Tokens (per WebUI设计规范 v1.0) ===== */
+/* ===== Design Tokens (Supabase style · dark-first) ===== */
 @layer base {
   :root {
-    /* Brand / Primary — Indigo 500 */
-    --primary: 239 84% 67%;
+    /* ===== Supabase 风格 · 亮色主题 ===== */
+    /* Brand / Primary — Supabase Green */
+    --primary: 159 63% 38%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 243 75% 59%;
-    --primary-active: 245 76% 52%;
-    --primary-light: 226 100% 97%;
+    --primary-hover: 159 66% 33%;
+    --primary-active: 159 66% 28%;
+    --primary-light: 159 45% 94%;
 
     /* Semantic — Success */
-    --success: 142 71% 45%;
-    --success-light: 138 76% 97%;
+    --success: 159 63% 38%;
+    --success-light: 159 45% 94%;
     /* Warning */
-    --warning: 38 92% 50%;
-    --warning-light: 48 100% 96%;
+    --warning: 32 95% 44%;
+    --warning-light: 40 70% 94%;
     /* Error / Destructive */
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --error-light: 0 93% 94%;
+    --error-light: 0 70% 95%;
     /* Info */
-    --info: 217 91% 60%;
-    --info-light: 214 95% 96%;
+    --info: 221 83% 53%;
+    --info-light: 221 80% 95%;
 
     /* Surfaces */
     --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    --foreground: 0 0% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 0 0% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 0 0% 12%;
 
     /* Secondary / Muted / Accent */
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 214 32% 91%;
-    --accent-foreground: 222 47% 11%;
+    --secondary: 0 0% 97%;
+    --secondary-foreground: 0 0% 12%;
+    --muted: 0 0% 97%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 0 0% 94%;
+    --accent-foreground: 0 0% 12%;
 
     /* Borders & Input */
-    --border: 214 32% 91%;
-    --border-light: 214 32% 96%;
-    --input: 214 32% 91%;
-    --ring: 239 84% 67%;
+    --border: 220 13% 91%;
+    --border-light: 220 13% 95%;
+    --input: 220 13% 91%;
+    --ring: 159 63% 38%;
 
     /* Radius */
-    --radius: 0.5rem;
+    --radius: 0.375rem;
 
     /* Font */
-    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    --font-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
       "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
     --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Consolas,
       "Liberation Mono", Menlo, monospace;
 
     /* Shadows */
     --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.06);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.06);
 
-    /* Transitions (per spec §8.2) */
+    /* Transitions */
     --transition-fast: 150ms ease-out;
     --transition-normal: 200ms ease-in-out;
     --transition-slow: 300ms ease-in-out;
   }
 
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+    /* ===== Supabase 风格 · 暗色主题（默认） ===== */
+    /* Surfaces */
+    --background: 0 0% 11%;        /* #1C1C1C */
+    --foreground: 0 0% 93%;        /* #EDEDED */
+    --card: 0 0% 14%;              /* #232323 */
+    --card-foreground: 0 0% 93%;
+    --popover: 0 0% 14%;
+    --popover-foreground: 0 0% 93%;
 
-    --primary: 239 84% 67%;
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 243 75% 59%;
-    --primary-active: 245 76% 52%;
-    --primary-light: 226 100% 12%;
+    /* Brand / Primary — Supabase Green */
+    --primary: 153 60% 53%;        /* #3ECF8E */
+    --primary-foreground: 0 0% 4%; /* #0A0A0A */
+    --primary-hover: 155 63% 60%;  /* #57D9A3 */
+    --primary-active: 154 59% 45%; /* #2FB57C */
+    --primary-light: 153 40% 13%;
 
-    --success: 142 71% 45%;
-    --success-light: 138 76% 10%;
-    --warning: 38 92% 50%;
-    --warning-light: 48 100% 10%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 100%;
-    --error-light: 0 93% 10%;
-    --info: 217 91% 60%;
-    --info-light: 214 95% 10%;
+    /* Semantic */
+    --success: 153 60% 53%;
+    --success-light: 153 40% 13%;
+    --warning: 37 91% 55%;         /* #F5A623 */
+    --warning-light: 37 60% 13%;
+    --destructive: 0 88% 68%;      /* #F56565 */
+    --destructive-foreground: 0 0% 8%;
+    --error-light: 0 50% 14%;
+    --info: 218 91% 70%;           /* #6C9FF8 */
+    --info-light: 218 50% 15%;
 
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
+    /* Secondary / Muted / Accent */
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 93%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 63%;  /* #A0A0A0 */
+    --accent: 0 0% 18%;            /* #2E2E2E */
+    --accent-foreground: 0 0% 93%;
 
-    --border: 217 33% 17%;
-    --border-light: 217 33% 12%;
-    --input: 217 33% 17%;
-    --ring: 212 27% 84%;
+    /* Borders & Input */
+    --border: 0 0% 18%;            /* #2E2E2E */
+    --border-light: 0 0% 15%;      /* #262626 */
+    --input: 0 0% 18%;
+    --ring: 153 60% 53%;
 
-    /* Dark mode: shadows减弱, 用边框区分层级 */
-    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    /* Dark mode: 以描边分层为主，阴影极弱 */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
   }
 }
 
